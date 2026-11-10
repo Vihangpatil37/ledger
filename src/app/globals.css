@@ -1,26 +1,124 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --font-newsreader: Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-plus-jakarta: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-dm-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-newsreader);
+  --font-sans: var(--font-plus-jakarta);
+  --font-mono: var(--font-dm-mono);
+
+  /* Heritage Khata & Editorial Banknote Palette */
+  --color-ink: #1e1b18;
+  --color-ink-muted: #6b665f;
+  --color-ink-faint: #a8a299;
+  --color-paper: #f8f6f0;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #fcfbf8;
+  --color-rule: #e5e0d4;
+  --color-rule-subtle: #f0ece3;
+
+  --color-muted: #6b665f;
+  --color-faint: #a8a299;
+
+  /* Accounting Semantics */
+  --color-debit: #b93826;
+  --color-debit-light: #fdf2f0;
+  --color-credit: #246645;
+  --color-credit-light: #edf6f0;
+
+  /* Interactive & Focus */
+  --color-focus: #3b5bdb;
+  --color-focus-light: #edf2ff;
+  --color-danger: #b93826;
+  --color-danger-light: #fdf2f0;
+  --color-stamp: #8b1e1e;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Safety constraint: prevent any unconstrained SVG flash or layout shift */
+svg {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-size: 15px;
+  line-height: 1.5;
+  touch-action: manipulation;
+}
+
+/* Tactile selection */
+::selection {
+  background: var(--color-focus-light);
+  color: var(--color-ink);
+}
+
+/* Focus ring: architectural cobalt, quiet but clear */
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Subtle ledger texture & tactile borders */
+.ledger-border {
+  border-color: var(--color-rule);
+  box-shadow: 0 1px 2px 0 rgba(30, 27, 24, 0.04);
+}
+
+/* Stamp badge styling for settled accounts */
+.stamp-settled {
+  border: 1.5px dashed var(--color-credit);
+  color: var(--color-credit);
+  background-color: var(--color-credit-light);
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Print styling for statement generation */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 12pt !important;
+  }
+
+  aside,
+  header,
+  nav,
+  form,
+  button:not(.print-include),
+  .print\:hidden {
+    display: none !important;
+  }
+
+  main {
+    padding-left: 0 !important;
+    padding-top: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
