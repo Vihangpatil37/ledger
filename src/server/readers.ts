@@ -198,3 +198,4 @@ export async function getPersonDetail(
     entries: chronological,
   };
 }
+
