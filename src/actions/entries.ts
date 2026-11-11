@@ -79,3 +79,4 @@ export async function deleteEntry(formData: FormData): Promise<void> {
   revalidatePath("/");
   revalidatePath(`/people/${personId.data}`);
 }
+
