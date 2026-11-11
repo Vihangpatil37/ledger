@@ -105,3 +105,4 @@ export async function deletePerson(formData: FormData): Promise<void> {
   revalidatePath(HOME);
   redirect(HOME);
 }
+
