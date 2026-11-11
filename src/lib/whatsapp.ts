@@ -122,3 +122,4 @@ export function universalWaLink(message: string, waNumber?: string | null): stri
   }
   return `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
 }
+
