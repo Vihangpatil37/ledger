@@ -144,4 +144,3 @@ export function AddEntryCard({ personId }: { personId: string }) {
     </form>
   );
 }
-
