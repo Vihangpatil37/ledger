@@ -63,4 +63,3 @@ export function peopleCol(): Collection<PersonDoc> {
 export function entriesCol(): Collection<EntryDoc> {
   return db().collection<EntryDoc>("entries");
 }
-
