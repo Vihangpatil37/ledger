@@ -90,4 +90,3 @@ describe("balanceMeta", () => {
     expect(meta.label).toBe("settled");
   });
 });
-

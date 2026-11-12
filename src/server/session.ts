@@ -12,4 +12,3 @@ export async function getOwner(): Promise<string | null> {
     return null;
   }
 }
-

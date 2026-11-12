@@ -1,37 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ledger (Chai Ledger V4)
 
-## Getting Started
+A fast, responsive, and privacy-focused personal khata book for tracking **Udhar** (money you gave / they owe you) and **Received** payments (money returned / you owe) with running balances, multi-channel statement sharing, and a comprehensive financial dashboard.
 
-First, run the development server:
+Built with **Next.js 15 (App Router)**, **React 19**, **Tailwind CSS v4**, and **MongoDB Atlas** (using app-owned stateless JWT cookie sessions via `jose` and `bcryptjs` — with zero third-party auth dependencies).
+
+---
+
+## Features
+
+- **Modern Paper & Ink Design**: Clean, tactile accounting visual identity with humanist typography (**DM Sans**) and tabular numeric digits (**DM Mono**) for aligned financial columns.
+- **Financial Health Dashboard**:
+  - **Net Balance**: Instant view of your overall receivable vs. payable position.
+  - **Udhar (You will get)**: Total debit balance with active debtor count.
+  - **You will give**: Total credit balance with active creditor count.
+  - **Recent Activity Feed**: Real-time list of latest transactions across all contacts with timestamps and notes.
+- **Filterable Contact Directory**:
+  - Filter tabs: **All**, **Owes you (Udhar)**, **You owe**, and **Settled**.
+  - Real-time client-side search by contact name or phone number.
+  - Contact initials avatar badges and one-tap WhatsApp reminder shortcuts.
+- **Multi-Channel Statement Sharing**:
+  - Export and share statements directly from any contact ledger.
+  - Scope selector: **Recent 5**, **Recent 10**, or **All history**.
+  - **WhatsApp Direct**: Opens WhatsApp with pre-filled formatted statement.
+  - **Native Device Share**: Triggers the iOS/Android system share drawer (`navigator.share`).
+  - **1-Click Copy**: Instant clipboard copy with feedback confirmation.
+  - **Print / PDF**: Clean printer-friendly statement layout via `@media print`.
+- **Zero Float Drift Money Model**:
+  - Money is stored in MongoDB as exact integer paise (`amountCents`).
+  - JavaScript never performs floating-point math; aggregations are performed in the database.
+  - Amounts are transported as string literals and rendered in the Indian Numbering System (`₹1,23,456.78`).
+- **Mobile-First Responsive Shell**:
+  - Desktop: Fixed sidebar with brand badge and clear sign-out controls.
+  - Mobile: Pinned header + bottom navigation bar with safe-area insets.
+  - 16px touch font sizes preventing unwanted iOS Safari auto-zoom.
+  - 44px minimum tap targets for comfortable thumb interactions.
+
+---
+
+## Quickstart
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# 1. Install dependencies
+pnpm install
+
+# 2. Configure environment
+# Copy .env.example to .env.local and set:
+#   MONGODB_URI    = your Atlas connection string
+#   MONGODB_DB     = ledger (or your database name)
+#   SESSION_SECRET = random 32-byte hex string
+
+# 3. Create indexes and seed owner account
+node scripts/setup-db.mjs you@example.com yourpassword
+
+# 4. Start local development server
 pnpm dev
-# or
-bun dev
+# or run .\start.bat on Windows
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) and log in with your credentials.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Verification & Quality Gates
 
-## Learn More
+```bash
+pnpm typecheck   # Typecheck TypeScript (tsc --noEmit)
+pnpm lint        # Run ESLint rules
+pnpm build       # Production Next.js build
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Architecture & Technical Documentation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+For an exhaustive breakdown of every subsystem, data schema, aggregation pipeline, security boundary, and request lifecycle, refer to:
+👉 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deploy to Vercel
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-            
+1. Push this repository to GitHub.
+2. In Vercel, import the repository (Next.js preset is auto-detected).
+3. Add environment variables:
+   - `MONGODB_URI`
+   - `MONGODB_DB`
+   - `SESSION_SECRET`
+4. Deploy.
