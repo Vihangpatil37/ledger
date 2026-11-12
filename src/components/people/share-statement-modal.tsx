@@ -221,3 +221,4 @@ export function ShareStatementModal({ detail }: { detail: PersonDetail }) {
     </>
   );
 }
+
