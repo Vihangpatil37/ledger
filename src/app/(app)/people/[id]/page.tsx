@@ -207,4 +207,3 @@ export default async function PersonPage({
     </div>
   );
 }
-
