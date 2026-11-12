@@ -1,31 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Newsreader, Plus_Jakarta_Sans, DM_Mono } from "next/font/google";
 import "./globals.css";
-
-const newsreader = Newsreader({
-  variable: "--font-newsreader",
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  fallback: ["Georgia", "serif"],
-});
-
-const plusJakarta = Plus_Jakarta_Sans({
-  variable: "--font-plus-jakarta",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  fallback: ["system-ui", "-apple-system", "sans-serif"],
-});
-
-const dmMono = DM_Mono({
-  variable: "--font-dm-mono",
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  display: "swap",
-  fallback: ["ui-monospace", "monospace"],
-});
 
 export const metadata: Metadata = {
   title: {
@@ -48,9 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${newsreader.variable} ${plusJakarta.variable} ${dmMono.variable} antialiased`}
-      >
+      <body className="antialiased">
         {children}
       </body>
     </html>
