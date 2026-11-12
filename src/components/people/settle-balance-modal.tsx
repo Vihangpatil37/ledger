@@ -185,3 +185,4 @@ export function SettleBalanceModal({ detail }: { detail: PersonDetail }) {
     </>
   );
 }
+
