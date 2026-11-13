@@ -112,16 +112,18 @@ export function AddEntryCard({ personId }: { personId: string }) {
           <FieldError message={state.fieldErrors?.note} />
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="dueDate">Promised return (optional)</Label>
-          <input
-            id="dueDate"
-            name="dueDate"
-            type="date"
-            className={`${inputClass} font-mono text-xs`}
-          />
-          <FieldError message={state.fieldErrors?.dueDate} />
-        </div>
+        {type === "GAVE" ? (
+          <div className="space-y-1.5">
+            <Label htmlFor="dueDate">Promised return (optional)</Label>
+            <input
+              id="dueDate"
+              name="dueDate"
+              type="date"
+              className={`${inputClass} font-mono text-xs`}
+            />
+            <FieldError message={state.fieldErrors?.dueDate} />
+          </div>
+        ) : null}
       </div>
 
       {state.error ? (

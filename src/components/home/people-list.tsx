@@ -15,7 +15,17 @@ function getInitials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export function PeopleList({ rows }: { rows: PersonListRow[] }) {
+type PeopleListProps = {
+  rows: PersonListRow[];
+  counts: {
+    owesYou: number;
+    youOwe: number;
+    overdue: number;
+    settled: number;
+  };
+};
+
+export function PeopleList({ rows, counts }: PeopleListProps) {
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<FilterTab>("ALL");
 
@@ -40,11 +50,6 @@ export function PeopleList({ rows }: { rows: PersonListRow[] }) {
       )
     : tabFiltered;
 
-  const owesYouCount = rows.filter((r) => Number(r.balance) > 0).length;
-  const youOweCount = rows.filter((r) => Number(r.balance) < 0).length;
-  const overdueCount = rows.filter((r) => r.isOverdue).length;
-  const settledCount = rows.filter((r) => Number(r.balance) === 0).length;
-
   return (
     <div className="space-y-3.5">
       {/* Search and Filters Header */}
@@ -53,10 +58,10 @@ export function PeopleList({ rows }: { rows: PersonListRow[] }) {
         <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           {[
             { id: "ALL", label: "All", count: rows.length },
-            { id: "OWES_YOU", label: "Owes you", count: owesYouCount },
-            { id: "YOU_OWE", label: "You owe", count: youOweCount },
-            { id: "OVERDUE", label: "Overdue", count: overdueCount },
-            { id: "SETTLED", label: "Settled", count: settledCount },
+            { id: "OWES_YOU", label: "Owes you", count: counts.owesYou },
+            { id: "YOU_OWE", label: "You owe", count: counts.youOwe },
+            { id: "OVERDUE", label: "Overdue", count: counts.overdue },
+            { id: "SETTLED", label: "Settled", count: counts.settled },
           ].map((item) => {
             const active = tab === item.id;
             const isOverdueTab = item.id === "OVERDUE" && item.count > 0;

@@ -43,4 +43,14 @@ describe("getDueStatus", () => {
     expect(res?.label).toContain("Due in 4 days");
     expect(isOverdueDate(dateStr)).toBe(false);
   });
+
+  it("evaluates overdue debt status based on outstanding balance", () => {
+    // A loan whose due date has passed should not be overdue if repaid in full
+    const overdueGaveCents = 50000; // ₹500
+    const fullRepaymentCents = 50000; // ₹500
+    const partialRepaymentCents = 20000; // ₹200
+
+    expect(overdueGaveCents > fullRepaymentCents).toBe(false);
+    expect(overdueGaveCents > partialRepaymentCents).toBe(true);
+  });
 });

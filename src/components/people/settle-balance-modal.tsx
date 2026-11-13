@@ -14,7 +14,7 @@ export function SettleBalanceModal({ detail }: { detail: PersonDetail }) {
   // If balance < 0 (you owe them), settling means you GAVE the money back.
   const isOwesYou = balanceVal > 0;
   const settleType = isOwesYou ? "RECEIVED" : "GAVE";
-  const exactAmount = Math.abs(balanceVal).toFixed(2);
+  const exactAmount = detail.balance.replace(/^-/, "");
 
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     addEntry,

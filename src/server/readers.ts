@@ -35,8 +35,12 @@ export async function getHomeSummary(): Promise<HomeSummary> {
     };
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Pin "today" to Asia/Kolkata so overdue checks are stable in IST,
+  // not shifted by the server's UTC clock (Vercel runs in UTC).
+  const istTodayStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+  }).format(new Date());
+  const today = new Date(`${istTodayStr}T00:00:00+05:30`);
 
   // Every query filters by ownerId
   const [people, balances, recentRaw, overdueRaw] = await Promise.all([
@@ -55,15 +59,47 @@ export async function getHomeSummary(): Promise<HomeSummary> {
       .sort({ createdAt: -1 })
       .limit(6)
       .toArray(),
+    // For each person, sum overdue GAVE amounts vs total RECEIVED.
+    // A person is overdue only when past-due loans are not fully
+    // covered by repayments — prevents false positives on repaid loans.
     entriesCol()
-      .find(
+      .aggregate<{ _id: string }>([
         {
-          ownerId: owner,
-          type: "GAVE",
-          dueDate: { $lt: today, $ne: null },
+          $match: {
+            ownerId: owner,
+            $or: [
+              { type: "GAVE", dueDate: { $lt: today, $ne: null } },
+              { type: "RECEIVED" },
+            ],
+          },
         },
-        { projection: { personId: 1 } }
-      )
+        {
+          $group: {
+            _id: "$personId",
+            overdueGave: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $eq: ["$type", "GAVE"] },
+                      { $ne: ["$dueDate", null] },
+                      { $lt: ["$dueDate", today] },
+                    ],
+                  },
+                  "$amountCents",
+                  0,
+                ],
+              },
+            },
+            totalReceived: {
+              $sum: {
+                $cond: [{ $eq: ["$type", "RECEIVED"] }, "$amountCents", 0],
+              },
+            },
+          },
+        },
+        { $match: { $expr: { $gt: ["$overdueGave", "$totalReceived"] } } },
+      ])
       .toArray(),
   ]);
 
@@ -75,7 +111,7 @@ export async function getHomeSummary(): Promise<HomeSummary> {
     balances.map((row) => [row._id, row])
   );
 
-  const overduePersonIds = new Set(overdueRaw.map((e) => e.personId));
+  const overduePersonIds = new Set(overdueRaw.map((r) => r._id));
 
   let youllGetCents = 0;
   let youllGiveCents = 0;

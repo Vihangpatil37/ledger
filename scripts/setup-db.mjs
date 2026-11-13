@@ -66,6 +66,9 @@ try {
     database
       .collection("entries")
       .createIndex({ ownerId: 1, createdAt: -1 }),
+    database
+      .collection("entries")
+      .createIndex({ ownerId: 1, type: 1, dueDate: 1 }),
   ]);
   console.log(`Indexes ensured on db "${database.databaseName}".`);
 
