@@ -127,7 +127,15 @@ export default async function HomePage() {
             </span>
           </div>
 
-          <PeopleList rows={summary.rows} />
+          <PeopleList
+            rows={summary.rows}
+            counts={{
+              owesYou: summary.debtorsCount,
+              youOwe: summary.creditorsCount,
+              overdue: summary.overdueCount,
+              settled: summary.settledCount,
+            }}
+          />
         </section>
 
         {/* Right Column: Recent Activity & Quick Stats */}

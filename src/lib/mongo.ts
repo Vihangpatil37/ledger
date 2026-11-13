@@ -44,8 +44,21 @@ function getClient(): MongoClient {
     serverSelectionTimeoutMS: 8_000,
     tls: true,
     connectTimeoutMS: 10_000,
+    // Vercel serverless: containers freeze between requests and AWS NAT
+    // drops idle TCP sockets. Cull stale connections after 10 s so the
+    // driver reconnects instantly on container resume instead of hanging
+    // for the full serverSelectionTimeout.
+    maxIdleTimeMS: 10_000,
+    // Keep the per-container pool small so concurrent lambdas don't
+    // exhaust Atlas connection limits (6 containers × 10 = 60).
+    maxPoolSize: 10,
   });
   return globalThis.__ledgerMongo;
+}
+
+/** Expose the client for session/transaction use (e.g. atomic deletes). */
+export function mongoClient(): MongoClient {
+  return getClient();
 }
 
 export function db() {
