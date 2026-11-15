@@ -41,7 +41,7 @@ export function formatMoney(amount: string | number): string {
 /**
  * Shared meaning of a person's balance (= GAVE total − RECEIVED total).
  * Positive → they have taken more money than they returned: "owes you".
- * Negative → they returned more money than they took: "you owe".
+ * Negative → they returned more money than they took: "Jama (Advance)".
  */
 export function balanceMeta(amount: string | number): {
   className: string;
@@ -52,6 +52,27 @@ export function balanceMeta(amount: string | number): {
     return { className: "text-muted", label: "settled" };
   }
   if (value > 0) return { className: "text-debit", label: "owes you" };
-  if (value < 0) return { className: "text-credit", label: "you owe" };
+  if (value < 0) return { className: "text-credit", label: "Jama (Advance)" };
   return { className: "text-muted", label: "settled" };
+}
+
+/**
+ * Calculates 100% and 50% split amounts in exact integer paise and decimal rupee strings.
+ * Half is computed as Math.floor(absPaise / 2) to ensure no fractional paise drift.
+ */
+export function calculateSettleSplits(balance: string | number): {
+  absPaise: number;
+  fullAmount: string;
+  halfPaise: number;
+  halfAmount: string;
+} {
+  const absPaise = Math.abs(
+    typeof balance === "string"
+      ? decimalStringToPaise(balance)
+      : Math.round(Number.isFinite(balance) ? balance * 100 : 0)
+  );
+  const fullAmount = paiseToDecimalString(absPaise);
+  const halfPaise = Math.floor(absPaise / 2);
+  const halfAmount = paiseToDecimalString(halfPaise);
+  return { absPaise, fullAmount, halfPaise, halfAmount };
 }
