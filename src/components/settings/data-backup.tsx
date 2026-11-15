@@ -199,7 +199,7 @@ export function DataBackupSection() {
       </div>
 
       {/* CSV Dry-Run Preview Modal */}
-      {/* preview modal deferred to next commit */ false && (
+      {isPreviewOpen && csvPreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-xs">
           <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-rule bg-surface p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-rule/50 pb-3">
