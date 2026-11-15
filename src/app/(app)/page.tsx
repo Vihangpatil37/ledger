@@ -1,15 +1,17 @@
 import Link from "next/link";
+import { FollowUpQueue } from "@/components/home/follow-up-queue";
 import { PeopleList } from "@/components/home/people-list";
 import { RecentActivity } from "@/components/home/recent-activity";
 import { Money } from "@/components/ui";
-import { getHomeSummary } from "@/server/readers";
+import { getFollowUpQueue, getHomeSummary } from "@/server/readers";
 import { getServerTranslations } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [summary, { t }] = await Promise.all([
+  const [summary, followUpQueue, { t }] = await Promise.all([
     getHomeSummary(),
+    getFollowUpQueue(),
     getServerTranslations(),
   ]);
   const count = summary.rows.length;
@@ -103,6 +105,9 @@ export default async function HomePage() {
           </p>
         </div>
       </div>
+
+      {/* Today's Follow-up Queue Banner */}
+      {followUpQueue.length > 0 && <FollowUpQueue items={followUpQueue} />}
 
       {/* Main Dashboard Grid: People Directory (Left) + Activity & Stats (Right) */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start pt-2">
