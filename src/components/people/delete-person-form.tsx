@@ -1,13 +1,23 @@
 "use client";
 
 import { deletePerson } from "@/actions/people";
+import { triggerUndoToast } from "@/components/trash/undo-toast";
 import { useLanguage } from "@/lib/i18n/client";
 
 export function DeletePersonForm({ personId }: { personId: string }) {
   const { t } = useLanguage();
 
   return (
-    <form action={deletePerson}>
+    <form
+      action={deletePerson}
+      onSubmit={() => {
+        triggerUndoToast({
+          id: personId,
+          kind: "PERSON",
+          title: "Contact",
+        });
+      }}
+    >
       <input type="hidden" name="id" value={personId} />
       <button
         type="submit"
