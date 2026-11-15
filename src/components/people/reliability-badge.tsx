@@ -55,7 +55,7 @@ export function ReliabilityBadge({
         </span>
       </button>
 
-      {/* details popover disabled initially */ false && (
+      {showDetails && (
         <>
           <div
             className="fixed inset-0 z-40"
