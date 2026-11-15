@@ -1,6 +1,7 @@
 "use client";
 
 import { deleteEntry } from "@/actions/entries";
+import { triggerUndoToast } from "@/components/trash/undo-toast";
 import { useLanguage } from "@/lib/i18n/client";
 
 export function DeleteEntryForm({
@@ -13,7 +14,17 @@ export function DeleteEntryForm({
   const { t } = useLanguage();
 
   return (
-    <form action={deleteEntry}>
+    <form
+      action={deleteEntry}
+      onSubmit={() => {
+        triggerUndoToast({
+          id: entryId,
+          kind: "ENTRY",
+          title: "Entry",
+          personId,
+        });
+      }}
+    >
       <input type="hidden" name="entryId" value={entryId} />
       <input type="hidden" name="personId" value={personId} />
       <button
