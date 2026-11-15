@@ -11,18 +11,6 @@ export type PersonListRow = {
   promiseDate?: string | null;
 };
 
-export type ReliabilityTier = "EXCELLENT" | "MODERATE" | "RISKY" | "NEW";
-
-export type ReliabilityScore = {
-  score: number;
-  tier: ReliabilityTier;
-  label: string;
-  onTimeRate: number;
-  avgRepayDays: number;
-  totalSettledCount: number;
-  brokenPromisesCount: number;
-};
-
 export type RecentEntryItem = {
   id: string;
   personId: string;
@@ -86,18 +74,17 @@ export type PersonDetail = {
   entries: Array<EntryRow & { running: string }>;
 };
 
-export type OwnerProfile = {
-  email: string;
-  upiId: string | null;
-  upiName: string | null;
-};
+export type ReliabilityTier = "EXCELLENT" | "MODERATE" | "RISKY" | "NEW";
 
-export type ActionState = {
-  ok?: boolean;
-  error?: string;
-  fieldErrors?: Record<string, string>;
+export type ReliabilityScore = {
+  score: number; // 0-100
+  tier: ReliabilityTier;
+  label: string;
+  onTimeRate: number; // percentage 0-100
+  avgRepayDays: number;
+  totalSettledCount: number;
+  brokenPromisesCount: number;
 };
-
 
 export type FollowUpUrgency =
   | "BROKEN_PROMISE"
@@ -118,4 +105,86 @@ export type FollowUpItem = {
   lastRemindedAt?: string | null;
   reliability: ReliabilityScore;
   waHref: string | null;
+};
+
+export type TrashItem = {
+  id: string;
+  kind: "PERSON" | "ENTRY";
+  title: string;
+  subtitle?: string | null;
+  amount?: string | null;
+  deletedAt: string;
+  daysRemaining: number;
+  personId?: string;
+};
+
+export type BackupPayload = {
+  version: "chai_ledger_backup_v2";
+  exportedAt: string;
+  owner: {
+    email: string;
+    upiId: string | null;
+    upiName: string | null;
+  };
+  people: Array<{
+    id: string;
+    name: string;
+    phone: string | null;
+    promiseDate?: string | null;
+    promiseNote?: string | null;
+    lastRemindedAt?: string | null;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  entries: Array<{
+    id: string;
+    personId: string;
+    type: EntryType;
+    amountCents: number;
+    note: string | null;
+    dueDate?: string | null;
+    createdAt: string;
+  }>;
+  promises?: Array<{
+    id: string;
+    personId: string;
+    promiseDate: string;
+    note: string | null;
+    status: string;
+    createdAt: string;
+  }>;
+};
+
+export type CsvImportRowPreview = {
+  line: number;
+  name: string;
+  phone: string | null;
+  type: EntryType;
+  amount: string;
+  note: string | null;
+  dueDate?: string | null;
+  status: "VALID" | "ERROR";
+  error?: string;
+  isExistingPerson: boolean;
+};
+
+export type CsvImportPreview = {
+  totalRows: number;
+  validCount: number;
+  errorCount: number;
+  newPeopleCount: number;
+  existingPeopleCount: number;
+  rows: CsvImportRowPreview[];
+};
+
+export type OwnerProfile = {
+  email: string;
+  upiId: string | null;
+  upiName: string | null;
+};
+
+export type ActionState = {
+  ok?: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string>;
 };
