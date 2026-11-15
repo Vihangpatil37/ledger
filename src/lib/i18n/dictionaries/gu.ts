@@ -5,6 +5,7 @@ export const gu: Dictionary = {
   "nav.dashboard": "ડેશબોર્ડ",
   "nav.addPerson": "વ્યક્તિ ઉમેરો",
   "nav.settings": "સેટિંગ્સ",
+  "nav.trash": "ટ્રેશ",
   "nav.signOut": "બહાર નીકળો",
   "nav.brandSub": "પર્સનલ ખાતાવહી",
   "nav.people": "સંપર્કો",
@@ -144,4 +145,51 @@ export const gu: Dictionary = {
   "common.today": "આજે",
   "common.yesterday": "ગઈકાલે",
   "common.loading": "લોડ થઈ રહ્યું છે…",
+
+  // Follow-up queue
+  "queue.title": "આજની ફોલો-અપ યાદી",
+  "queue.subtitle": "તૂટેલા વાયદા અથવા બાકી ઉધાર વાળા ગ્રાહકો",
+  "queue.empty": "આજે કોઈ બાકી ફોલો-અપ નથી! બધું બરાબર ચાલે છે.",
+  "queue.brokenPromise": "વાયદો તૂટ્યો",
+  "queue.remindedAgo": "રિમાઇન્ડર મોકલ્યું",
+  "queue.remindWhatsApp": "વોટ્સએપ",
+  "queue.setPromise": "વાયદો નક્કી કરો",
+
+  // Promise to pay
+  "promise.title": "ચુકવણીનો વાયદો",
+  "promise.subtitle": "ગ્રાહકે કઈ તારીખે હિસાબ કરવાનો વાયદો કર્યો",
+  "promise.dateLabel": "વાયદાની તારીખ",
+  "promise.noteLabel": "નોંધ (મરજિયાત)",
+  "promise.save": "વાયદો સાચવો",
+  "promise.clear": "વાયદો દૂર કરો",
+
+  // Reliability
+  "reliability.title": "વિશ્વાસપાત્રતા સ્કોર",
+  "reliability.excellent": "ઉત્તમ",
+  "reliability.moderate": "સામાન્ય",
+  "reliability.risky": "જોખમી",
+  "reliability.new": "નવો",
+  "reliability.onTime": "સમયસર",
+  "reliability.avgDays": "સરેરાશ દિવસ",
+
+  // Trash & Undo
+  "trash.title": "ટ્રેશ અને ડિલીટ કરેલ વસ્તુઓ",
+  "trash.subtitle": "વસ્તુઓ 30 દિવસમાં રીસ્ટોર કરી શકાય છે",
+  "trash.empty": "ટ્રેશ ખાલી છે.",
+  "trash.restore": "રીસ્ટોર કરો",
+  "trash.purge": "કાયમ માટે ડિલીટ કરો",
+  "trash.emptyBtn": "ટ્રેશ ખાલી કરો",
+  "trash.daysLeft": "દિવસ બાકી",
+  "undo.itemDeleted": "વસ્તુ ટ્રેશમાં મોકલાઈ",
+  "undo.btn": "પાછું ખેંચો (Undo)",
+
+  // Backup & CSV Import
+  "backup.title": "ડેટા બેકઅપ અને માઇગ્રેશન",
+  "backup.exportBtn": "બેકઅપ JSON ડાઉનલોડ કરો",
+  "backup.restoreTitle": "બેકઅપ રીસ્ટોર કરો",
+  "backup.restoreBtn": "JSON રીસ્ટોર કરો",
+  "backup.csvTitle": "ખાતાવહી CSV આયાત કરો",
+  "backup.csvBtn": "CSV ફાઇલ પસંદ કરો",
+  "backup.csvPreview": "CSV પૂર્વાવલોકન",
+  "backup.csvCommit": "વ્યવહારો આયાત કરો",
 };
