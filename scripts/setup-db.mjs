@@ -60,6 +60,7 @@ try {
   await Promise.all([
     database.collection("users").createIndex({ email: 1 }, { unique: true }),
     database.collection("people").createIndex({ ownerId: 1, name: 1 }),
+    database.collection("people").createIndex({ ownerId: 1, deletedAt: 1, promiseDate: 1 }),
     database
       .collection("entries")
       .createIndex({ personId: 1, createdAt: 1, _id: 1 }),
@@ -69,6 +70,12 @@ try {
     database
       .collection("entries")
       .createIndex({ ownerId: 1, type: 1, dueDate: 1 }),
+    database
+      .collection("entries")
+      .createIndex({ ownerId: 1, deletedAt: 1, createdAt: -1 }),
+    database
+      .collection("promises")
+      .createIndex({ ownerId: 1, personId: 1, createdAt: -1 }),
   ]);
   console.log(`Indexes ensured on db "${database.databaseName}".`);
 
