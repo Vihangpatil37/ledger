@@ -397,4 +397,34 @@ describe("universalWaLink", () => {
     expect(universalWaLink("Hello", "919876543210")).toBe("https://wa.me/919876543210?text=Hello");
     expect(universalWaLink("Hello", null)).toBe("https://api.whatsapp.com/send?text=Hello");
   });
+
+  it("prioritizes broken promise notice over regular overdue date", () => {
+    const overdueDate = getIstDateString(-5);
+    const brokenPromiseDate = getIstDateString(-2);
+
+    const detailWithPromise: PersonDetail = {
+      id: "uuid-p",
+      name: "Dinesh",
+      phone: "9876543210",
+      gaveTotal: "1000",
+      receivedTotal: "0",
+      balance: "1000",
+      promiseDate: brokenPromiseDate,
+      entries: [
+        {
+          id: "e-1",
+          type: "GAVE",
+          amount: "1000",
+          note: null,
+          dueDate: overdueDate,
+          createdAt: new Date().toISOString(),
+          running: "1000",
+        },
+      ],
+    };
+
+    const msg = reminderMessage(detailWithPromise);
+    expect(msg).toContain("⚠️ *Wada Yaad Dihani:*");
+    expect(msg).toContain(brokenPromiseDate);
+  });
 });
