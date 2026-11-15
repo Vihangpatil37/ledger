@@ -5,6 +5,7 @@ export const hi: Dictionary = {
   "nav.dashboard": "डैशबोर्ड",
   "nav.addPerson": "व्यक्ति जोड़ें",
   "nav.settings": "सेटिंग्स",
+  "nav.trash": "ट्रैश",
   "nav.signOut": "लॉग आउट",
   "nav.brandSub": "पर्सनल खाता बही",
   "nav.people": "संपर्क",
@@ -144,4 +145,51 @@ export const hi: Dictionary = {
   "common.today": "आज",
   "common.yesterday": "कल",
   "common.loading": "लोड हो रहा है…",
+
+  // Follow-up queue
+  "queue.title": "आज की फॉलो-अप लिस्ट",
+  "queue.subtitle": "टूटे वादे या ओवरड्यू उधारी वाले ग्राहक",
+  "queue.empty": "आज कोई पेंडिंग फॉलो-अप नहीं है! सब ठीक चल रहा है।",
+  "queue.brokenPromise": "वादा टूटा",
+  "queue.remindedAgo": "रिमाइंडर भेजा",
+  "queue.remindWhatsApp": "व्हाट्सएप",
+  "queue.setPromise": "तारीख तय करें",
+
+  // Promise to pay
+  "promise.title": "पेमेंट का वादा",
+  "promise.subtitle": "ग्राहक ने किस तारीख को हिसाब का वादा किया",
+  "promise.dateLabel": "वादे की तारीख",
+  "promise.noteLabel": "नोट (वैकल्पिक)",
+  "promise.save": "वादा सेव करें",
+  "promise.clear": "वादा हटाएं",
+
+  // Reliability
+  "reliability.title": "विश्वसनीयता स्कोर",
+  "reliability.excellent": "शानदार",
+  "reliability.moderate": "मध्यम",
+  "reliability.risky": "जोखिम",
+  "reliability.new": "नया",
+  "reliability.onTime": "समय पर",
+  "reliability.avgDays": "औसत दिन",
+
+  // Trash & Undo
+  "trash.title": "ट्रैश और डिलीट किए गए आइटम",
+  "trash.subtitle": "आइटम 30 दिनों के भीतर रीस्टोर किए जा सकते हैं",
+  "trash.empty": "ट्रैश खाली है।",
+  "trash.restore": "रीस्टोर करें",
+  "trash.purge": "हमेशा के लिए हटाएं",
+  "trash.emptyBtn": "ट्रैश खाली करें",
+  "trash.daysLeft": "दिन बचे",
+  "undo.itemDeleted": "आइटम ट्रैश में भेजा गया",
+  "undo.btn": "वापस लें (Undo)",
+
+  // Backup & CSV Import
+  "backup.title": "डेटा बैकअप और माइग्रेशन",
+  "backup.exportBtn": "बैकअप JSON डाउनलोड करें",
+  "backup.restoreTitle": "बैकअप रीस्टोर करें",
+  "backup.restoreBtn": "JSON रीस्टोर करें",
+  "backup.csvTitle": "खाता CSV इम्पोर्ट करें",
+  "backup.csvBtn": "CSV फाइल चुनें",
+  "backup.csvPreview": "CSV प्रीव्यू",
+  "backup.csvCommit": "लेनदेन इम्पोर्ट करें",
 };
