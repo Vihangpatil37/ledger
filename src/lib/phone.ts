@@ -1,4 +1,18 @@
 /**
+ * Strips formatting, trunk prefixes (0), and country codes (+91, 91)
+ * to return canonical 10-digit phone digits for matching and storage.
+ */
+export function normalizePhone(raw?: string | null): string | null {
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return null;
+  if (digits.length === 10) return digits;
+  if (digits.length === 11 && digits.startsWith("0")) return digits.slice(1);
+  if (digits.length === 12 && digits.startsWith("91")) return digits.slice(2);
+  return digits;
+}
+
+/**
  * Pure formatter for Indian phone numbers:
  * - Empty string remains empty ("").
  * - Digits format into "+91 XXXXX" or "+91 XXXXX XXXXX".
