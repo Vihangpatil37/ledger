@@ -206,10 +206,18 @@ export async function getPersonDetail(
   const owner = await getOwner();
   if (!owner) return null;
 
-  // The ownerId filter keeps other owners' people invisible.
+  // The ownerId filter keeps other owners' people invisible; exclude soft-deleted
   const person = await peopleCol().findOne(
     { _id: id, ownerId: owner, ...activeFilter() },
-    { projection: { name: 1, phone: 1 } }
+    {
+      projection: {
+        name: 1,
+        phone: 1,
+        promiseDate: 1,
+        promiseNote: 1,
+        lastRemindedAt: 1,
+      },
+    }
   );
   if (!person) return null;
 
@@ -222,46 +230,78 @@ export async function getPersonDetail(
   const entriesQuery: Record<string, unknown> = {
     personId: id,
     ownerId: owner,
+    ...activeFilter(),
   };
   if (fromDate || toDateExclusive) {
     entriesQuery.createdAt = createdAtFilter;
   }
 
-  const [balanceRes, openingRes, entries, ownerDoc] = await Promise.all([
-    // Lifetime total balance
-    entriesCol()
-      .aggregate<{ _id: null; gave: number; received: number }>([
-        { $match: { personId: id, ownerId: owner, ...activeFilter() } },
-        { $group: { _id: null, ...BALANCE_GROUP } },
-      ])
-      .toArray(),
-    // Opening balance before fromDate (only computed if fromDate is set)
-    fromDate
-      ? entriesCol()
-          .aggregate<{ _id: null; gave: number; received: number }>([
-            {
-              $match: {
-                personId: id,
-                ownerId: owner,
-                createdAt: { $lt: fromDate },
+  const [balanceRes, openingRes, entries, ownerDoc, promisesRes, allLifetimeEntries] =
+    await Promise.all([
+      // Lifetime total balance
+      entriesCol()
+        .aggregate<{ _id: null; gave: number; received: number }>([
+          { $match: { personId: id, ownerId: owner, ...activeFilter() } },
+          { $group: { _id: null, ...BALANCE_GROUP } },
+        ])
+        .toArray(),
+      // Opening balance before fromDate (only computed if fromDate is set)
+      fromDate
+        ? entriesCol()
+            .aggregate<{ _id: null; gave: number; received: number }>([
+              {
+                $match: {
+                  personId: id,
+                  ownerId: owner,
+                  ...activeFilter(),
+                  createdAt: { $lt: fromDate },
+                },
               },
-            },
-            { $group: { _id: null, ...BALANCE_GROUP } },
-          ])
-          .toArray()
-      : Promise.resolve([]),
-    entriesCol()
-      .find(
-        entriesQuery,
-        { projection: { type: 1, amountCents: 1, note: 1, dueDate: 1, editedAt: 1, createdAt: 1 } }
-      )
-      .sort({ createdAt: 1, _id: 1 })
-      .toArray(),
-    usersCol().findOne(
-      { _id: owner },
-      { projection: { upiId: 1, upiName: 1 } }
-    ),
-  ]);
+              { $group: { _id: null, ...BALANCE_GROUP } },
+            ])
+            .toArray()
+        : Promise.resolve([]),
+      entriesCol()
+        .find(entriesQuery, {
+          projection: {
+            type: 1,
+            amountCents: 1,
+            note: 1,
+            dueDate: 1,
+            editedAt: 1,
+            createdAt: 1,
+          },
+        })
+        .sort({ createdAt: 1, _id: 1 })
+        .toArray(),
+      usersCol().findOne(
+        { _id: owner },
+        { projection: { upiId: 1, upiName: 1 } }
+      ),
+      // Broken promises count for reliability scoring
+      promisesCol
+        ? promisesCol()
+            .find({ personId: id, ownerId: owner, status: "BROKEN" })
+            .toArray()
+            .catch(() => [])
+        : Promise.resolve([]),
+      // All lifetime entries if range was filtered, otherwise entries is already all
+      fromDate || toDateExclusive
+        ? entriesCol()
+            .find(
+              { personId: id, ownerId: owner, ...activeFilter() },
+              {
+                projection: {
+                  type: 1,
+                  amountCents: 1,
+                  createdAt: 1,
+                  dueDate: 1,
+                },
+              }
+            )
+            .toArray()
+        : Promise.resolve(null),
+    ]);
 
   const balance = balanceRes[0] ?? { gave: 0, received: 0 };
   const opening = openingRes[0] ?? { gave: 0, received: 0 };
@@ -286,6 +326,13 @@ export async function getPersonDetail(
   // ...then the list is shown newest first.
   chronological.reverse();
 
+  // Compute reliability score
+  const entriesForReliability = allLifetimeEntries ?? entries;
+  const reliability = computeReliabilityScore({
+    entries: entriesForReliability,
+    brokenPromisesCount: promisesRes.length,
+  });
+
   return {
     id: person._id,
     name: person.name,
@@ -301,10 +348,25 @@ export async function getPersonDetail(
           upiName: ownerDoc.upiName ?? null,
         }
       : null,
+    reliability,
+    lastRemindedAt: person.lastRemindedAt
+      ? person.lastRemindedAt.toISOString()
+      : null,
+    promiseDate: person.promiseDate
+      ? person.promiseDate.toISOString().split("T")[0]
+      : null,
+    promiseNote: person.promiseNote ?? null,
     entries: chronological,
   };
 }
 
+/**
+ * Returns prioritized queue of customers who need follow-up today:
+ * 1. Broken promises (promiseDate <= today in IST)
+ * 2. Overdue loans
+ * 3. Due today
+ * 4. Due soon (<= 3 days)
+ */
 export async function getOwnerProfile(): Promise<OwnerProfile | null> {
   const owner = await getOwner();
   if (!owner) return null;
