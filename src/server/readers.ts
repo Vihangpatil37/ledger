@@ -208,7 +208,7 @@ export async function getPersonDetail(
 
   // The ownerId filter keeps other owners' people invisible.
   const person = await peopleCol().findOne(
-    { _id: id, ownerId: owner },
+    { _id: id, ownerId: owner, ...activeFilter() },
     { projection: { name: 1, phone: 1 } }
   );
   if (!person) return null;
@@ -231,7 +231,7 @@ export async function getPersonDetail(
     // Lifetime total balance
     entriesCol()
       .aggregate<{ _id: null; gave: number; received: number }>([
-        { $match: { personId: id, ownerId: owner } },
+        { $match: { personId: id, ownerId: owner, ...activeFilter() } },
         { $group: { _id: null, ...BALANCE_GROUP } },
       ])
       .toArray(),
