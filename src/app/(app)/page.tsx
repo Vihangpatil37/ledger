@@ -3,11 +3,15 @@ import { PeopleList } from "@/components/home/people-list";
 import { RecentActivity } from "@/components/home/recent-activity";
 import { Money } from "@/components/ui";
 import { getHomeSummary } from "@/server/readers";
+import { getServerTranslations } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const summary = await getHomeSummary();
+  const [summary, { t }] = await Promise.all([
+    getHomeSummary(),
+    getServerTranslations(),
+  ]);
   const count = summary.rows.length;
   const netValue = Number(summary.netBalance);
   const isNetPositive = netValue > 0;
@@ -19,27 +23,21 @@ export default async function HomePage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-rule/50 pb-5">
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-            Ledger Overview
+            {t("nav.dashboard")}
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-muted">
             {count === 0
-              ? "Welcome to your personal khata book"
-              : `Managing ${count} ${count === 1 ? "contact" : "contacts"} · ${
-                  isNetPositive
-                    ? "Net pending collection (Udhar)"
-                    : isNetNegative
-                      ? "Net amount to return"
-                      : "All accounts balanced"
-                }`}
+              ? t("home.addFirstPerson")
+              : `${summary.debtorsCount} ${t("home.filterDebtors")} · ${summary.creditorsCount} ${t("home.filterCreditors")} · ${summary.settledCount} ${t("home.filterSettled")}`}
           </p>
         </div>
 
         <Link
           href="/people/new"
-          className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl bg-ink px-4 py-2 text-xs sm:text-sm font-semibold text-paper shadow-[0_2px_4px_0_rgba(30,27,24,0.15)] transition-all duration-150 hover:bg-ink/90 active:scale-[0.98] self-start sm:self-auto"
+          className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl bg-ink px-4 py-2 text-xs sm:text-sm font-semibold text-paper shadow-[0_2px_4px_0_rgba(30,27,24,0.15)] transition-all duration-150 hover:bg-ink/90 active:scale-[0.98] self-start sm:self-auto cursor-pointer"
         >
           <span className="text-base leading-none font-bold">+</span>
-          <span>Add person</span>
+          <span>{t("nav.addPerson")}</span>
         </Link>
       </div>
 
@@ -48,7 +46,7 @@ export default async function HomePage() {
         {/* Card 1: Net Balance */}
         <div className="rounded-xl border border-rule bg-surface p-4 sm:p-5 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)] transition-all">
           <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted">
-            Net Balance
+            {t("home.netBalance")}
           </p>
           <Money
             amount={summary.netBalance}
@@ -63,10 +61,10 @@ export default async function HomePage() {
           />
           <p className="mt-1.5 text-xs text-muted">
             {isNetPositive
-              ? "You will get in total"
+              ? t("home.youllGet")
               : isNetNegative
-                ? "You need to return in total"
-                : "All accounts settled"}
+                ? t("home.youllGive")
+                : t("home.settledBadge")}
           </p>
         </div>
 
@@ -74,7 +72,7 @@ export default async function HomePage() {
         <div className="rounded-xl border border-rule bg-surface p-4 sm:p-5 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)] transition-all">
           <div className="flex items-center justify-between">
             <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted">
-              Udhar (You will get)
+              {t("home.youllGet")}
             </p>
             <span className="size-2 rounded-full bg-debit ring-4 ring-debit/10" />
           </div>
@@ -83,19 +81,15 @@ export default async function HomePage() {
             className="mt-2 block text-2xl sm:text-3xl font-bold text-debit tracking-tight"
           />
           <p className="mt-1.5 text-xs text-muted">
-            {summary.debtorsCount === 0
-              ? "No pending collections"
-              : `${summary.debtorsCount} ${
-                  summary.debtorsCount === 1 ? "person owes" : "people owe"
-                } you`}
+            {summary.debtorsCount} {t("home.filterDebtors")}
           </p>
         </div>
 
-        {/* Card 3: You will give */}
+        {/* Card 3: Advance Deposit (Jama) */}
         <div className="rounded-xl border border-rule bg-surface p-4 sm:p-5 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)] transition-all">
           <div className="flex items-center justify-between">
             <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted">
-              You will give
+              {t("home.youllGive")}
             </p>
             <span className="size-2 rounded-full bg-credit ring-4 ring-credit/10" />
           </div>
@@ -105,11 +99,7 @@ export default async function HomePage() {
             className="mt-2 block text-2xl sm:text-3xl font-bold text-credit tracking-tight"
           />
           <p className="mt-1.5 text-xs text-muted">
-            {summary.creditorsCount === 0
-              ? "No pending payables"
-              : `${summary.creditorsCount} ${
-                  summary.creditorsCount === 1 ? "person to return" : "people to return"
-                }`}
+            {summary.creditorsCount} {t("home.filterCreditors")}
           </p>
         </div>
       </div>
@@ -163,7 +153,7 @@ export default async function HomePage() {
                 </span>
               </div>
               <div className="flex justify-between py-1 border-b border-rule/40">
-                <span className="text-muted">Active payables</span>
+                <span className="text-muted">Advance deposits (Jama)</span>
                 <span className="font-mono font-semibold text-credit">{summary.creditorsCount}</span>
               </div>
               <div className="flex justify-between py-1">
