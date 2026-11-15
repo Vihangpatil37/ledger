@@ -73,9 +73,9 @@ describe("balanceMeta", () => {
     expect(meta.className).toContain("text-debit");
   });
 
-  it("marks negative balances as you owe (credit)", () => {
+  it("marks negative balances as Jama (Advance) (credit)", () => {
     const meta = balanceMeta("-200");
-    expect(meta.label).toBe("you owe");
+    expect(meta.label).toBe("Jama (Advance)");
     expect(meta.className).toContain("text-credit");
   });
 
