@@ -8,6 +8,7 @@ import { entriesCol, peopleCol } from "@/lib/mongo";
 import { getOwner } from "@/server/session";
 import type { ActionState } from "@/lib/types";
 import {
+  editEntrySchema,
   entrySchema,
   fieldErrorsOf,
   idSchema,
@@ -62,6 +63,60 @@ export async function addEntry(
 
   revalidatePath("/");
   revalidatePath(`/people/${parsed.data.personId}`);
+  return { ok: true };
+}
+
+export async function editEntry(
+  _previous: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const owner = await getOwner();
+  if (!owner) return { error: "Please sign in again." };
+
+  const parsed = editEntrySchema.safeParse({
+    id: formData.get("id"),
+    type: formData.get("type"),
+    amount: formData.get("amount"),
+    note: formData.get("note"),
+    dueDate: formData.get("dueDate"),
+  });
+  if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
+
+  let existing: { _id: string; personId: string } | null = null;
+  try {
+    existing = await entriesCol().findOne(
+      { _id: parsed.data.id, ownerId: owner },
+      { projection: { _id: 1, personId: 1 } }
+    );
+  } catch {
+    return { error: "Could not find entry. Try again." };
+  }
+  if (!existing) return { error: "Entry not found." };
+
+  try {
+    const dueDate =
+      parsed.data.type === "GAVE" && parsed.data.dueDate
+        ? new Date(parsed.data.dueDate)
+        : null;
+
+    await entriesCol().updateOne(
+      { _id: parsed.data.id, ownerId: owner },
+      {
+        $set: {
+          type: parsed.data.type,
+          amountCents: decimalStringToPaise(parsed.data.amount),
+          note: parsed.data.note ?? null,
+          dueDate,
+          editedAt: new Date(),
+        },
+      }
+    );
+  } catch {
+    return { error: "Could not update entry. Try again." };
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/people/${existing.personId}`);
   return { ok: true };
 }
 
