@@ -3,6 +3,7 @@ export const en = {
   "nav.dashboard": "Dashboard",
   "nav.addPerson": "Add person",
   "nav.settings": "Settings",
+  "nav.trash": "Trash",
   "nav.signOut": "Sign out",
   "nav.brandSub": "Personal Khata",
   "nav.people": "People",
@@ -142,6 +143,53 @@ export const en = {
   "common.today": "Today",
   "common.yesterday": "Yesterday",
   "common.loading": "Loading…",
+
+  // Follow-up queue
+  "queue.title": "Today's Follow-up Queue",
+  "queue.subtitle": "Customers with broken promises or overdue repayments",
+  "queue.empty": "No pending follow-ups today! All repayments on track.",
+  "queue.brokenPromise": "Broken Promise",
+  "queue.remindedAgo": "Reminded",
+  "queue.remindWhatsApp": "WhatsApp",
+  "queue.setPromise": "Set Promise",
+
+  // Promise to pay
+  "promise.title": "Promise to Pay",
+  "promise.subtitle": "Record when customer promised to settle",
+  "promise.dateLabel": "Promise Date",
+  "promise.noteLabel": "Note (optional)",
+  "promise.save": "Save Promise",
+  "promise.clear": "Clear Promise",
+
+  // Reliability
+  "reliability.title": "Reliability Score",
+  "reliability.excellent": "Excellent",
+  "reliability.moderate": "Moderate",
+  "reliability.risky": "Risky",
+  "reliability.new": "New",
+  "reliability.onTime": "On-time",
+  "reliability.avgDays": "Avg settle",
+
+  // Trash & Undo
+  "trash.title": "Trash & Deleted Items",
+  "trash.subtitle": "Items can be restored within 30 days",
+  "trash.empty": "Trash is empty.",
+  "trash.restore": "Restore",
+  "trash.purge": "Delete Forever",
+  "trash.emptyBtn": "Empty Trash",
+  "trash.daysLeft": "days left",
+  "undo.itemDeleted": "Item moved to trash",
+  "undo.btn": "Undo",
+
+  // Backup & CSV Import
+  "backup.title": "Data Backup & Migration",
+  "backup.exportBtn": "Export JSON Backup",
+  "backup.restoreTitle": "Restore Backup",
+  "backup.restoreBtn": "Restore JSON",
+  "backup.csvTitle": "Import Paper Khata (CSV)",
+  "backup.csvBtn": "Choose CSV File",
+  "backup.csvPreview": "CSV Import Preview",
+  "backup.csvCommit": "Import Transactions",
 } as const;
 
 export type TranslationKey = keyof typeof en;
