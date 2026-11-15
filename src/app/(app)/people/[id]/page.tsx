@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AddEntryCard } from "@/components/entries/add-entry-card";
 import { DeleteEntryForm } from "@/components/entries/delete-entry-form";
 import { EditEntryModal } from "@/components/entries/edit-entry-modal";
+import { ReliabilityBadge } from "@/components/people/reliability-badge";
 import { SettleBalanceModal } from "@/components/people/settle-balance-modal";
 import { ShareStatementModal } from "@/components/people/share-statement-modal";
 import { Money } from "@/components/ui";
@@ -66,9 +67,12 @@ export default async function PersonPage({
         </Link>
         <div className="mt-2 flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="truncate font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
-              {detail.name}
-            </h1>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="truncate font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+                {detail.name}
+              </h1>
+              <ReliabilityBadge score={detail.reliability} />
+            </div>
             {detail.phone ? (
               <a
                 href={`tel:${detail.phone.replace(/\s+/g, "")}`}
