@@ -23,7 +23,7 @@ export default async function SettingsPage() {
           href="/"
           className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-muted transition-colors hover:text-ink"
         >
-          <span>←</span> Back to Dashboard
+          <span>←</span> {t("settings.backToDashboard")}
         </Link>
         <h1 className="mt-3 font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
           {t("settings.title")}

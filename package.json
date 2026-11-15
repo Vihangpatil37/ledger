@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "seed": "node scripts/seed-month-data.mjs",
+    "seed:sample": "node scripts/seed-sample.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

@@ -25,6 +25,13 @@ export const en = {
   "home.settledBadge": "Settled",
   "home.overdueBadge": "Overdue",
   "home.jamaBadge": "Jama (Advance)",
+  "home.directoryTitle": "Khata Directory",
+  "home.summaryTitle": "Ledger Summary",
+  "home.summaryTotal": "Total contacts",
+  "home.summaryDebtors": "Active collections",
+  "home.summaryOverdue": "Overdue debts",
+  "home.summaryCreditors": "Advance deposits (Jama)",
+  "home.summarySettled": "Fully settled",
 
   // Person ledger page
   "person.backToPeople": "All people",
@@ -45,6 +52,11 @@ export const en = {
   "person.date": "Date",
   "person.transaction": "Transaction",
   "person.dueOn": "Due",
+  "person.remindWhatsApp": "Remind on WhatsApp",
+  "person.activityHistory": "Activity History",
+  "person.priorTo": "prior to",
+  "person.addPhoneNotice": "Add a phone number to enable WhatsApp reminders",
+  "person.addNumberLink": "add number",
 
   // Entry types & actions
   "entry.gave": "Udhar",
@@ -85,6 +97,7 @@ export const en = {
   "statement.copied": "Copied to clipboard!",
   "statement.preview": "Statement Preview",
   "statement.printPdf": "Print / Save PDF statement",
+  "statement.shareViaApps": "Share via apps…",
 
   // Settings page
   "settings.title": "Settings",
@@ -100,6 +113,12 @@ export const en = {
   "settings.upiSaved": "UPI settings saved ✓",
   "settings.accountTitle": "Account",
   "settings.signedInAs": "Signed in as",
+  "settings.backToDashboard": "Back to Dashboard",
+
+  // Due status
+  "due.overdue": "Overdue",
+  "due.today": "Due today",
+  "due.soon": "Due soon",
 
   // Person form (add / edit)
   "form.fullName": "Full name",

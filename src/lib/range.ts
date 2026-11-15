@@ -1,4 +1,5 @@
 import type { DateRange } from "@/lib/types";
+import { isValidCalendarDate } from "@/lib/validation";
 
 export type PresetRangeId = "ALL" | "THIS_MONTH" | "LAST_30_DAYS";
 
@@ -16,12 +17,12 @@ export function resolveIstRange(range?: DateRange): {
   let fromDate: Date | undefined;
   let toDateExclusive: Date | undefined;
 
-  if (range.from && /^\d{4}-\d{2}-\d{2}$/.test(range.from)) {
+  if (range.from && isValidCalendarDate(range.from)) {
     const d = new Date(`${range.from}T00:00:00+05:30`);
     if (!isNaN(d.getTime())) fromDate = d;
   }
 
-  if (range.to && /^\d{4}-\d{2}-\d{2}$/.test(range.to)) {
+  if (range.to && isValidCalendarDate(range.to)) {
     const [y, m, day] = range.to.split("-").map(Number);
     // Advance 1 day in calendar for exclusive upper bound
     const nextDate = new Date(Date.UTC(y, m - 1, day + 1));

@@ -110,7 +110,7 @@ export default async function HomePage() {
         <section className="lg:col-span-8 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-bold text-ink tracking-tight">
-              Khata Directory
+              {t("home.directoryTitle")}
             </h2>
             <span className="font-mono text-xs text-muted">
               {summary.rows.length} {summary.rows.length === 1 ? "contact" : "contacts"}
@@ -135,29 +135,29 @@ export default async function HomePage() {
           {/* Quick Ledger Overview Card */}
           <div className="rounded-xl border border-rule bg-surface p-4 sm:p-5 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)] space-y-3">
             <h3 className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted">
-              Ledger Summary
+              {t("home.summaryTitle")}
             </h3>
             <div className="space-y-2 text-xs">
               <div className="flex justify-between py-1 border-b border-rule/40">
-                <span className="text-muted">Total contacts</span>
+                <span className="text-muted">{t("home.summaryTotal")}</span>
                 <span className="font-mono font-semibold text-ink">{count}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-rule/40">
-                <span className="text-muted">Active collections</span>
+                <span className="text-muted">{t("home.summaryDebtors")}</span>
                 <span className="font-mono font-semibold text-debit">{summary.debtorsCount}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-rule/40">
-                <span className="text-muted">Overdue debts</span>
+                <span className="text-muted">{t("home.summaryOverdue")}</span>
                 <span className={`font-mono font-semibold ${summary.overdueCount > 0 ? "text-debit font-bold" : "text-muted"}`}>
                   {summary.overdueCount}
                 </span>
               </div>
               <div className="flex justify-between py-1 border-b border-rule/40">
-                <span className="text-muted">Advance deposits (Jama)</span>
+                <span className="text-muted">{t("home.summaryCreditors")}</span>
                 <span className="font-mono font-semibold text-credit">{summary.creditorsCount}</span>
               </div>
               <div className="flex justify-between py-1">
-                <span className="text-muted">Fully settled</span>
+                <span className="text-muted">{t("home.summarySettled")}</span>
                 <span className="font-mono font-semibold text-muted">{summary.settledCount}</span>
               </div>
             </div>

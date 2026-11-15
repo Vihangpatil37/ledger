@@ -45,6 +45,11 @@ export async function addEntry(
   if (!ownsPerson) return { error: "Person not found." };
 
   try {
+    const dueDate =
+      parsed.data.type === "GAVE" && parsed.data.dueDate
+        ? new Date(parsed.data.dueDate)
+        : null;
+
     // Money crosses the wire as a decimal string; it is stored as an
     // exact integer of paise. ≤ 9,999,999.99 stays within double range.
     await entriesCol().insertOne({
@@ -54,7 +59,7 @@ export async function addEntry(
       type: parsed.data.type,
       amountCents: decimalStringToPaise(parsed.data.amount),
       note: parsed.data.note ?? null,
-      dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
+      dueDate,
       createdAt: new Date(),
     });
   } catch {

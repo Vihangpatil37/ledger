@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Money } from "@/components/ui";
 import { balanceMeta, formatMoney } from "@/lib/money";
-import { normalizeWaPhone, waLink } from "@/lib/whatsapp";
+import { normalizeWaPhone, universalWaLink } from "@/lib/whatsapp";
 import { useLanguage } from "@/lib/i18n/client";
 import type { PersonListRow } from "@/lib/types";
 
@@ -150,9 +150,9 @@ export function PeopleList({ rows, counts }: PeopleListProps) {
             const isSettled = value === 0;
             const waNumber = isOwesYou && row.phone ? normalizeWaPhone(row.phone) : null;
             const quickWaHref = waNumber
-              ? waLink(
-                  waNumber,
-                  `Namaste *${row.name.trim()}* ji 🙏 Aapke khate mein *${formatMoney(row.balance)}* baaki udhar hai.`
+              ? universalWaLink(
+                  `Namaste *${row.name.trim()}* ji 🙏 Aapke khate mein *${formatMoney(row.balance)}* baaki udhar hai.`,
+                  waNumber
                 )
               : null;
 

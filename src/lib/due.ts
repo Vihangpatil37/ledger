@@ -77,6 +77,25 @@ export function getDueStatus(
   };
 }
 
+/** Returns a localized or default human-readable label for a due status badge. */
+export function formatDueLabel(
+  info: DueInfo,
+  t?: (key: "due.overdue" | "due.today" | "due.soon") => string
+): string {
+  if (!t) return info.label;
+  if (info.status === "OVERDUE") {
+    const days = Math.abs(info.daysDiff);
+    return `${t("due.overdue")} (${days}d)`;
+  }
+  if (info.status === "DUE_TODAY") {
+    return t("due.today");
+  }
+  if (info.status === "DUE_SOON") {
+    return `${t("due.soon")} (${info.daysDiff}d)`;
+  }
+  return info.label;
+}
+
 /** Returns true if the date is strictly in the past (before today in Asia/Kolkata). */
 export function isOverdueDate(
   dueDateStr?: string | null,

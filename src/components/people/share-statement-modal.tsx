@@ -195,7 +195,7 @@ export function ShareStatementModal({ detail }: { detail: PersonDetail }) {
                   onClick={handleNativeShare}
                   className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-rule bg-surface px-3.5 py-2.5 text-xs font-semibold text-ink transition-colors hover:bg-paper cursor-pointer"
                 >
-                  <span>Share via apps…</span>
+                  <span>{t("statement.shareViaApps")}</span>
                 </button>
               ) : null}
 

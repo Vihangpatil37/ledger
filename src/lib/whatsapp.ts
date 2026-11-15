@@ -214,11 +214,6 @@ export function formatStatementMessage(
   return lines.join("\n");
 }
 
-/** Click-to-chat link; delegates to universalWaLink. */
-export function waLink(waNumber: string, message: string): string {
-  return universalWaLink(message, waNumber);
-}
-
 /**
  * Universal WhatsApp share link: if number is present, directs to that chat;
  * otherwise opens WhatsApp app with message pre-filled to select any contact.

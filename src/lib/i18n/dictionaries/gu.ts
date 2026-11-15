@@ -27,6 +27,13 @@ export const gu: Dictionary = {
   "home.settledBadge": "ચૂકતે",
   "home.overdueBadge": "મુદત વીતી",
   "home.jamaBadge": "જમા રકમ",
+  "home.directoryTitle": "ખાતાવહી ડિરેક્ટરી",
+  "home.summaryTitle": "ખાતાવહી સારાંશ",
+  "home.summaryTotal": "કુલ સંપર્કો",
+  "home.summaryDebtors": "લેવાના બાકી હિસાબ",
+  "home.summaryOverdue": "મુદત વીતી ગયેલ ઉધાર",
+  "home.summaryCreditors": "જમા રકમ (એડવાન્સ)",
+  "home.summarySettled": "સંપૂર્ણ ચૂકતે",
 
   // Person ledger page
   "person.backToPeople": "બધા સંપર્કો",
@@ -47,6 +54,11 @@ export const gu: Dictionary = {
   "person.date": "તારીખ",
   "person.transaction": "વ્યવહાર",
   "person.dueOn": "મુદત",
+  "person.remindWhatsApp": "WhatsApp પર યાદ અપાવો",
+  "person.activityHistory": "વ્યવહાર ઇતિહાસ",
+  "person.priorTo": "પહેલાંનું",
+  "person.addPhoneNotice": "WhatsApp પર યાદ અપાવવા ફોન નંબર ઉમેરો",
+  "person.addNumberLink": "નંબર ઉમેરો",
 
   // Entry types & actions
   "entry.gave": "ઉધાર આપ્યા",
@@ -87,6 +99,7 @@ export const gu: Dictionary = {
   "statement.copied": "ક્લિપબોર્ડ પર કૉપિ થઈ ગયું!",
   "statement.preview": "સ્ટેટમેન્ટ પ્રિવ્યુ",
   "statement.printPdf": "પ્રિન્ટ / PDF સાચવો",
+  "statement.shareViaApps": "અન્ય એપ દ્વારા શેર કરો…",
 
   // Settings page
   "settings.title": "સેટિંગ્સ",
@@ -102,6 +115,12 @@ export const gu: Dictionary = {
   "settings.upiSaved": "UPI સેટિંગ્સ સચવાઈ ગઈ ✓",
   "settings.accountTitle": "એકાઉન્ટ",
   "settings.signedInAs": "લૉગિન થયેલ એકાઉન્ટ",
+  "settings.backToDashboard": "ડેશબોર્ડ પર પાછા જાઓ",
+
+  // Due status
+  "due.overdue": "મુદત વીતી",
+  "due.today": "આજે છેલ્લી તારીખ",
+  "due.soon": "ટૂંક સમયમાં દેય",
 
   // Person form (add / edit)
   "form.fullName": "પૂરું નામ",

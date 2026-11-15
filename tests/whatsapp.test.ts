@@ -3,7 +3,6 @@ import {
   normalizeWaPhone,
   reminderMessage,
   formatStatementMessage,
-  waLink,
   universalWaLink,
 } from "@/lib/whatsapp";
 import type { PersonDetail } from "@/lib/types";
@@ -388,16 +387,10 @@ describe("formatStatementMessage", () => {
   });
 });
 
-describe("waLink and universalWaLink", () => {
-  it("formats direct click-to-chat URL", () => {
-    const url = waLink("919876543210", "Hello");
+describe("universalWaLink", () => {
+  it("formats direct click-to-chat URL with normalized phone", () => {
+    const url = universalWaLink("Hello", "919876543210");
     expect(url).toBe("https://wa.me/919876543210?text=Hello");
-  });
-
-  it("delegates waLink to universalWaLink", () => {
-    expect(waLink("919876543210", "Hello world")).toBe(
-      universalWaLink("Hello world", "919876543210")
-    );
   });
 
   it("formats universal link with or without phone", () => {

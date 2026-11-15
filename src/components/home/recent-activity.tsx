@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Money } from "@/components/ui";
-import { getDueStatus } from "@/lib/due";
+import { formatDueLabel, getDueStatus } from "@/lib/due";
 import { formatWhen } from "@/lib/format";
 import { useLanguage } from "@/lib/i18n/client";
 import type { RecentEntryItem } from "@/lib/types";
@@ -60,7 +60,7 @@ export function RecentActivity({ entries }: { entries: RecentEntryItem[] }) {
                           <span
                             className={`inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold tracking-wide ${dueInfo.className}`}
                           >
-                            {dueInfo.label}
+                            {formatDueLabel(dueInfo, t)}
                           </span>
                         ) : null;
                       })()

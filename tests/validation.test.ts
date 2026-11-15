@@ -383,6 +383,13 @@ describe("dateRangeSchema", () => {
   it("rejects non-calendar or malformed date strings", () => {
     expect(dateRangeSchema.safeParse({ from: "not-a-date" }).success).toBe(false);
     expect(dateRangeSchema.safeParse({ to: "01-01-2026" }).success).toBe(false);
+    expect(dateRangeSchema.safeParse({ from: "2026-99-99" }).success).toBe(false);
+    expect(dateRangeSchema.safeParse({ to: "2026-02-31" }).success).toBe(false);
+  });
+
+  it("accepts real leap days and valid calendar boundaries", () => {
+    expect(dateRangeSchema.safeParse({ from: "2024-02-29", to: "2024-03-01" }).success).toBe(true);
+    expect(dateRangeSchema.safeParse({ from: "2026-02-29" }).success).toBe(false); // 2026 is not a leap year
   });
 });
 

@@ -34,6 +34,13 @@ describe("resolveIstRange", () => {
       new Date("2026-02-01T00:00:00+05:30").toISOString()
     );
   });
+
+  it("ignores impossible calendar dates without throwing or overflowing", () => {
+    const res = resolveIstRange({ from: "2026-99-99", to: "2026-02-31" });
+    expect(res.fromDate).toBeUndefined();
+    expect(res.toDateExclusive).toBeUndefined();
+    expect(res).toEqual({});
+  });
 });
 
 describe("getPresetDateRange", () => {

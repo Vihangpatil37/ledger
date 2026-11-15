@@ -12,7 +12,11 @@ const mockRevalidatePath = vi.fn();
 const mockDeleteOneEntry = vi.fn();
 const mockFindOneEntry = vi.fn();
 const mockUpdateOneEntry = vi.fn();
+const mockInsertOneEntry = vi.fn();
 const mockDeleteOnePerson = vi.fn();
+const mockFindOnePerson = vi.fn();
+const mockInsertOnePerson = vi.fn();
+const mockUpdateOnePerson = vi.fn();
 const mockDeleteManyEntries = vi.fn();
 const mockUpdateOneUser = vi.fn();
 
@@ -38,9 +42,13 @@ vi.mock("@/lib/mongo", () => ({
     deleteMany: mockDeleteManyEntries,
     findOne: mockFindOneEntry,
     updateOne: mockUpdateOneEntry,
+    insertOne: mockInsertOneEntry,
   }),
   peopleCol: () => ({
     deleteOne: mockDeleteOnePerson,
+    findOne: mockFindOnePerson,
+    insertOne: mockInsertOnePerson,
+    updateOne: mockUpdateOnePerson,
   }),
   usersCol: () => ({
     updateOne: mockUpdateOneUser,
@@ -50,8 +58,8 @@ vi.mock("@/lib/mongo", () => ({
   }),
 }));
 
-import { deleteEntry, editEntry } from "@/actions/entries";
-import { deletePerson } from "@/actions/people";
+import { addEntry, deleteEntry, editEntry } from "@/actions/entries";
+import { createPerson, deletePerson, updatePerson } from "@/actions/people";
 import { updateOwnerUpi } from "@/actions/profile";
 
 describe("deleteEntry", () => {
@@ -300,5 +308,243 @@ describe("updateOwnerUpi", () => {
     );
     expect(mockRevalidatePath).toHaveBeenCalledWith("/settings");
     expect(mockRevalidatePath).toHaveBeenCalledWith("/");
+  });
+});
+
+describe("addEntry", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns error when not authenticated", async () => {
+    mockGetOwner.mockResolvedValue(null);
+    const fd = new FormData();
+    fd.append("personId", "550e8400-e29b-41d4-a716-446655440001");
+    fd.append("type", "GAVE");
+    fd.append("amount", "100.00");
+
+    const res = await addEntry({}, fd);
+    expect(res.error).toBe("Please sign in again.");
+    expect(mockInsertOneEntry).not.toHaveBeenCalled();
+  });
+
+  it("returns fieldErrors on invalid schema input", async () => {
+    mockGetOwner.mockResolvedValue("owner-1");
+    const fd = new FormData();
+    fd.append("personId", "not-a-uuid");
+    fd.append("type", "INVALID");
+    fd.append("amount", "0");
+
+    const res = await addEntry({}, fd);
+    expect(res.fieldErrors).toBeDefined();
+    expect(mockInsertOneEntry).not.toHaveBeenCalled();
+  });
+
+  it("returns error if person does not belong to owner", async () => {
+    mockGetOwner.mockResolvedValue("owner-1");
+    mockFindOnePerson.mockResolvedValue(null);
+
+    const fd = new FormData();
+    fd.append("personId", "550e8400-e29b-41d4-a716-446655440001");
+    fd.append("type", "GAVE");
+    fd.append("amount", "100.00");
+
+    const res = await addEntry({}, fd);
+    expect(res.error).toBe("Person not found.");
+    expect(mockInsertOneEntry).not.toHaveBeenCalled();
+  });
+
+  it("inserts GAVE entry with paise and dueDate and revalidates paths", async () => {
+    mockGetOwner.mockResolvedValue("owner-1");
+    const personId = "550e8400-e29b-41d4-a716-446655440001";
+    mockFindOnePerson.mockResolvedValue({ _id: personId });
+    mockInsertOneEntry.mockResolvedValue({ insertedId: "entry-1" });
+
+    const fd = new FormData();
+    fd.append("personId", personId);
+    fd.append("type", "GAVE");
+    fd.append("amount", "250.50");
+    fd.append("note", "Tea and snacks");
+    fd.append("dueDate", "2026-12-01");
+
+    const res = await addEntry({}, fd);
+    expect(res.ok).toBe(true);
+
+    expect(mockInsertOneEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ownerId: "owner-1",
+        personId,
+        type: "GAVE",
+        amountCents: 25050,
+        note: "Tea and snacks",
+        dueDate: expect.any(Date),
+      })
+    );
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/");
+    expect(mockRevalidatePath).toHaveBeenCalledWith(`/people/${personId}`);
+  });
+
+  it("clears dueDate to null when type is RECEIVED even if dueDate was provided", async () => {
+    mockGetOwner.mockResolvedValue("owner-1");
+    const personId = "550e8400-e29b-41d4-a716-446655440001";
+    mockFindOnePerson.mockResolvedValue({ _id: personId });
+    mockInsertOneEntry.mockResolvedValue({ insertedId: "entry-2" });
+
+    const fd = new FormData();
+    fd.append("personId", personId);
+    fd.append("type", "RECEIVED");
+    fd.append("amount", "100.00");
+    fd.append("dueDate", "2026-12-01");
+
+    const res = await addEntry({}, fd);
+    expect(res.ok).toBe(true);
+
+    expect(mockInsertOneEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ownerId: "owner-1",
+        personId,
+        type: "RECEIVED",
+        amountCents: 10000,
+        dueDate: null,
+      })
+    );
+  });
+
+  it("catches database errors and returns friendly error state", async () => {
+    mockGetOwner.mockResolvedValue("owner-1");
+    const personId = "550e8400-e29b-41d4-a716-446655440001";
+    mockFindOnePerson.mockResolvedValue({ _id: personId });
+    mockInsertOneEntry.mockRejectedValue(new Error("Connection reset"));
+
+    const fd = new FormData();
+    fd.append("personId", personId);
+    fd.append("type", "GAVE");
+    fd.append("amount", "50.00");
+
+    const res = await addEntry({}, fd);
+    expect(res.error).toBe("Could not save entry. Try again.");
+  });
+});
+
+describe("createPerson", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns error when not authenticated", async () => {
+    mockGetOwner.mockResolvedValue(null);
+    const fd = new FormData();
+    fd.append("name", "Ramesh");
+
+    const res = await createPerson({}, fd);
+    expect(res.error).toBe("Please sign in again.");
+    expect(mockInsertOnePerson).not.toHaveBeenCalled();
+  });
+
+  it("returns fieldErrors on invalid name or phone", async () => {
+    mockGetOwner.mockResolvedValue("owner-1");
+    const fd = new FormData();
+    fd.append("name", "");
+    fd.append("phone", "123");
+
+    const res = await createPerson({}, fd);
+    expect(res.fieldErrors?.name).toBeDefined();
+    expect(res.fieldErrors?.phone).toBeDefined();
+    expect(mockInsertOnePerson).not.toHaveBeenCalled();
+  });
+
+  it("inserts person, revalidates / and redirects to /", async () => {
+    mockGetOwner.mockResolvedValue("owner-1");
+    mockInsertOnePerson.mockResolvedValue({ insertedId: "person-1" });
+
+    const fd = new FormData();
+    fd.append("name", "Ramesh Kumar");
+    fd.append("phone", "+91 98765 43210");
+
+    await expect(createPerson({}, fd)).rejects.toThrow("NEXT_REDIRECT: /");
+    expect(mockInsertOnePerson).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ownerId: "owner-1",
+        name: "Ramesh Kumar",
+        phone: "+91 98765 43210",
+      })
+    );
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/");
+  });
+
+  it("catches DB errors on insertion gracefully", async () => {
+    mockGetOwner.mockResolvedValue("owner-1");
+    mockInsertOnePerson.mockRejectedValue(new Error("DB error"));
+
+    const fd = new FormData();
+    fd.append("name", "Ramesh");
+
+    const res = await createPerson({}, fd);
+    expect(res.error).toBe("Could not save. Try again.");
+  });
+});
+
+describe("updatePerson", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns error when not authenticated", async () => {
+    mockGetOwner.mockResolvedValue(null);
+    const fd = new FormData();
+    fd.append("id", "550e8400-e29b-41d4-a716-446655440001");
+    fd.append("name", "Updated Name");
+
+    const res = await updatePerson({}, fd);
+    expect(res.error).toBe("Please sign in again.");
+  });
+
+  it("returns error when id is invalid or not found", async () => {
+    mockGetOwner.mockResolvedValue("owner-1");
+    const fd = new FormData();
+    fd.append("id", "not-a-uuid");
+    fd.append("name", "Updated Name");
+
+    const res = await updatePerson({}, fd);
+    expect(res.error).toBe("Person not found.");
+  });
+
+  it("returns error when person does not belong to owner (matchedCount === 0)", async () => {
+    mockGetOwner.mockResolvedValue("owner-1");
+    mockUpdateOnePerson.mockResolvedValue({ matchedCount: 0 });
+
+    const fd = new FormData();
+    const id = "550e8400-e29b-41d4-a716-446655440001";
+    fd.append("id", id);
+    fd.append("name", "Updated Name");
+
+    const res = await updatePerson({}, fd);
+    expect(res.error).toBe("Person not found.");
+  });
+
+  it("successfully updates person, revalidates paths and returns ok: true", async () => {
+    mockGetOwner.mockResolvedValue("owner-1");
+    mockUpdateOnePerson.mockResolvedValue({ matchedCount: 1 });
+
+    const id = "550e8400-e29b-41d4-a716-446655440001";
+    const fd = new FormData();
+    fd.append("id", id);
+    fd.append("name", "Ramesh Patel");
+    fd.append("phone", "+91 98765 43210");
+
+    const res = await updatePerson({}, fd);
+    expect(res.ok).toBe(true);
+    expect(mockUpdateOnePerson).toHaveBeenCalledWith(
+      { _id: id, ownerId: "owner-1" },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          name: "Ramesh Patel",
+          phone: "+91 98765 43210",
+        }),
+      })
+    );
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/");
+    expect(mockRevalidatePath).toHaveBeenCalledWith(`/people/${id}`);
+    expect(mockRevalidatePath).toHaveBeenCalledWith(`/people/${id}/edit`);
   });
 });

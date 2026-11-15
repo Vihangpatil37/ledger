@@ -27,6 +27,13 @@ export const hi: Dictionary = {
   "home.settledBadge": "चुकता",
   "home.overdueBadge": "अतिदेय",
   "home.jamaBadge": "जमा राशि",
+  "home.directoryTitle": "खाता बही डायरेक्टरी",
+  "home.summaryTitle": "खाता बही सारांश",
+  "home.summaryTotal": "कुल संपर्क",
+  "home.summaryDebtors": "सक्रिय वसूली (उधार)",
+  "home.summaryOverdue": "अतिदेय कर्ज",
+  "home.summaryCreditors": "अग्रिम जमा (जमा राशि)",
+  "home.summarySettled": "पूर्णतः चुकता",
 
   // Person ledger page
   "person.backToPeople": "सभी संपर्क",
@@ -47,6 +54,11 @@ export const hi: Dictionary = {
   "person.date": "तारीख",
   "person.transaction": "लेन-देन",
   "person.dueOn": "अंतिम तिथि",
+  "person.remindWhatsApp": "WhatsApp पर याद दिलाएं",
+  "person.activityHistory": "गतिविधि इतिहास",
+  "person.priorTo": "से पहले",
+  "person.addPhoneNotice": "WhatsApp पर याद दिलाने के लिए फ़ोन नंबर जोड़ें",
+  "person.addNumberLink": "नंबर जोड़ें",
 
   // Entry types & actions
   "entry.gave": "उधार दिया",
@@ -87,6 +99,7 @@ export const hi: Dictionary = {
   "statement.copied": "क्लिपबोर्ड पर कॉपी हो गया!",
   "statement.preview": "स्टेटमेंट पूर्वावलोकन",
   "statement.printPdf": "प्रिंट / PDF सेव करें",
+  "statement.shareViaApps": "अन्य ऐप से शेयर करें…",
 
   // Settings page
   "settings.title": "सेटिंग्स",
@@ -102,6 +115,12 @@ export const hi: Dictionary = {
   "settings.upiSaved": "UPI सेटिंग्स सेव हो गईं ✓",
   "settings.accountTitle": "खाता",
   "settings.signedInAs": "लॉगिन खाता",
+  "settings.backToDashboard": "डैशबोर्ड पर वापस जाएं",
+
+  // Due status
+  "due.overdue": "अतिदेय",
+  "due.today": "आज देय",
+  "due.soon": "शीघ्र देय",
 
   // Person form (add / edit)
   "form.fullName": "पूरा नाम",

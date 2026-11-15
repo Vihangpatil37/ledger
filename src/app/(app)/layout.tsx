@@ -4,12 +4,13 @@ import { LanguageSwitcher } from "@/components/shell/language-switcher";
 import { MobileNav } from "@/components/shell/mobile-nav";
 import { SideNav } from "@/components/shell/nav";
 import { LanguageProvider } from "@/lib/i18n/client";
-import { getLocale } from "@/lib/i18n/server";
+import { getLocale, getServerTranslations } from "@/lib/i18n/server";
 
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const locale = await getLocale();
+  const { t } = await getServerTranslations(locale);
 
   return (
     <LanguageProvider initialLocale={locale}>
@@ -34,7 +35,7 @@ export default async function AppLayout({
                 type="submit"
                 className="rounded-md px-2.5 py-1.5 text-xs font-semibold text-muted transition-colors hover:bg-rule/30 hover:text-ink active:bg-rule/50"
               >
-                Sign out
+                {t("nav.signOut")}
               </button>
             </form>
           </div>

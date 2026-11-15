@@ -90,6 +90,13 @@ export const personSchema = z.object({
   phone: indianPhoneField,
 });
 
+/** Validates that a string is a real calendar date in YYYY-MM-DD format (no leap day or month overflow). */
+export function isValidCalendarDate(val: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(val)) return false;
+  const d = new Date(val + "T00:00:00Z");
+  return !isNaN(d.getTime()) && d.toISOString().startsWith(val);
+}
+
 export const entrySchema = z.object({
   personId: z.uuid("Pick a person"),
   type: z.enum(["GAVE", "RECEIVED"]),
@@ -108,12 +115,7 @@ export const entrySchema = z.object({
     .string()
     .trim()
     .refine(
-      (val) => {
-        if (!val) return true;
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(val)) return false;
-        const d = new Date(val + "T00:00:00Z");
-        return !isNaN(d.getTime()) && d.toISOString().startsWith(val);
-      },
+      (val) => !val || isValidCalendarDate(val),
       "Enter a valid calendar date (YYYY-MM-DD)"
     )
     .nullish()
@@ -128,20 +130,24 @@ export const editEntrySchema = entrySchema
     id: idSchema,
   });
 
-const dateStrRegex = /^\d{4}-\d{2}-\d{2}$/;
-
 export const dateRangeSchema = z
   .object({
     from: z
       .string()
       .trim()
-      .regex(dateStrRegex, "From date must be YYYY-MM-DD")
+      .refine(
+        (val) => !val || isValidCalendarDate(val),
+        "From date must be a valid calendar date (YYYY-MM-DD)"
+      )
       .nullish()
       .transform((val) => (val ? val : undefined)),
     to: z
       .string()
       .trim()
-      .regex(dateStrRegex, "To date must be YYYY-MM-DD")
+      .refine(
+        (val) => !val || isValidCalendarDate(val),
+        "To date must be a valid calendar date (YYYY-MM-DD)"
+      )
       .nullish()
       .transform((val) => (val ? val : undefined)),
   })
