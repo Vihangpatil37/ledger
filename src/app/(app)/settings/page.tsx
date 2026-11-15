@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { DataBackupSection } from "@/components/settings/data-backup";
 import { OwnerUpiForm } from "@/components/settings/owner-upi-form";
 import { LanguageSwitcher } from "@/components/shell/language-switcher";
 import { getOwnerProfile } from "@/server/readers";
@@ -25,12 +26,24 @@ export default async function SettingsPage() {
         >
           <span>←</span> {t("settings.backToDashboard")}
         </Link>
-        <h1 className="mt-3 font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
-          {t("settings.title")}
-        </h1>
-        <p className="font-mono text-xs text-muted mt-1">
-          {t("settings.signedInAs")} <span className="font-bold text-ink">{profile.email}</span>
-        </p>
+        <div className="mt-3 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+              {t("settings.title")}
+            </h1>
+            <p className="font-mono text-xs text-muted mt-1">
+              {t("settings.signedInAs")} <span className="font-bold text-ink">{profile.email}</span>
+            </p>
+          </div>
+
+          <Link
+            href="/trash"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-rule bg-surface px-3 py-1.5 text-xs font-semibold text-muted hover:text-ink hover:bg-paper transition-all"
+          >
+            <span>🗑️</span>
+            <span>{t("nav.trash")}</span>
+          </Link>
+        </div>
       </div>
 
       {/* Language Preferences Card */}
@@ -47,6 +60,9 @@ export default async function SettingsPage() {
       </section>
 
       <OwnerUpiForm profile={profile} />
+
+      {/* Data Backup & CSV Import */}
+      <DataBackupSection />
     </div>
   );
 }
