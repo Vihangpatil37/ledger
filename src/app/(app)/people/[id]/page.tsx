@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AddEntryCard } from "@/components/entries/add-entry-card";
 import { DeleteEntryForm } from "@/components/entries/delete-entry-form";
 import { EditEntryModal } from "@/components/entries/edit-entry-modal";
+import { PromiseModal } from "@/components/people/promise-modal";
 import { ReliabilityBadge } from "@/components/people/reliability-badge";
 import { SettleBalanceModal } from "@/components/people/settle-balance-modal";
 import { ShareStatementModal } from "@/components/people/share-statement-modal";
@@ -114,11 +115,38 @@ export default async function PersonPage({
         </div>
       </div>
 
-      {/* Action Buttons: Settle Up + Share Statement + WhatsApp Reminder */}
+      {/* Promise & Reminder Context Banner */}
+      {(detail.promiseDate || detail.lastRemindedAt) && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-rule bg-surface p-3.5 text-xs shadow-2xs">
+          <div className="flex items-center gap-2">
+            {detail.promiseDate ? (
+              <span className="font-medium text-ink">
+                📅 {t("promise.title")}: <strong className="font-mono text-ink">{detail.promiseDate}</strong>
+                {detail.promiseNote ? <span className="text-muted italic"> &ldquo;{detail.promiseNote}&rdquo;</span> : ""}
+              </span>
+            ) : null}
+          </div>
+          {detail.lastRemindedAt ? (
+            <span className="text-muted">
+              {t("queue.remindedAgo")}: <strong className="text-ink">{formatWhen(detail.lastRemindedAt)}</strong>
+            </span>
+          ) : null}
+        </div>
+      )}
+
+      {/* Action Buttons: Settle Up + Share Statement + WhatsApp Reminder + Set Promise */}
       <div className="space-y-2">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <SettleBalanceModal detail={detail} />
           <ShareStatementModal detail={detail} />
+
+          <PromiseModal
+            personId={detail.id}
+            currentPromiseDate={detail.promiseDate}
+            currentPromiseNote={detail.promiseNote}
+            triggerLabel={t("promise.title")}
+            className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-rule bg-surface px-4 py-2.5 text-sm font-semibold text-ink shadow-2xs transition-colors hover:bg-paper active:scale-[0.98]"
+          />
 
           {waHref ? (
             <a
