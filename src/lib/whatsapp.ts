@@ -1,6 +1,6 @@
 import { getDueStatus, isOverdueDate } from "@/lib/due";
 import { formatWhen } from "@/lib/format";
-import { balanceMeta, decimalStringToPaise, formatMoney } from "@/lib/money";
+import { decimalStringToPaise, formatMoney } from "@/lib/money";
 import type { PersonDetail } from "@/lib/types";
 
 /**
@@ -66,22 +66,63 @@ export function reminderMessage(detail: PersonDetail): string {
     if (oldestUnrepaid?.dueDate) {
       const dueInfo = getDueStatus(oldestUnrepaid.dueDate);
       if (dueInfo) {
-        overdueNotice = `⚠️ Wada tha: ${oldestUnrepaid.dueDate} tak (${dueInfo.label})\n`;
+        overdueNotice = `⚠️ *Overdue:* ${oldestUnrepaid.dueDate} tak wada tha (${dueInfo.label})`;
       }
     }
   }
 
-  return [
-    `Namaste ${detail.name} ji 🙏`,
-    "",
-    `Aapke khate mein *${formatMoney(detail.balance)}* baaki hai.`,
-    overdueNotice ? overdueNotice.trim() : null,
-    `(Total diye gaye: ${formatMoney(detail.gaveTotal)} · Total wapas mile: ${formatMoney(detail.receivedTotal)})`,
-    "",
-    "Kripya jaldi payment kar dijiye 🙏",
-  ]
-    .filter((line): line is string => line !== null)
-    .join("\n");
+  const customerName = detail.name?.trim() || detail.name;
+  const ownerName = detail.ownerUpi?.upiName?.trim() || undefined;
+  const upiId = detail.ownerUpi?.upiId?.trim() || undefined;
+
+  const sections: string[] = [];
+
+  // 1. Header with optional shop / owner branding
+  const header = ownerName
+    ? `📋 *Khata Reminder* · ${ownerName}`
+    : `📋 *Khata Reminder*`;
+  sections.push(header);
+
+  // 2. Polite salutation & overview
+  sections.push(`Namaste *${customerName}* ji,\nAapke khate ka taaza hisab:`);
+
+  // 3. Balance & Totals (and overdue notice if applicable)
+  const balanceLines = [
+    `💰 *Baaki Udhar:* *${formatMoney(detail.balance)}*`,
+    `📊 Kul Udhar: ${formatMoney(detail.gaveTotal)} | Kul Jama: ${formatMoney(detail.receivedTotal)}`,
+  ];
+  if (overdueNotice) {
+    balanceLines.push(overdueNotice);
+  }
+  sections.push(balanceLines.join("\n"));
+
+  // 4. Online payment details (only if UPI ID is present and balance is positive)
+  if (upiId && Number(detail.balance) > 0) {
+    const upiLines = [
+      `💳 *Online Payment ke liye:*`,
+      `UPI ID: *${upiId}*`,
+    ];
+    if (ownerName) {
+      upiLines.push(`Naam: ${ownerName}`);
+    }
+    upiLines.push(
+      `_(Google Pay, PhonePe, Paytm ya kisi bhi UPI app se pay kar sakte hain)_`
+    );
+    sections.push(upiLines.join("\n"));
+  }
+
+  // 5. Professional & courteous closing
+  const closingLines = [
+    "Kripya baaki rashi ka bhugtan samay par karein aur khata update rakhein.",
+    "Kisi bhi sawal ke liye sampark karein.",
+    "Dhanyawad!",
+  ];
+  if (ownerName) {
+    closingLines.push(`— *${ownerName}*`);
+  }
+  sections.push(closingLines.join("\n"));
+
+  return sections.join("\n\n");
 }
 
 /**
@@ -92,46 +133,83 @@ export function formatStatementMessage(
   detail: PersonDetail,
   limit?: number
 ): string {
+  const customerName = detail.name?.trim() || detail.name;
+  const ownerName = detail.ownerUpi?.upiName?.trim() || undefined;
+  const upiId = detail.ownerUpi?.upiId?.trim() || undefined;
+
   const entriesToShow =
     typeof limit === "number" && limit > 0
       ? detail.entries.slice(0, limit)
       : detail.entries;
 
-  const meta = balanceMeta(detail.balance);
+  const balVal = Number(detail.balance);
+  const absVal = Math.abs(Number.isFinite(balVal) ? balVal : 0);
+  let statusHinglish = "Chukte (Settled)";
+  if (balVal > 0) {
+    statusHinglish = "Baaki Udhar (Lene baaki)";
+  } else if (balVal < 0) {
+    statusHinglish = "Advance Deposit (Jama rashi)";
+  }
+
   const now = new Date().toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
     day: "numeric",
     month: "short",
     year: "numeric",
   });
 
+  const separator = "━━━━━━━━━━━━━━━━━━━━";
+
   const lines: string[] = [
-    `📒 *Ledger Statement: ${detail.name}*`,
-    `Generated: ${now}`,
-    `--------------------------------`,
-    `Current Balance: *${formatMoney(Math.abs(Number(detail.balance)))}* (${meta.label})`,
-    `Total Given: ${formatMoney(detail.gaveTotal)} | Total Received: ${formatMoney(detail.receivedTotal)}`,
-    `--------------------------------`,
-    `*Transaction History:*`,
+    `📒 *Khata Statement: ${customerName}*`,
+    `Tarikh: ${now}`,
   ];
 
+  if (ownerName) {
+    lines.push(`Dukan / Malik: ${ownerName}`);
+  }
+
+  lines.push(separator);
+  lines.push(`💰 *Net Balance:* *${formatMoney(absVal)}* (${statusHinglish})`);
+  lines.push(
+    `📊 Kul Udhar: ${formatMoney(detail.gaveTotal)} | Kul Jama: ${formatMoney(detail.receivedTotal)}`
+  );
+
+  if (detail.openingBalance !== undefined && detail.openingBalance !== null) {
+    lines.push(
+      `Opening Balance: ${formatMoney(detail.openingBalance)} (Pichhla Baaki)`
+    );
+  }
+
+  lines.push(separator);
+  lines.push(`📋 *Pichhle Vyavahar (Transaction History):*`);
+
   if (entriesToShow.length === 0) {
-    lines.push(`(No transactions recorded yet)`);
+    lines.push(`(Koi vyavahar darj nahi hai)`);
   } else {
     for (const entry of entriesToShow) {
-      const typeStr = entry.type === "GAVE" ? "Udhar" : "Received";
+      const typeStr = entry.type === "GAVE" ? "Udhar" : "Jama";
       const noteStr = entry.note ? ` - ${entry.note}` : "";
       const dueStr = entry.dueDate ? ` [Due: ${entry.dueDate}]` : "";
       const dateStr = formatWhen(entry.createdAt);
-      lines.push(`• ${dateStr}: ${typeStr} ${formatMoney(entry.amount)}${noteStr}${dueStr}`);
+      lines.push(
+        `• ${dateStr}: ${typeStr} ${formatMoney(entry.amount)}${noteStr}${dueStr}`
+      );
     }
   }
 
   if (typeof limit === "number" && limit > 0 && detail.entries.length > limit) {
-    lines.push(`... and ${detail.entries.length - limit} earlier transactions`);
+    lines.push(`... aur ${detail.entries.length - limit} pichhle vyavahar`);
   }
 
-  lines.push(`--------------------------------`);
-  lines.push(`_Shared via Ledger_`);
+  lines.push(separator);
+
+  if (upiId) {
+    const upiNameSuffix = ownerName ? ` (${ownerName})` : "";
+    lines.push(`💳 *UPI ID:* ${upiId}${upiNameSuffix}`);
+  }
+
+  lines.push(`_Shared via Chai Ledger_`);
 
   return lines.join("\n");
 }
