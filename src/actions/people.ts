@@ -103,15 +103,24 @@ export async function deletePerson(formData: FormData): Promise<void> {
     return;
   }
 
-  // Atomic delete: both the person and their entries are removed in a
+  // Atomic soft delete: both the person and their entries are marked deleted in a
   // single transaction. If the connection drops mid-way, neither
-  // operation commits — no orphaned ghosts or destroyed history.
+  // operation commits — data remains safe and restorable.
   let session: ClientSession | undefined;
   try {
     session = mongoClient().startSession();
     await session.withTransaction(async () => {
-      await peopleCol().deleteOne({ _id: id.data, ownerId: owner }, { session });
-      await entriesCol().deleteMany({ personId: id.data, ownerId: owner }, { session });
+      const now = new Date();
+      await peopleCol().updateOne(
+        { _id: id.data, ownerId: owner },
+        { $set: { deletedAt: now } },
+        { session }
+      );
+      await entriesCol().updateMany(
+        { personId: id.data, ownerId: owner },
+        { $set: { deletedAt: now } },
+        { session }
+      );
     });
   } catch (err) {
     console.error("Failed to delete person transaction:", err);
