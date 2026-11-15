@@ -56,14 +56,16 @@ describe("personSchema", () => {
     }
   });
 
-  it("transforms empty phone string to undefined", () => {
-    const res = personSchema.safeParse({
-      name: "Suresh",
-      phone: "   ",
-    });
-    expect(res.success).toBe(true);
-    if (res.success) {
-      expect(res.data.phone).toBeUndefined();
+  it("transforms empty phone string, null, or undefined to undefined", () => {
+    for (const phoneVal of ["   ", "", null, undefined]) {
+      const res = personSchema.safeParse({
+        name: "Suresh",
+        phone: phoneVal,
+      });
+      expect(res.success).toBe(true);
+      if (res.success) {
+        expect(res.data.phone).toBeUndefined();
+      }
     }
   });
 
@@ -153,16 +155,33 @@ describe("entrySchema", () => {
     }
   });
 
-  it("transforms empty dueDate string to undefined", () => {
+  it("transforms empty dueDate string, null, or undefined to undefined", () => {
+    for (const dueVal of ["", "   ", null, undefined]) {
+      const res = entrySchema.safeParse({
+        personId: validUUID,
+        type: "GAVE",
+        amount: "100",
+        dueDate: dueVal,
+      });
+      expect(res.success).toBe(true);
+      if (res.success) {
+        expect(res.data.dueDate).toBeUndefined();
+      }
+    }
+  });
+
+  it("accepts RECEIVED entry where dueDate and note are omitted (null from FormData.get)", () => {
     const res = entrySchema.safeParse({
       personId: validUUID,
-      type: "GAVE",
+      type: "RECEIVED",
       amount: "100",
-      dueDate: "",
+      note: null,
+      dueDate: null,
     });
     expect(res.success).toBe(true);
     if (res.success) {
       expect(res.data.dueDate).toBeUndefined();
+      expect(res.data.note).toBeUndefined();
     }
   });
 

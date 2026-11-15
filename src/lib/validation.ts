@@ -16,8 +16,8 @@ export const personSchema = z.object({
     .string()
     .trim()
     .max(20, "Up to 20 characters")
-    .transform((value) => (value ? value : undefined))
-    .optional(),
+    .nullish()
+    .transform((value) => (value ? value : undefined)),
 });
 
 export const entrySchema = z.object({
@@ -32,8 +32,8 @@ export const entrySchema = z.object({
     .string()
     .trim()
     .max(200, "Up to 200 characters")
-    .transform((value) => (value ? value : undefined))
-    .optional(),
+    .nullish()
+    .transform((value) => (value ? value : undefined)),
   dueDate: z
     .string()
     .trim()
@@ -46,8 +46,8 @@ export const entrySchema = z.object({
       },
       "Enter a valid calendar date (YYYY-MM-DD)"
     )
-    .transform((val) => (val ? val : undefined))
-    .optional(),
+    .nullish()
+    .transform((val) => (val ? val : undefined)),
 });
 
 export const idSchema = z.uuid("Invalid id");

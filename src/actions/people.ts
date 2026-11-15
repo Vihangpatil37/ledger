@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
+import type { ClientSession } from "mongodb";
 import { entriesCol, mongoClient, peopleCol } from "@/lib/mongo";
 import { getOwner } from "@/server/session";
 import type { ActionState } from "@/lib/types";
@@ -105,19 +106,20 @@ export async function deletePerson(formData: FormData): Promise<void> {
   // Atomic delete: both the person and their entries are removed in a
   // single transaction. If the connection drops mid-way, neither
   // operation commits — no orphaned ghosts or destroyed history.
-  const session = mongoClient().startSession();
+  let session: ClientSession | undefined;
   try {
-    try {
-      await session.withTransaction(async () => {
-        await peopleCol().deleteOne({ _id: id.data, ownerId: owner }, { session });
-        await entriesCol().deleteMany({ personId: id.data, ownerId: owner }, { session });
-      });
-    } catch (err) {
-      console.error("Failed to delete person transaction:", err);
-      return;
-    }
+    session = mongoClient().startSession();
+    await session.withTransaction(async () => {
+      await peopleCol().deleteOne({ _id: id.data, ownerId: owner }, { session });
+      await entriesCol().deleteMany({ personId: id.data, ownerId: owner }, { session });
+    });
+  } catch (err) {
+    console.error("Failed to delete person transaction:", err);
+    return;
   } finally {
-    await session.endSession();
+    if (session) {
+      await session.endSession();
+    }
   }
 
   revalidatePath(HOME);

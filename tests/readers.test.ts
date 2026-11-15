@@ -2,11 +2,18 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockGetOwner = vi.fn();
 const mockPeopleFindOne = vi.fn();
+const mockPeopleFindToArray = vi.fn();
 const mockEntriesAggregateToArray = vi.fn();
 const mockEntriesFindToArray = vi.fn();
 
+const mockPeopleCursor = {
+  sort: vi.fn().mockReturnThis(),
+  toArray: mockPeopleFindToArray,
+};
+
 const mockFindCursor = {
   sort: vi.fn().mockReturnThis(),
+  limit: vi.fn().mockReturnThis(),
   toArray: mockEntriesFindToArray,
 };
 
@@ -21,6 +28,7 @@ vi.mock("@/server/session", () => ({
 vi.mock("@/lib/mongo", () => ({
   peopleCol: () => ({
     findOne: mockPeopleFindOne,
+    find: () => mockPeopleCursor,
   }),
   entriesCol: () => ({
     aggregate: () => mockAggregateCursor,
@@ -28,7 +36,7 @@ vi.mock("@/lib/mongo", () => ({
   }),
 }));
 
-import { getPersonDetail } from "@/server/readers";
+import { getHomeSummary, getPersonDetail } from "@/server/readers";
 
 describe("getPersonDetail", () => {
   beforeEach(() => {
@@ -151,5 +159,62 @@ describe("getPersonDetail", () => {
     expect(result.entries[1].running).toBe("300.00");
     expect(result.entries[2].id).toBe("e1");
     expect(result.entries[2].running).toBe("500.00");
+  });
+});
+
+describe("getHomeSummary", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns zeroed summary when user is not authenticated", async () => {
+    mockGetOwner.mockResolvedValue(null);
+    const summary = await getHomeSummary();
+    expect(summary.debtorsCount).toBe(0);
+    expect(summary.creditorsCount).toBe(0);
+    expect(summary.rows).toHaveLength(0);
+  });
+
+  it("aggregates debtor/creditor balances and identifies overdue borrowers", async () => {
+    mockGetOwner.mockResolvedValue("owner-1");
+    mockPeopleFindToArray.mockResolvedValue([
+      { _id: "p1", name: "Borrower Overdue", phone: "111" },
+      { _id: "p2", name: "Borrower Repaid", phone: "222" },
+      { _id: "p3", name: "Lender (We Owe)", phone: "333" },
+    ]);
+
+    // Balances aggregation (p1: gave 1000, received 0 -> balance +1000)
+    // (p2: gave 500, received 200 -> balance +300)
+    // (p3: gave 0, received 800 -> balance -800)
+    mockEntriesAggregateToArray
+      .mockResolvedValueOnce([
+        { _id: "p1", gave: 100000, received: 0 },
+        { _id: "p2", gave: 50000, received: 20000 },
+        { _id: "p3", gave: 0, received: 80000 },
+      ])
+      // Overdue query: only p1 has overdueGave > totalReceived
+      .mockResolvedValueOnce([
+        { _id: "p1" },
+      ]);
+
+    mockEntriesFindToArray.mockResolvedValue([]);
+
+    const summary = await getHomeSummary();
+
+    expect(summary.debtorsCount).toBe(2);
+    expect(summary.creditorsCount).toBe(1);
+    expect(summary.overdueCount).toBe(1);
+    expect(summary.youllGet).toBe("1300.00");
+    expect(summary.youllGive).toBe("800.00");
+    expect(summary.netBalance).toBe("500.00");
+
+    const p1Row = summary.rows.find((r) => r.id === "p1");
+    expect(p1Row?.isOverdue).toBe(true);
+
+    const p2Row = summary.rows.find((r) => r.id === "p2");
+    expect(p2Row?.isOverdue).toBe(false);
+
+    const p3Row = summary.rows.find((r) => r.id === "p3");
+    expect(p3Row?.isOverdue).toBe(false);
   });
 });

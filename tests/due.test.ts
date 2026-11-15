@@ -48,13 +48,38 @@ describe("getDueStatus", () => {
     expect(isOverdueDate(dateStr)).toBe(false);
   });
 
-  it("evaluates overdue debt status based on outstanding balance", () => {
-    // A loan whose due date has passed should not be overdue if repaid in full
-    const overdueGaveCents = 50000; // ₹500
-    const fullRepaymentCents = 50000; // ₹500
-    const partialRepaymentCents = 20000; // ₹200
+  it("identifies due later beyond 7 days", () => {
+    const dateStr = getIstDateString(14);
 
-    expect(overdueGaveCents > fullRepaymentCents).toBe(false);
-    expect(overdueGaveCents > partialRepaymentCents).toBe(true);
+    const res = getDueStatus(dateStr);
+    expect(res).not.toBeNull();
+    expect(res?.status).toBe("DUE_LATER");
+    expect(res?.label).toMatch(/^Due \d{1,2} [A-Z][a-z]{2}$/);
+    expect(isOverdueDate(dateStr)).toBe(false);
+  });
+
+  it("handles singular vs plural days correctly", () => {
+    const overdue1 = getDueStatus(getIstDateString(-1));
+    expect(overdue1?.label).toBe("Overdue by 1 day");
+
+    const soon1 = getDueStatus(getIstDateString(1));
+    expect(soon1?.label).toBe("Due in 1 day");
+  });
+
+  it("computes status relative to an explicit referenceDate deterministically", () => {
+    // Reference: June 15, 2026 IST
+    const refDate = new Date("2026-06-15T10:00:00+05:30");
+
+    expect(getDueStatus("2026-06-14", refDate)?.status).toBe("OVERDUE");
+    expect(isOverdueDate("2026-06-14", refDate)).toBe(true);
+
+    expect(getDueStatus("2026-06-15", refDate)?.status).toBe("DUE_TODAY");
+    expect(isOverdueDate("2026-06-15", refDate)).toBe(false);
+
+    expect(getDueStatus("2026-06-18", refDate)?.status).toBe("DUE_SOON");
+    expect(getDueStatus("2026-06-18", refDate)?.label).toBe("Due in 3 days");
+
+    expect(getDueStatus("2026-06-30", refDate)?.status).toBe("DUE_LATER");
+    expect(getDueStatus("2026-06-30", refDate)?.label).toBe("Due 30 Jun");
   });
 });
