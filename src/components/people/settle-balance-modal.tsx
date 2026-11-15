@@ -1,12 +1,19 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { addEntry } from "@/actions/entries";
 import { Button, FieldError, Label, Money, inputClass } from "@/components/ui";
+import { UpiQrCode } from "@/components/qr-code";
+import { calculateSettleSplits, decimalStringToPaise, formatMoney } from "@/lib/money";
+import { buildUpiPayUrl } from "@/lib/upi";
+import { useLanguage } from "@/lib/i18n/client";
 import type { ActionState, PersonDetail } from "@/lib/types";
 
 export function SettleBalanceModal({ detail }: { detail: PersonDetail }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showQr, setShowQr] = useState(false);
+  const { t } = useLanguage();
   const balanceVal = Number(detail.balance);
   const isSettled = balanceVal === 0;
 
@@ -14,7 +21,10 @@ export function SettleBalanceModal({ detail }: { detail: PersonDetail }) {
   // If balance < 0 (you owe them), settling means you GAVE the money back.
   const isOwesYou = balanceVal > 0;
   const settleType = isOwesYou ? "RECEIVED" : "GAVE";
-  const exactAmount = detail.balance.replace(/^-/, "");
+  const { fullAmount, halfAmount, halfPaise } = calculateSettleSplits(detail.balance);
+
+  const [amount, setAmount] = useState(fullAmount);
+  const [note, setNote] = useState("Full account settlement");
 
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     addEntry,
@@ -28,17 +38,39 @@ export function SettleBalanceModal({ detail }: { detail: PersonDetail }) {
     }
   }, [state]);
 
-  // Lock background scroll when open
+  // Lock background scroll when open and initialize presets
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
+      setAmount(fullAmount);
+      setNote("Full account settlement");
     } else {
       document.body.style.overflow = "";
     }
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isOpen]);
+  }, [isOpen, fullAmount]);
+
+  function handleSelectFull() {
+    setAmount(fullAmount);
+    setNote("Full account settlement");
+  }
+
+  function handleSelectHalf() {
+    setAmount(halfAmount);
+    setNote("Partial settlement (50%)");
+  }
+
+  const ownerUpiUrl =
+    isOwesYou && detail.ownerUpi?.upiId
+      ? buildUpiPayUrl({
+          pa: detail.ownerUpi.upiId,
+          pn: detail.ownerUpi.upiName ?? "Chai Ledger",
+          amountCents: decimalStringToPaise(amount),
+          tn: note || "Khata settlement",
+        })
+      : null;
 
   if (isSettled) return null;
 
@@ -61,7 +93,7 @@ export function SettleBalanceModal({ detail }: { detail: PersonDetail }) {
         >
           <polyline points="20 6 9 17 4 12" />
         </svg>
-        <span>Settle up</span>
+        <span>{t("person.settleBalance")}</span>
       </button>
 
       {isOpen ? (
@@ -82,17 +114,17 @@ export function SettleBalanceModal({ detail }: { detail: PersonDetail }) {
                   id="settle-modal-title"
                   className="font-display text-lg font-bold tracking-tight text-ink"
                 >
-                  Settle Balance
+                  {t("settle.title")}
                 </h3>
                 <p className="font-mono text-xs text-muted">
-                  With {detail.name}
+                  {detail.name}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
                 className="inline-flex size-8 items-center justify-center rounded-lg text-muted hover:bg-paper hover:text-ink transition-colors cursor-pointer"
-                aria-label="Close"
+                aria-label={t("common.close")}
               >
                 ✕
               </button>
@@ -101,17 +133,12 @@ export function SettleBalanceModal({ detail }: { detail: PersonDetail }) {
             {/* Overview Banner */}
             <div className="my-4 rounded-xl border border-rule bg-paper/70 p-3.5 text-center">
               <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted block">
-                {isOwesYou ? "Pending to collect" : "Pending to return"}
+                {isOwesYou ? t("home.youllGet") : t("home.youllGive")}
               </span>
               <Money
-                amount={exactAmount}
+                amount={fullAmount}
                 className="mt-1 block text-2xl font-bold font-mono tracking-tight text-ink"
               />
-              <span className="mt-1 block text-xs text-muted">
-                {isOwesYou
-                  ? "Recording this payment will mark their account settled."
-                  : "Recording this payment will mark your account settled."}
-              </span>
             </div>
 
             {/* Settle Form */}
@@ -119,8 +146,36 @@ export function SettleBalanceModal({ detail }: { detail: PersonDetail }) {
               <input type="hidden" name="personId" value={detail.id} />
               <input type="hidden" name="type" value={settleType} />
 
-              <div className="space-y-1.5">
-                <Label htmlFor="settle-amount">Settlement amount (₹)</Label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="settle-amount">{t("settle.customAmount")} (₹)</Label>
+                  <div className="inline-flex gap-1.5">
+                    <button
+                      type="button"
+                      onClick={handleSelectFull}
+                      className={`rounded-md border px-2 py-0.5 font-mono text-[11px] font-semibold transition-colors cursor-pointer ${
+                        amount === fullAmount
+                          ? "border-ink bg-ink text-paper shadow-2xs"
+                          : "border-rule bg-paper text-muted hover:text-ink"
+                      }`}
+                    >
+                      {t("settle.fullOption")} ({formatMoney(fullAmount)})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSelectHalf}
+                      disabled={halfPaise === 0}
+                      className={`rounded-md border px-2 py-0.5 font-mono text-[11px] font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${
+                        amount === halfAmount
+                          ? "border-ink bg-ink text-paper shadow-2xs"
+                          : "border-rule bg-paper text-muted hover:text-ink"
+                      }`}
+                    >
+                      {t("settle.halfOption")} ({formatMoney(halfAmount)})
+                    </button>
+                  </div>
+                </div>
+
                 <div className="relative">
                   <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm font-semibold text-muted">
                     ₹
@@ -130,7 +185,8 @@ export function SettleBalanceModal({ detail }: { detail: PersonDetail }) {
                     name="amount"
                     type="text"
                     inputMode="decimal"
-                    defaultValue={exactAmount}
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
                     required
                     className={`${inputClass} pl-8 font-mono font-bold tracking-tight`}
                   />
@@ -139,18 +195,68 @@ export function SettleBalanceModal({ detail }: { detail: PersonDetail }) {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="settle-note">Note / Payment method</Label>
+                <Label htmlFor="settle-note">{t("settle.note")}</Label>
                 <input
                   id="settle-note"
                   name="note"
                   type="text"
                   maxLength={200}
-                  defaultValue="Full account settlement"
-                  placeholder="e.g. Paid via UPI / GPay / Cash"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder={t("settle.notePlaceholder")}
                   className={inputClass}
                 />
                 <FieldError message={state.fieldErrors?.note} />
               </div>
+
+              {/* UPI Action Section (when contact owes you) */}
+              {isOwesYou ? (
+                <div className="border-t border-rule/60 pt-3">
+                  {ownerUpiUrl ? (
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowQr(!showQr)}
+                        className="inline-flex w-full items-center justify-between rounded-lg border border-rule bg-paper px-3 py-2 text-xs font-semibold text-ink hover:bg-surface transition-colors cursor-pointer"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-3.5 text-focus">
+                            <rect x="3" y="3" width="7" height="7" />
+                            <rect x="14" y="3" width="7" height="7" />
+                            <rect x="14" y="14" width="7" height="7" />
+                            <rect x="3" y="14" width="7" height="7" />
+                          </svg>
+                          <span>{showQr ? t("settle.hideQr") : t("settle.showQr")}</span>
+                        </span>
+                        <span className="font-mono text-[10px] text-muted">
+                          {showQr ? "▲" : "▼"}
+                        </span>
+                      </button>
+
+                      {showQr ? (
+                        <div className="rounded-xl border border-rule bg-surface p-3 text-center space-y-2 animate-in fade-in duration-150">
+                          <div className="flex justify-center">
+                            <UpiQrCode upiUrl={ownerUpiUrl} size={150} />
+                          </div>
+                          <p className="font-mono text-[11px] font-semibold text-ink">
+                            UPI ID: {detail.ownerUpi?.upiId}
+                          </p>
+                          <p className="text-[10px] text-muted">
+                            {t("settle.qrInstruction")}
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-dashed border-rule bg-paper/50 px-3 py-2 text-center text-xs text-muted">
+                      {t("settle.noOwnerUpi")}{" "}
+                      <Link href="/settings" className="font-semibold text-focus hover:underline">
+                        {t("settle.setUpiInSettings")}
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              ) : null}
 
               {state.error ? (
                 <p
@@ -167,7 +273,7 @@ export function SettleBalanceModal({ detail }: { detail: PersonDetail }) {
                   disabled={pending}
                   className="w-full flex-1"
                 >
-                  {pending ? "Recording settlement…" : `Confirm & Settle`}
+                  {pending ? t("settle.recording") : t("settle.confirmBtn")}
                 </Button>
                 <Button
                   type="button"
@@ -175,7 +281,7 @@ export function SettleBalanceModal({ detail }: { detail: PersonDetail }) {
                   onClick={() => setIsOpen(false)}
                   className="w-full sm:w-auto"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
               </div>
             </form>

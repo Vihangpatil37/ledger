@@ -1,26 +1,30 @@
+"use client";
+
 import Link from "next/link";
 import { Money } from "@/components/ui";
 import { getDueStatus } from "@/lib/due";
 import { formatWhen } from "@/lib/format";
+import { useLanguage } from "@/lib/i18n/client";
 import type { RecentEntryItem } from "@/lib/types";
 
 export function RecentActivity({ entries }: { entries: RecentEntryItem[] }) {
+  const { t } = useLanguage();
+
   return (
     <div className="rounded-xl border border-rule bg-surface p-4 sm:p-5 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)]">
       <div className="flex items-center justify-between pb-3 border-b border-rule/50">
-        <h2 className="font-display text-base font-bold text-ink tracking-tight">Recent Activity</h2>
+        <h2 className="font-display text-base font-bold text-ink tracking-tight">
+          {t("home.recentActivity")}
+        </h2>
         <span className="font-mono text-xs text-muted">
-          {entries.length} recent
+          {entries.length}
         </span>
       </div>
 
       {entries.length === 0 ? (
         <div className="py-8 text-center">
           <p className="text-xs font-medium text-muted">
-            No transactions yet.
-          </p>
-          <p className="mt-0.5 font-mono text-[11px] text-faint">
-            Transactions you record will appear here.
+            {t("home.noRecentActivity")}
           </p>
         </div>
       ) : (
@@ -47,7 +51,7 @@ export function RecentActivity({ entries }: { entries: RecentEntryItem[] }) {
                           : "bg-credit-light text-credit border border-credit/20"
                       }`}
                     >
-                      {isGave ? "Udhar" : "Received"}
+                      {isGave ? t("entry.gave") : t("entry.received")}
                     </span>
                     {entry.dueDate ? (
                       (() => {
@@ -60,6 +64,11 @@ export function RecentActivity({ entries }: { entries: RecentEntryItem[] }) {
                           </span>
                         ) : null;
                       })()
+                    ) : null}
+                    {entry.editedAt ? (
+                      <span className="text-[10px] text-muted font-mono" title={new Date(entry.editedAt).toLocaleString()}>
+                        {t("person.edited")}
+                      </span>
                     ) : null}
                   </div>
 

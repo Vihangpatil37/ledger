@@ -3,11 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/actions/auth";
+import { LanguageSwitcher } from "./language-switcher";
+import { useLanguage } from "@/lib/i18n/client";
+import type { TranslationKey } from "@/lib/i18n/dictionaries/en";
 
-const ITEMS = [
+const ITEMS: Array<{
+  href: string;
+  key: TranslationKey;
+  icon: React.ReactNode;
+}> = [
   {
     href: "/",
-    label: "Dashboard",
+    key: "nav.dashboard",
     icon: (
       <svg
         width="16"
@@ -29,7 +36,7 @@ const ITEMS = [
   },
   {
     href: "/people/new",
-    label: "Add person",
+    key: "nav.addPerson",
     icon: (
       <svg
         width="16"
@@ -49,10 +56,31 @@ const ITEMS = [
       </svg>
     ),
   },
+  {
+    href: "/settings",
+    key: "nav.settings",
+    icon: (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="size-4 shrink-0"
+      >
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </svg>
+    ),
+  },
 ];
 
 export function SideNav() {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   return (
     <nav className="flex h-full flex-col justify-between">
@@ -67,7 +95,7 @@ export function SideNav() {
                 Ledger
               </span>
               <span className="font-mono text-[10px] uppercase tracking-wider text-muted block mt-1.5 leading-none">
-                Personal Khata
+                {t("nav.brandSub")}
               </span>
             </div>
           </Link>
@@ -87,19 +115,22 @@ export function SideNav() {
                 }`}
               >
                 {item.icon}
-                <span>{item.label}</span>
+                <span>{t(item.key)}</span>
               </Link>
             );
           })}
         </div>
       </div>
 
-      {/* Footer sign out with ample padding to prevent dev badge overlap */}
-      <div className="p-3 pb-12 border-t border-rule/40">
+      {/* Footer language toggle & sign out with ample padding to prevent dev badge overlap */}
+      <div className="p-3 pb-12 border-t border-rule/40 space-y-2">
+        <div className="px-1">
+          <LanguageSwitcher variant="compact" className="w-full justify-between" />
+        </div>
         <form action={logout}>
           <button
             type="submit"
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold text-muted transition-colors hover:bg-danger-light hover:text-danger active:bg-danger-light/80"
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold text-muted transition-colors hover:bg-danger-light hover:text-danger active:bg-danger-light/80 cursor-pointer"
           >
             <svg
               width="16"
@@ -116,7 +147,7 @@ export function SideNav() {
               <polyline points="16 17 21 12 16 7" />
               <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
-            <span>Sign out</span>
+            <span>{t("nav.signOut")}</span>
           </button>
         </form>
       </div>

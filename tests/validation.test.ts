@@ -1,7 +1,14 @@
 import { describe, it, expect } from "vitest";
+import { formatIndianPhone } from "@/lib/phone";
 import {
   entrySchema,
+  editEntrySchema,
+  dateRangeSchema,
   personSchema,
+  ownerUpiSchema,
+  upiIdField,
+  normalizeIndianPhone,
+  indianPhoneField,
   loginSchema,
   idSchema,
   fieldErrorsOf,
@@ -45,7 +52,7 @@ describe("loginSchema", () => {
 });
 
 describe("personSchema", () => {
-  it("accepts valid name and phone", () => {
+  it("accepts valid name and formats phone to +91 XXXXX XXXXX", () => {
     const res = personSchema.safeParse({
       name: "Ramesh Sharma",
       phone: "+91 98765 43210",
@@ -53,6 +60,63 @@ describe("personSchema", () => {
     expect(res.success).toBe(true);
     if (res.success) {
       expect(res.data.name).toBe("Ramesh Sharma");
+      expect(res.data.phone).toBe("+91 98765 43210");
+    }
+  });
+
+  it("normalizes raw 10-digit number to +91 XXXXX XXXXX", () => {
+    const res = personSchema.safeParse({
+      name: "Ramesh Sharma",
+      phone: "9876543210",
+    });
+    expect(res.success).toBe(true);
+    if (res.success) {
+      expect(res.data.phone).toBe("+91 98765 43210");
+    }
+  });
+
+  it("normalizes numbers with trunk zero or +91 without spaces", () => {
+    const res1 = personSchema.safeParse({ name: "A", phone: "09876543210" });
+    expect(res1.success).toBe(true);
+    if (res1.success) expect(res1.data.phone).toBe("+91 98765 43210");
+
+    const res2 = personSchema.safeParse({ name: "B", phone: "+919876543210" });
+    expect(res2.success).toBe(true);
+    if (res2.success) expect(res2.data.phone).toBe("+91 98765 43210");
+
+    const res3 = personSchema.safeParse({ name: "C", phone: "919876543210" });
+    expect(res3.success).toBe(true);
+    if (res3.success) expect(res3.data.phone).toBe("+91 98765 43210");
+  });
+
+  it("accepts Indian mobile numbers starting with 6, 7, 8, or 9", () => {
+    for (const prefix of ["6", "7", "8", "9"]) {
+      const num = `${prefix}123456789`;
+      const res = personSchema.safeParse({ name: "Test", phone: num });
+      expect(res.success).toBe(true);
+      if (res.success) expect(res.data.phone).toBe(`+91 ${prefix}1234 56789`);
+    }
+  });
+
+  it("rejects numbers starting with invalid digits (0 to 5)", () => {
+    for (const prefix of ["0", "1", "2", "3", "4", "5"]) {
+      // Raw 10 digits starting with 0-5
+      const num = `${prefix}123456789`;
+      const res = personSchema.safeParse({ name: "Test", phone: num });
+      expect(res.success).toBe(false);
+    }
+  });
+
+  it("rejects phone numbers with invalid length or non-digits", () => {
+    const invalidList = [
+      "98765", // too short
+      "9876543210123", // too long
+      "98765abcde", // contains letters
+      "abcdefghij", // non-digits
+    ];
+    for (const num of invalidList) {
+      const res = personSchema.safeParse({ name: "Test", phone: num });
+      expect(res.success).toBe(false);
     }
   });
 
@@ -67,6 +131,18 @@ describe("personSchema", () => {
         expect(res.data.phone).toBeUndefined();
       }
     }
+  });
+
+  it("normalizeIndianPhone returns null for invalid formats and string for valid ones", () => {
+    expect(normalizeIndianPhone("")).toBeNull();
+    expect(normalizeIndianPhone("invalid")).toBeNull();
+    expect(normalizeIndianPhone("5551234567")).toBeNull();
+    expect(normalizeIndianPhone("9876543210")).toBe("+91 98765 43210");
+  });
+
+  it("indianPhoneField rejects invalid numbers with custom issue message", () => {
+    const res = indianPhoneField.safeParse("12345");
+    expect(res.success).toBe(false);
   });
 
   it("rejects empty name", () => {
@@ -239,6 +315,122 @@ describe("idSchema", () => {
   });
 });
 
+describe("editEntrySchema", () => {
+  const validId = "550e8400-e29b-41d4-a716-446655440000";
+
+  it("accepts valid edit data without personId", () => {
+    const res = editEntrySchema.safeParse({
+      id: validId,
+      type: "GAVE",
+      amount: "500",
+      note: "Updated note",
+      dueDate: "2026-12-31",
+    });
+    expect(res.success).toBe(true);
+  });
+
+  it("rejects invalid id or missing id", () => {
+    expect(
+      editEntrySchema.safeParse({
+        id: "invalid-id",
+        type: "GAVE",
+        amount: "500",
+      }).success
+    ).toBe(false);
+
+    expect(
+      editEntrySchema.safeParse({
+        type: "GAVE",
+        amount: "500",
+      }).success
+    ).toBe(false);
+  });
+
+  it("rejects invalid amount", () => {
+    expect(
+      editEntrySchema.safeParse({
+        id: validId,
+        type: "GAVE",
+        amount: "-10",
+      }).success
+    ).toBe(false);
+  });
+});
+
+describe("dateRangeSchema", () => {
+  it("accepts valid from and to dates where from <= to", () => {
+    const res = dateRangeSchema.safeParse({
+      from: "2026-01-01",
+      to: "2026-01-31",
+    });
+    expect(res.success).toBe(true);
+  });
+
+  it("accepts partial ranges or empty range", () => {
+    expect(dateRangeSchema.safeParse({ from: "2026-01-01" }).success).toBe(true);
+    expect(dateRangeSchema.safeParse({ to: "2026-01-31" }).success).toBe(true);
+    expect(dateRangeSchema.safeParse({}).success).toBe(true);
+  });
+
+  it("rejects when from date is after to date", () => {
+    const res = dateRangeSchema.safeParse({
+      from: "2026-02-01",
+      to: "2026-01-15",
+    });
+    expect(res.success).toBe(false);
+  });
+
+  it("rejects non-calendar or malformed date strings", () => {
+    expect(dateRangeSchema.safeParse({ from: "not-a-date" }).success).toBe(false);
+    expect(dateRangeSchema.safeParse({ to: "01-01-2026" }).success).toBe(false);
+  });
+});
+
+describe("upiIdField and ownerUpiSchema", () => {
+  it("accepts valid UPI IDs and trims whitespace", () => {
+    const res = upiIdField.safeParse("  name@okhdfcbank  ");
+    expect(res.success).toBe(true);
+    if (res.success) expect(res.data).toBe("name@okhdfcbank");
+  });
+
+  it("converts empty string, null, or undefined to null", () => {
+    expect(upiIdField.parse("")).toBeNull();
+    expect(upiIdField.parse("   ")).toBeNull();
+    expect(upiIdField.parse(null)).toBeNull();
+    expect(upiIdField.parse(undefined)).toBeNull();
+  });
+
+  it("rejects invalid UPI handles without @ symbol", () => {
+    expect(upiIdField.safeParse("invalid-upi").success).toBe(false);
+    expect(upiIdField.safeParse("@invalid").success).toBe(false);
+    expect(upiIdField.safeParse("invalid@").success).toBe(false);
+  });
+
+  it("validates ownerUpiSchema with optional upiName", () => {
+    const res = ownerUpiSchema.safeParse({
+      upiId: "mybusiness@icici",
+      upiName: "Ramesh Stores",
+    });
+    expect(res.success).toBe(true);
+    if (res.success) {
+      expect(res.data.upiId).toBe("mybusiness@icici");
+      expect(res.data.upiName).toBe("Ramesh Stores");
+    }
+  });
+
+  it("allows clearing owner UPI settings with empty strings", () => {
+    const res = ownerUpiSchema.safeParse({
+      upiId: "",
+      upiName: "",
+    });
+    expect(res.success).toBe(true);
+    if (res.success) {
+      expect(res.data.upiId).toBeNull();
+      expect(res.data.upiName).toBeNull();
+    }
+  });
+});
+
 describe("fieldErrorsOf", () => {
   it("formats zod error into key-value map", () => {
     const parsed = loginSchema.safeParse({ email: "invalid", password: "1" });
@@ -247,5 +439,34 @@ describe("fieldErrorsOf", () => {
       expect(errors.email).toBeDefined();
       expect(errors.password).toBeDefined();
     }
+  });
+});
+
+describe("formatIndianPhone formatter", () => {
+  it("formats incremental typing correctly", () => {
+    expect(formatIndianPhone("")).toBe("");
+    expect(formatIndianPhone("9")).toBe("+91 9");
+    expect(formatIndianPhone("98")).toBe("+91 98");
+    expect(formatIndianPhone("98765")).toBe("+91 98765");
+    expect(formatIndianPhone("987654")).toBe("+91 98765 4");
+    expect(formatIndianPhone("9876543210")).toBe("+91 98765 43210");
+  });
+
+  it("handles backspacing down to empty", () => {
+    expect(formatIndianPhone("+91 98765 43210")).toBe("+91 98765 43210");
+    expect(formatIndianPhone("+91 98765 4")).toBe("+91 98765 4");
+    expect(formatIndianPhone("+91 98765")).toBe("+91 98765");
+    expect(formatIndianPhone("+91 9")).toBe("+91 9");
+    expect(formatIndianPhone("+91 ")).toBe("");
+    expect(formatIndianPhone("+91")).toBe("");
+    expect(formatIndianPhone("+9")).toBe("");
+    expect(formatIndianPhone("+")).toBe("");
+  });
+
+  it("formats pasted inputs with varied prefixes", () => {
+    expect(formatIndianPhone("9876543210")).toBe("+91 98765 43210");
+    expect(formatIndianPhone("+919876543210")).toBe("+91 98765 43210");
+    expect(formatIndianPhone("+91 98765 43210")).toBe("+91 98765 43210");
+    expect(formatIndianPhone("09876543210")).toBe("+91 98765 43210");
   });
 });

@@ -3,30 +3,8 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { addEntry } from "@/actions/entries";
 import { Button, FieldError, Label, inputClass } from "@/components/ui";
+import { useLanguage } from "@/lib/i18n/client";
 import type { ActionState, EntryType } from "@/lib/types";
-
-const OPTIONS: Array<{
-  value: EntryType;
-  label: string;
-  hint: string;
-  activeClass: string;
-  hintClass: string;
-}> = [
-  {
-    value: "GAVE",
-    label: "Udhar",
-    hint: "they owe you",
-    activeClass: "border-debit bg-debit text-white shadow-2xs",
-    hintClass: "text-white/85",
-  },
-  {
-    value: "RECEIVED",
-    label: "You received",
-    hint: "they paid back",
-    activeClass: "border-credit bg-credit text-white shadow-2xs",
-    hintClass: "text-white/85",
-  },
-];
 
 export function AddEntryCard({ personId }: { personId: string }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
@@ -35,6 +13,30 @@ export function AddEntryCard({ personId }: { personId: string }) {
   );
   const [type, setType] = useState<EntryType>("GAVE");
   const formRef = useRef<HTMLFormElement>(null);
+  const { t } = useLanguage();
+
+  const options: Array<{
+    value: EntryType;
+    label: string;
+    hint: string;
+    activeClass: string;
+    hintClass: string;
+  }> = [
+    {
+      value: "GAVE",
+      label: t("entry.gave"),
+      hint: t("entry.gaveHint"),
+      activeClass: "border-debit bg-debit text-white shadow-2xs",
+      hintClass: "text-white/85",
+    },
+    {
+      value: "RECEIVED",
+      label: t("entry.received"),
+      hint: t("entry.receivedHint"),
+      activeClass: "border-credit bg-credit text-white shadow-2xs",
+      hintClass: "text-white/85",
+    },
+  ];
 
   useEffect(() => {
     if (state.ok) formRef.current?.reset();
@@ -50,7 +52,7 @@ export function AddEntryCard({ personId }: { personId: string }) {
       <input type="hidden" name="type" value={type} />
 
       <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
-        {OPTIONS.map((option) => {
+        {options.map((option) => {
           const active = type === option.value;
           return (
             <button
@@ -81,7 +83,7 @@ export function AddEntryCard({ personId }: { personId: string }) {
 
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1.5">
-          <Label htmlFor="amount">Amount (₹)</Label>
+          <Label htmlFor="amount">{t("entry.amount")} (₹)</Label>
           <div className="relative">
             <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm font-semibold text-muted">
               ₹
@@ -100,13 +102,13 @@ export function AddEntryCard({ personId }: { personId: string }) {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="note">Note (optional)</Label>
+          <Label htmlFor="note">{t("entry.note")}</Label>
           <input
             id="note"
             name="note"
             maxLength={200}
             autoComplete="off"
-            placeholder="What was it for?"
+            placeholder={t("entry.notePlaceholder")}
             className={inputClass}
           />
           <FieldError message={state.fieldErrors?.note} />
@@ -114,7 +116,7 @@ export function AddEntryCard({ personId }: { personId: string }) {
 
         {type === "GAVE" ? (
           <div className="space-y-1.5">
-            <Label htmlFor="dueDate">Promised return (optional)</Label>
+            <Label htmlFor="dueDate">{t("entry.dueDate")}</Label>
             <input
               id="dueDate"
               name="dueDate"
@@ -136,12 +138,12 @@ export function AddEntryCard({ personId }: { personId: string }) {
       ) : null}
       {state.ok ? (
         <p role="status" className="text-xs sm:text-sm font-medium text-credit">
-          Entry saved ✓
+          ✓
         </p>
       ) : null}
 
-      <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-        {pending ? "Saving…" : "Save entry"}
+      <Button type="submit" disabled={pending} className="w-full sm:w-auto cursor-pointer">
+        {pending ? t("entry.saving") : t("entry.saveEntry")}
       </Button>
     </form>
   );

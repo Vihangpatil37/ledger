@@ -1,11 +1,14 @@
 import "server-only";
 
 import { paiseToDecimalString } from "@/lib/money";
-import { entriesCol, peopleCol } from "@/lib/mongo";
+import { entriesCol, peopleCol, usersCol } from "@/lib/mongo";
+import { resolveIstRange } from "@/lib/range";
 import { getOwner } from "@/server/session";
 import type {
+  DateRange,
   EntryType,
   HomeSummary,
+  OwnerProfile,
   PersonDetail,
   PersonListRow,
 } from "@/lib/types";
@@ -156,6 +159,7 @@ export async function getHomeSummary(): Promise<HomeSummary> {
     amount: paiseToDecimalString(e.amountCents),
     note: e.note,
     dueDate: e.dueDate ? e.dueDate.toISOString().split("T")[0] : null,
+    editedAt: e.editedAt ? e.editedAt.toISOString() : null,
     createdAt: e.createdAt.toISOString(),
   }));
 
@@ -175,7 +179,8 @@ export async function getHomeSummary(): Promise<HomeSummary> {
 }
 
 export async function getPersonDetail(
-  id: string
+  id: string,
+  range?: DateRange
 ): Promise<PersonDetail | null> {
   const owner = await getOwner();
   if (!owner) return null;
@@ -187,26 +192,62 @@ export async function getPersonDetail(
   );
   if (!person) return null;
 
-  const [balanceRes, entries] = await Promise.all([
+  const { fromDate, toDateExclusive } = resolveIstRange(range);
+
+  const createdAtFilter: Record<string, unknown> = {};
+  if (fromDate) createdAtFilter.$gte = fromDate;
+  if (toDateExclusive) createdAtFilter.$lt = toDateExclusive;
+
+  const entriesQuery: Record<string, unknown> = {
+    personId: id,
+    ownerId: owner,
+  };
+  if (fromDate || toDateExclusive) {
+    entriesQuery.createdAt = createdAtFilter;
+  }
+
+  const [balanceRes, openingRes, entries, ownerDoc] = await Promise.all([
+    // Lifetime total balance
     entriesCol()
       .aggregate<{ _id: null; gave: number; received: number }>([
         { $match: { personId: id, ownerId: owner } },
         { $group: { _id: null, ...BALANCE_GROUP } },
       ])
       .toArray(),
+    // Opening balance before fromDate (only computed if fromDate is set)
+    fromDate
+      ? entriesCol()
+          .aggregate<{ _id: null; gave: number; received: number }>([
+            {
+              $match: {
+                personId: id,
+                ownerId: owner,
+                createdAt: { $lt: fromDate },
+              },
+            },
+            { $group: { _id: null, ...BALANCE_GROUP } },
+          ])
+          .toArray()
+      : Promise.resolve([]),
     entriesCol()
       .find(
-        { personId: id, ownerId: owner },
-        { projection: { type: 1, amountCents: 1, note: 1, dueDate: 1, createdAt: 1 } }
+        entriesQuery,
+        { projection: { type: 1, amountCents: 1, note: 1, dueDate: 1, editedAt: 1, createdAt: 1 } }
       )
       .sort({ createdAt: 1, _id: 1 })
       .toArray(),
+    usersCol().findOne(
+      { _id: owner },
+      { projection: { upiId: 1, upiName: 1 } }
+    ),
   ]);
 
   const balance = balanceRes[0] ?? { gave: 0, received: 0 };
+  const opening = openingRes[0] ?? { gave: 0, received: 0 };
+  const openingBalanceCents = fromDate ? opening.gave - opening.received : 0;
 
-  // Running balance builds up chronologically...
-  let runningCents = 0;
+  // Running balance builds up chronologically from opening balance...
+  let runningCents = openingBalanceCents;
   const chronological = entries.map((entry) => {
     runningCents +=
       entry.type === "GAVE" ? entry.amountCents : -entry.amountCents;
@@ -216,6 +257,7 @@ export async function getPersonDetail(
       amount: paiseToDecimalString(entry.amountCents),
       note: entry.note,
       dueDate: entry.dueDate ? entry.dueDate.toISOString().split("T")[0] : null,
+      editedAt: entry.editedAt ? entry.editedAt.toISOString() : null,
       createdAt: entry.createdAt.toISOString(),
       running: paiseToDecimalString(runningCents),
     };
@@ -230,6 +272,31 @@ export async function getPersonDetail(
     gaveTotal: paiseToDecimalString(balance.gave),
     receivedTotal: paiseToDecimalString(balance.received),
     balance: paiseToDecimalString(balance.gave - balance.received),
+    openingBalance: fromDate ? paiseToDecimalString(openingBalanceCents) : null,
+    range,
+    ownerUpi: ownerDoc
+      ? {
+          upiId: ownerDoc.upiId ?? null,
+          upiName: ownerDoc.upiName ?? null,
+        }
+      : null,
     entries: chronological,
+  };
+}
+
+export async function getOwnerProfile(): Promise<OwnerProfile | null> {
+  const owner = await getOwner();
+  if (!owner) return null;
+
+  const user = await usersCol().findOne(
+    { _id: owner },
+    { projection: { email: 1, upiId: 1, upiName: 1 } }
+  );
+  if (!user) return null;
+
+  return {
+    email: user.email,
+    upiId: user.upiId ?? null,
+    upiName: user.upiName ?? null,
   };
 }

@@ -9,6 +9,8 @@ export type UserDoc = {
   /** Stored lowercase; unique index enforced by setup script. */
   email: string;
   passwordHash: string;
+  upiId?: string | null;
+  upiName?: string | null;
   createdAt: Date;
 };
 
@@ -30,6 +32,7 @@ export type EntryDoc = {
   amountCents: number;
   note: string | null;
   dueDate?: Date | null;
+  editedAt?: Date | null;
   createdAt: Date;
 };
 

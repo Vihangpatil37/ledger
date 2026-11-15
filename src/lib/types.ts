@@ -16,6 +16,7 @@ export type RecentEntryItem = {
   amount: string;
   note: string | null;
   dueDate?: string | null;
+  editedAt?: string | null;
   createdAt: string;
 };
 
@@ -40,7 +41,13 @@ export type EntryRow = {
   amount: string;
   note: string | null;
   dueDate?: string | null;
+  editedAt?: string | null;
   createdAt: string;
+};
+
+export type DateRange = {
+  from?: string; // YYYY-MM-DD
+  to?: string;   // YYYY-MM-DD
 };
 
 export type PersonDetail = {
@@ -50,8 +57,20 @@ export type PersonDetail = {
   gaveTotal: string;
   receivedTotal: string;
   balance: string;
+  openingBalance?: string | null;
+  range?: DateRange;
+  ownerUpi?: {
+    upiId: string | null;
+    upiName: string | null;
+  } | null;
   /** Newest first; running balance is after that entry was added. */
   entries: Array<EntryRow & { running: string }>;
+};
+
+export type OwnerProfile = {
+  email: string;
+  upiId: string | null;
+  upiName: string | null;
 };
 
 export type ActionState = {

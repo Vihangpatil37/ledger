@@ -2,30 +2,49 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AddEntryCard } from "@/components/entries/add-entry-card";
 import { DeleteEntryForm } from "@/components/entries/delete-entry-form";
+import { EditEntryModal } from "@/components/entries/edit-entry-modal";
 import { SettleBalanceModal } from "@/components/people/settle-balance-modal";
 import { ShareStatementModal } from "@/components/people/share-statement-modal";
 import { Money } from "@/components/ui";
 import { getDueStatus } from "@/lib/due";
 import { formatWhen } from "@/lib/format";
 import { balanceMeta } from "@/lib/money";
-import { idSchema } from "@/lib/validation";
+import { getPresetDateRange } from "@/lib/range";
+import { dateRangeSchema, idSchema } from "@/lib/validation";
 import { normalizeWaPhone, reminderMessage, waLink } from "@/lib/whatsapp";
 import { getPersonDetail } from "@/server/readers";
+import { getServerTranslations } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function PersonPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string; to?: string }>;
 }) {
   const { id } = await params;
   if (!idSchema.safeParse(id).success) notFound();
 
-  const detail = await getPersonDetail(id);
+  const rawParams = await searchParams;
+  const parsedRange = dateRangeSchema.safeParse(rawParams);
+  const range = parsedRange.success ? parsedRange.data : undefined;
+
+  const [detail, { t }] = await Promise.all([
+    getPersonDetail(id, range),
+    getServerTranslations(),
+  ]);
   if (!detail) notFound();
 
   const meta = balanceMeta(detail.balance);
+
+  const thisMonth = getPresetDateRange("THIS_MONTH");
+  const last30 = getPresetDateRange("LAST_30_DAYS");
+
+  const isAll = !range?.from && !range?.to;
+  const isThisMonth = range?.from === thisMonth.from && range?.to === thisMonth.to;
+  const isLast30 = range?.from === last30.from && range?.to === last30.to;
 
   // One-click WhatsApp reminder: opens the chat with the reminder pre-filled
   const owesMoney = Number(detail.balance) > 0;
@@ -43,7 +62,7 @@ export default async function PersonPage({
           href="/"
           className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-muted transition-colors hover:text-ink"
         >
-          <span>←</span> Back to people
+          <span>←</span> {t("person.backToPeople")}
         </Link>
         <div className="mt-2 flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -63,7 +82,7 @@ export default async function PersonPage({
             href={`/people/${detail.id}/edit`}
             className="inline-flex min-h-[36px] items-center rounded-xl border border-rule bg-surface px-3 py-1.5 text-xs font-semibold text-ink shadow-[0_1px_2px_0_rgba(30,27,24,0.05)] transition-all duration-150 hover:bg-paper active:scale-[0.98]"
           >
-            Edit profile
+            {t("person.editPerson")}
           </Link>
         </div>
       </div>
@@ -71,7 +90,7 @@ export default async function PersonPage({
       {/* Balance overview card */}
       <div className="rounded-xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)]">
         <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted">
-          Current Balance · {meta.label}
+          {t("person.runningBalance")}
         </p>
         <Money
           amount={detail.balance}
@@ -80,12 +99,12 @@ export default async function PersonPage({
         />
         <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-rule/50 pt-3.5 text-xs text-muted">
           <span>
-            Total given:{" "}
+            {t("entry.gave")}:{" "}
             <Money amount={detail.gaveTotal} className="font-semibold text-ink" />
           </span>
           <span className="hidden sm:inline text-faint">·</span>
           <span>
-            Total received:{" "}
+            {t("entry.received")}:{" "}
             <Money amount={detail.receivedTotal} className="font-semibold text-ink" />
           </span>
         </div>
@@ -135,21 +154,82 @@ export default async function PersonPage({
 
       {/* Entry History */}
       <section className="space-y-3 pt-2">
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold text-ink tracking-tight">
-            Activity History
-          </h2>
-          <span className="font-mono text-xs text-muted">
-            {detail.entries.length} {detail.entries.length === 1 ? "entry" : "entries"}
-          </span>
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-display text-lg font-bold text-ink tracking-tight">
+              Activity History
+            </h2>
+            <span className="font-mono text-xs text-muted">
+              {detail.entries.length} {detail.entries.length === 1 ? "entry" : "entries"}
+            </span>
+          </div>
+
+          {/* Date range filter pills */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+            <Link
+              href={`/people/${detail.id}`}
+              className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors ${
+                isAll
+                  ? "bg-ink text-paper shadow-2xs"
+                  : "border border-rule bg-surface text-muted hover:bg-paper hover:text-ink"
+              }`}
+            >
+              {t("person.rangeAll")}
+            </Link>
+            <Link
+              href={`/people/${detail.id}?from=${thisMonth.from}&to=${thisMonth.to}`}
+              className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors ${
+                isThisMonth
+                  ? "bg-ink text-paper shadow-2xs"
+                  : "border border-rule bg-surface text-muted hover:bg-paper hover:text-ink"
+              }`}
+            >
+              {t("person.rangeThisMonth")}
+            </Link>
+            <Link
+              href={`/people/${detail.id}?from=${last30.from}&to=${last30.to}`}
+              className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors ${
+                isLast30
+                  ? "bg-ink text-paper shadow-2xs"
+                  : "border border-rule bg-surface text-muted hover:bg-paper hover:text-ink"
+              }`}
+            >
+              {t("person.rangeLast30Days")}
+            </Link>
+          </div>
         </div>
 
-        {detail.entries.length === 0 ? (
+        {detail.entries.length === 0 && !detail.openingBalance ? (
           <div className="rounded-lg border border-dashed border-rule bg-surface px-4 py-8 sm:px-6 sm:py-8 text-center text-xs sm:text-sm text-muted">
-            No entries recorded yet · use the form above to record your first transaction.
+            {t("person.noEntriesInRange")}
           </div>
         ) : (
           <ul className="divide-y divide-rule/60 overflow-hidden rounded-lg border border-rule bg-surface">
+            {detail.openingBalance !== null && detail.openingBalance !== undefined ? (
+              <li className="flex items-center justify-between gap-2.5 bg-paper/70 px-3.5 py-2.5 text-xs sm:px-4 border-b border-rule/70">
+                <div>
+                  <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-muted">
+                    {t("person.openingBalance")}
+                  </span>
+                  <span className="font-mono text-[10px] text-faint ml-1.5">
+                    prior to {range?.from}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <Money
+                    amount={detail.openingBalance}
+                    className="font-bold text-xs text-ink"
+                  />
+                </div>
+              </li>
+            ) : null}
+
+            {detail.entries.length === 0 ? (
+              <li className="px-4 py-6 text-center text-xs text-muted">
+                {t("person.noEntriesInRange")}
+              </li>
+            ) : null}
+
             {detail.entries.map((entry) => {
               const runningMeta = balanceMeta(entry.running);
               const isGave = entry.type === "GAVE";
@@ -171,7 +251,7 @@ export default async function PersonPage({
                           isGave ? "text-debit" : "text-credit"
                         }`}
                       >
-                        {isGave ? "Udhar " : "You received "}
+                        {isGave ? `${t("entry.gave")} ` : `${t("entry.received")} `}
                         <Money amount={entry.amount} />
                       </p>
                       {dueInfo ? (
@@ -189,15 +269,25 @@ export default async function PersonPage({
                       </p>
                     ) : null}
 
-                    <p className="mt-1 text-[11px] sm:text-xs text-muted">
-                      {formatWhen(entry.createdAt)} · balance{" "}
+                    <p className="mt-1 text-[11px] sm:text-xs text-muted flex items-center gap-1 flex-wrap">
+                      <span>{formatWhen(entry.createdAt)}</span>
+                      {entry.editedAt ? (
+                        <span className="font-mono text-[10px] text-muted italic">
+                          {t("person.edited")}
+                        </span>
+                      ) : null}
+                      <span>·</span>
+                      <span>{t("person.runningBalance")}</span>
                       <Money
                         amount={entry.running}
                         className={`font-medium ${runningMeta.className}`}
                       />
                     </p>
                   </div>
-                  <DeleteEntryForm entryId={entry.id} personId={detail.id} />
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <EditEntryModal entry={entry} />
+                    <DeleteEntryForm entryId={entry.id} personId={detail.id} />
+                  </div>
                 </li>
               );
             })}

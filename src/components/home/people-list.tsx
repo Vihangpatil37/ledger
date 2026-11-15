@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Money } from "@/components/ui";
-import { balanceMeta } from "@/lib/money";
+import { balanceMeta, formatMoney } from "@/lib/money";
 import { normalizeWaPhone, waLink } from "@/lib/whatsapp";
+import { useLanguage } from "@/lib/i18n/client";
 import type { PersonListRow } from "@/lib/types";
 
 type FilterTab = "ALL" | "OWES_YOU" | "YOU_OWE" | "OVERDUE" | "SETTLED";
@@ -28,6 +29,7 @@ type PeopleListProps = {
 export function PeopleList({ rows, counts }: PeopleListProps) {
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<FilterTab>("ALL");
+  const { t } = useLanguage();
 
   const trimmed = query.trim().toLowerCase();
 
@@ -57,11 +59,11 @@ export function PeopleList({ rows, counts }: PeopleListProps) {
         {/* Filter Pills */}
         <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           {[
-            { id: "ALL", label: "All", count: rows.length },
-            { id: "OWES_YOU", label: "Owes you", count: counts.owesYou },
-            { id: "YOU_OWE", label: "You owe", count: counts.youOwe },
-            { id: "OVERDUE", label: "Overdue", count: counts.overdue },
-            { id: "SETTLED", label: "Settled", count: counts.settled },
+            { id: "ALL", label: t("home.filterAll"), count: rows.length },
+            { id: "OWES_YOU", label: t("home.filterDebtors"), count: counts.owesYou },
+            { id: "YOU_OWE", label: t("home.filterCreditors"), count: counts.youOwe },
+            { id: "OVERDUE", label: t("home.filterOverdue"), count: counts.overdue },
+            { id: "SETTLED", label: t("home.filterSettled"), count: counts.settled },
           ].map((item) => {
             const active = tab === item.id;
             const isOverdueTab = item.id === "OVERDUE" && item.count > 0;
@@ -116,7 +118,7 @@ export function PeopleList({ rows, counts }: PeopleListProps) {
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search name or phone…"
+              placeholder={t("home.searchPlaceholder")}
               aria-label="Search people"
               className="w-full min-h-[36px] rounded-lg border border-rule bg-surface pl-8 pr-7 py-1 text-xs text-ink placeholder:text-faint focus-visible:border-focus focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-focus"
             />
@@ -135,30 +137,10 @@ export function PeopleList({ rows, counts }: PeopleListProps) {
 
       {/* Directory List */}
       {filtered.length === 0 ? (
-        trimmed ? (
-          <Nothing
-            title="No matches found"
-            hint={`No contacts matched "${trimmed}". Try searching by a different name or phone number.`}
-          />
-        ) : tab !== "ALL" ? (
-          <Nothing
-            title={`No ${
-              tab === "OWES_YOU"
-                ? "pending collections"
-                : tab === "YOU_OWE"
-                  ? "pending payables"
-                  : tab === "OVERDUE"
-                    ? "overdue payments"
-                    : "settled contacts"
-            }`}
-            hint="Contacts in this category will appear here once balance changes."
-          />
-        ) : (
-          <Nothing
-            title="Your khata book is empty"
-            hint="Add your first contact to start recording Udhar and received payments."
-          />
-        )
+        <Nothing
+          title={t("home.noPeopleFound")}
+          hint={tab === "ALL" && !trimmed ? t("home.addFirstPerson") : ""}
+        />
       ) : (
         <ul className="divide-y divide-rule/60 overflow-hidden rounded-xl border border-rule bg-surface shadow-[0_2px_8px_0_rgba(30,27,24,0.03)]">
           {filtered.map((row) => {
@@ -170,7 +152,7 @@ export function PeopleList({ rows, counts }: PeopleListProps) {
             const quickWaHref = waNumber
               ? waLink(
                   waNumber,
-                  `Namaste ${row.name} ji 🙏 Aapke khate mein balance baki hai.`
+                  `Namaste *${row.name.trim()}* ji 🙏 Aapke khate mein *${formatMoney(row.balance)}* baaki udhar hai.`
                 )
               : null;
 
@@ -196,12 +178,12 @@ export function PeopleList({ rows, counts }: PeopleListProps) {
                       </p>
                       {row.isOverdue ? (
                         <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono font-bold tracking-wider uppercase bg-debit-light text-debit border border-debit/30">
-                          Overdue
+                          {t("home.overdueBadge")}
                         </span>
                       ) : null}
                     </div>
                     <p className="truncate font-mono text-xs text-muted">
-                      {row.phone ? row.phone : "No phone saved"}
+                      {row.phone ? row.phone : t("person.noPhone")}
                     </p>
                   </div>
                 </Link>
@@ -230,7 +212,7 @@ export function PeopleList({ rows, counts }: PeopleListProps) {
                   <Link href={`/people/${row.id}`} className="text-right">
                     {isSettled ? (
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold tracking-wider uppercase bg-credit-light text-credit border border-credit/30">
-                        Settled
+                        {t("home.settledBadge")}
                       </span>
                     ) : (
                       <>
@@ -246,7 +228,7 @@ export function PeopleList({ rows, counts }: PeopleListProps) {
                               : "text-credit"
                           }`}
                         >
-                          {meta.label}
+                          {isOwesYou ? t("entry.gave") : t("home.jamaBadge")}
                         </span>
                       </>
                     )}
