@@ -18,6 +18,7 @@ const mockFindOnePerson = vi.fn();
 const mockInsertOnePerson = vi.fn();
 const mockUpdateOnePerson = vi.fn();
 const mockDeleteManyEntries = vi.fn();
+const mockUpdateManyEntries = vi.fn();
 const mockUpdateOneUser = vi.fn();
 
 const mockWithTransaction = vi.fn();
@@ -42,6 +43,7 @@ vi.mock("@/lib/mongo", () => ({
     deleteMany: mockDeleteManyEntries,
     findOne: mockFindOneEntry,
     updateOne: mockUpdateOneEntry,
+    updateMany: mockUpdateManyEntries,
     insertOne: mockInsertOneEntry,
   }),
   peopleCol: () => ({
@@ -91,20 +93,20 @@ describe("deleteEntry", () => {
 
   it("handles database deletion errors gracefully without throwing", async () => {
     mockGetOwner.mockResolvedValue("owner-1");
-    mockDeleteOneEntry.mockRejectedValue(new Error("Database connection lost"));
+    mockUpdateOneEntry.mockRejectedValue(new Error("Database connection lost"));
 
     const fd = new FormData();
     fd.append("entryId", "550e8400-e29b-41d4-a716-446655440000");
     fd.append("personId", "550e8400-e29b-41d4-a716-446655440001");
 
     await expect(deleteEntry(fd)).resolves.not.toThrow();
-    expect(mockDeleteOneEntry).toHaveBeenCalled();
+    expect(mockUpdateOneEntry).toHaveBeenCalled();
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("successfully deletes entry and revalidates paths", async () => {
+  it("successfully soft-deletes entry and revalidates paths", async () => {
     mockGetOwner.mockResolvedValue("owner-1");
-    mockDeleteOneEntry.mockResolvedValue({ deletedCount: 1 });
+    mockUpdateOneEntry.mockResolvedValue({ modifiedCount: 1 });
 
     const entryId = "550e8400-e29b-41d4-a716-446655440000";
     const personId = "550e8400-e29b-41d4-a716-446655440001";
@@ -113,10 +115,15 @@ describe("deleteEntry", () => {
     fd.append("personId", personId);
 
     await deleteEntry(fd);
-    expect(mockDeleteOneEntry).toHaveBeenCalledWith({
-      _id: entryId,
-      ownerId: "owner-1",
-    });
+    expect(mockUpdateOneEntry).toHaveBeenCalledWith(
+      {
+        _id: entryId,
+        ownerId: "owner-1",
+      },
+      expect.objectContaining({
+        $set: expect.objectContaining({ deletedAt: expect.any(Date) }),
+      })
+    );
     expect(mockRevalidatePath).toHaveBeenCalledWith("/");
     expect(mockRevalidatePath).toHaveBeenCalledWith(`/people/${personId}`);
   });
@@ -254,8 +261,8 @@ describe("deletePerson", () => {
 
     await expect(deletePerson(fd)).rejects.toThrow("NEXT_REDIRECT: /");
     expect(mockWithTransaction).toHaveBeenCalled();
-    expect(mockDeleteOnePerson).toHaveBeenCalled();
-    expect(mockDeleteManyEntries).toHaveBeenCalled();
+    expect(mockUpdateOnePerson).toHaveBeenCalled();
+    expect(mockUpdateManyEntries).toHaveBeenCalled();
     expect(mockEndSession).toHaveBeenCalled();
     expect(mockRevalidatePath).toHaveBeenCalledWith("/");
   });
