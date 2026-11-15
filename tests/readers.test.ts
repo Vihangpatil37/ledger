@@ -5,6 +5,7 @@ const mockPeopleFindOne = vi.fn();
 const mockPeopleFindToArray = vi.fn();
 const mockEntriesAggregateToArray = vi.fn();
 const mockEntriesFindToArray = vi.fn();
+const mockUsersFindOne = vi.fn().mockResolvedValue({ upiId: null, upiName: null });
 
 const mockPeopleCursor = {
   sort: vi.fn().mockReturnThis(),
@@ -33,6 +34,9 @@ vi.mock("@/lib/mongo", () => ({
   entriesCol: () => ({
     aggregate: () => mockAggregateCursor,
     find: () => mockFindCursor,
+  }),
+  usersCol: () => ({
+    findOne: mockUsersFindOne,
   }),
 }));
 
@@ -159,6 +163,44 @@ describe("getPersonDetail", () => {
     expect(result.entries[1].running).toBe("300.00");
     expect(result.entries[2].id).toBe("e1");
     expect(result.entries[2].running).toBe("500.00");
+  });
+
+  it("calculates historical opening balance and adjusts filtered running balances when date range is specified", async () => {
+    mockGetOwner.mockResolvedValue("owner-1");
+    mockPeopleFindOne.mockResolvedValue({
+      _id: "person-3",
+      name: "Geeta Ben",
+      phone: null,
+    });
+
+    // 1st aggregate call: lifetime balance (gave 1000, received 200 -> balance 800)
+    // 2nd aggregate call: opening balance prior to fromDate (gave 500, received 100 -> opening balance 400)
+    mockEntriesAggregateToArray
+      .mockResolvedValueOnce([{ _id: null, gave: 100000, received: 20000 }])
+      .mockResolvedValueOnce([{ _id: null, gave: 50000, received: 10000 }]);
+
+    // Only entries within the filtered range
+    mockEntriesFindToArray.mockResolvedValue([
+      {
+        _id: "e-in-range",
+        type: "GAVE" as const,
+        amountCents: 50000, // +₹500 on top of opening balance 400 = running 900
+        note: "Recent loan",
+        dueDate: null,
+        editedAt: null,
+        createdAt: new Date("2026-11-10T10:00:00Z"),
+      },
+    ]);
+
+    const result = await getPersonDetail("person-3", { from: "2026-11-01" });
+    expect(result).not.toBeNull();
+    if (!result) return;
+
+    expect(result.openingBalance).toBe("400.00");
+    expect(result.balance).toBe("800.00");
+    expect(result.entries).toHaveLength(1);
+    // Running balance starts from opening balance (400) + 500 = 900
+    expect(result.entries[0].running).toBe("900.00");
   });
 });
 
