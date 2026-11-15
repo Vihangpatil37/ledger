@@ -38,6 +38,11 @@ vi.mock("@/lib/mongo", () => ({
   usersCol: () => ({
     findOne: mockUsersFindOne,
   }),
+  promisesCol: () => ({
+    find: () => ({
+      toArray: vi.fn().mockResolvedValue([]),
+    }),
+  }),
 }));
 
 import { getHomeSummary, getPersonDetail } from "@/server/readers";
