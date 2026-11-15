@@ -52,9 +52,13 @@ describe("reminderMessage", () => {
 
   it("generates Hinglish payment reminder with formatted totals", () => {
     const msg = reminderMessage(mockDetail);
-    expect(msg).toContain("Namaste Mohan Lal ji");
-    expect(msg).toContain("Aapke khate mein");
-    expect(msg).toContain("baaki hai");
+    expect(msg).toContain("📋 *Khata Reminder*");
+    expect(msg).toContain("Namaste *Mohan Lal* ji,");
+    expect(msg).toContain("Aapke khate ka taaza hisab:");
+    expect(msg).toContain("💰 *Baaki Udhar:* *₹1,000.00*");
+    expect(msg).toContain("📊 Kul Udhar: ₹1,500.00 | Kul Jama: ₹500.00");
+    expect(msg).toContain("Kripya baaki rashi ka bhugtan samay par karein aur khata update rakhein.");
+    expect(msg).toContain("Dhanyawad!");
   });
 
   it("includes overdue notice when an active debt is overdue", () => {
@@ -74,8 +78,93 @@ describe("reminderMessage", () => {
       ],
     };
     const msg = reminderMessage(overdueDetail);
-    expect(msg).toContain("Wada tha:");
+    expect(msg).toContain("⚠️ *Overdue:*");
+    expect(msg).toContain(`${pastDueDate} tak wada tha`);
     expect(msg).toContain("Overdue by 5 days");
+  });
+
+  it("includes UPI ID line and owner name when owner has a configured UPI ID and balance is positive", () => {
+    const detailWithUpi: PersonDetail = {
+      ...mockDetail,
+      ownerUpi: {
+        upiId: "mybusiness@upi",
+        upiName: "My Business",
+      },
+    };
+    const msg = reminderMessage(detailWithUpi);
+    expect(msg).toContain("📋 *Khata Reminder* · My Business");
+    expect(msg).toContain("💳 *Online Payment ke liye:*");
+    expect(msg).toContain("UPI ID: *mybusiness@upi*");
+    expect(msg).toContain("Naam: My Business");
+    expect(msg).toContain("Google Pay, PhonePe, Paytm ya kisi bhi UPI app se pay kar sakte hain");
+    expect(msg).toContain("— *My Business*");
+  });
+
+  it("omits UPI ID block when owner has no UPI ID or balance is negative", () => {
+    const msgWithoutUpi = reminderMessage(mockDetail);
+    expect(msgWithoutUpi).not.toContain("UPI ID:");
+    expect(msgWithoutUpi).not.toContain("Online Payment ke liye");
+
+    const negativeDetail: PersonDetail = {
+      ...mockDetail,
+      balance: "-500",
+      ownerUpi: { upiId: "mybusiness@upi", upiName: "My Business" },
+    };
+    expect(reminderMessage(negativeDetail)).not.toContain("UPI ID:");
+  });
+
+  it("handles owner with only shop name but no UPI ID cleanly", () => {
+    const detailWithNameOnly: PersonDetail = {
+      ...mockDetail,
+      ownerUpi: {
+        upiId: "",
+        upiName: "Corner Chai Shop",
+      },
+    };
+    const msg = reminderMessage(detailWithNameOnly);
+    expect(msg).toContain("📋 *Khata Reminder* · Corner Chai Shop");
+    expect(msg).toContain("— *Corner Chai Shop*");
+    expect(msg).not.toContain("Online Payment ke liye");
+    expect(msg).not.toContain("UPI ID:");
+  });
+
+  it("trims whitespace from customer name, UPI ID, and shop name", () => {
+    const paddedDetail: PersonDetail = {
+      ...mockDetail,
+      name: "   Ramesh Shah   ",
+      ownerUpi: {
+        upiId: "   ramesh@okhdfcbank   ",
+        upiName: "   Ramesh Store   ",
+      },
+    };
+    const msg = reminderMessage(paddedDetail);
+    expect(msg).toContain("Namaste *Ramesh Shah* ji,");
+    expect(msg).toContain("📋 *Khata Reminder* · Ramesh Store");
+    expect(msg).toContain("UPI ID: *ramesh@okhdfcbank*");
+    expect(msg).toContain("Naam: Ramesh Store");
+    expect(msg).toContain("— *Ramesh Store*");
+    expect(msg).not.toContain("   ");
+  });
+
+  it("treats whitespace-only owner configs as absent", () => {
+    const whitespaceDetail: PersonDetail = {
+      ...mockDetail,
+      ownerUpi: {
+        upiId: "   ",
+        upiName: "   ",
+      },
+    };
+    const msg = reminderMessage(whitespaceDetail);
+    expect(msg).toContain("📋 *Khata Reminder*");
+    expect(msg).not.toContain("·");
+    expect(msg).not.toContain("Online Payment ke liye");
+    expect(msg).not.toContain("UPI ID:");
+    expect(msg).not.toContain("— *");
+  });
+
+  it("contains no broken Unicode replacement characters or malformed UTF-8", () => {
+    const msg = reminderMessage(mockDetail);
+    expect(msg).not.toContain("\uFFFD");
   });
 
   it("does not include overdue notice if overdue debt was fully covered by repayments", () => {
@@ -118,7 +207,7 @@ describe("reminderMessage", () => {
       ],
     };
     const msg = reminderMessage(coveredDetail);
-    expect(msg).not.toContain("Wada tha:");
+    expect(msg).not.toContain("*Overdue:*");
   });
 
   it("picks the oldest un-repaid loan when prior overdue loan is covered by repayment", () => {
@@ -153,7 +242,8 @@ describe("reminderMessage", () => {
       ],
     };
     const msg = reminderMessage(multiOverdueDetail);
-    expect(msg).toContain("Wada tha:");
+    expect(msg).toContain("⚠️ *Overdue:*");
+    expect(msg).toContain(`${newerDate} tak wada tha`);
     expect(msg).toContain("Overdue by 3 days");
     expect(msg).not.toContain("Overdue by 10 days");
   });
@@ -187,19 +277,114 @@ describe("formatStatementMessage", () => {
     ],
   };
 
-  it("includes header, current balance, and transaction history", () => {
+  it("includes header, current balance, and transaction history in Hinglish", () => {
     const statement = formatStatementMessage(mockDetail);
-    expect(statement).toContain("Ledger Statement: Mohan Lal");
-    expect(statement).toContain("Current Balance:");
-    expect(statement).toContain("Total Given:");
-    expect(statement).toContain("Udhar");
-    expect(statement).toContain("Received");
-    expect(statement).toContain("Supplies");
+    expect(statement).toContain("📒 *Khata Statement: Mohan Lal*");
+    expect(statement).toContain("Tarikh:");
+    expect(statement).toContain("💰 *Net Balance:* *₹1,000.00* (Baaki Udhar (Lene baaki))");
+    expect(statement).toContain("📊 Kul Udhar: ₹1,500.00 | Kul Jama: ₹500.00");
+    expect(statement).toContain("📋 *Pichhle Vyavahar (Transaction History):*");
+    expect(statement).toContain("Udhar ₹1,500.00 - Supplies");
+    expect(statement).toContain("Jama ₹500.00 - Cash return");
+    expect(statement).toContain("_Shared via Chai Ledger_");
   });
 
-  it("respects limit parameter and appends earlier transactions count", () => {
+  it("formats advance deposit status when balance is negative", () => {
+    const negativeDetail: PersonDetail = {
+      ...mockDetail,
+      balance: "-500",
+      gaveTotal: "1000",
+      receivedTotal: "1500",
+    };
+    const statement = formatStatementMessage(negativeDetail);
+    expect(statement).toContain("💰 *Net Balance:* *₹500.00* (Advance Deposit (Jama rashi))");
+  });
+
+  it("formats settled status when balance is zero", () => {
+    const settledDetail: PersonDetail = {
+      ...mockDetail,
+      balance: "0",
+      gaveTotal: "1000",
+      receivedTotal: "1000",
+    };
+    const statement = formatStatementMessage(settledDetail);
+    expect(statement).toContain("💰 *Net Balance:* *₹0.00* (Chukte (Settled))");
+  });
+
+  it("includes owner shop name and UPI payment footer when present", () => {
+    const detailWithOwner: PersonDetail = {
+      ...mockDetail,
+      ownerUpi: {
+        upiId: "chaishop@okhdfcbank",
+        upiName: "Chai Corner",
+      },
+    };
+    const statement = formatStatementMessage(detailWithOwner);
+    expect(statement).toContain("Dukan / Malik: Chai Corner");
+    expect(statement).toContain("💳 *UPI ID:* chaishop@okhdfcbank (Chai Corner)");
+  });
+
+  it("respects limit parameter and appends earlier transactions count in Hinglish", () => {
     const statement = formatStatementMessage(mockDetail, 1);
-    expect(statement).toContain("and 1 earlier transactions");
+    expect(statement).toContain("... aur 1 pichhle vyavahar");
+  });
+
+  it("includes opening balance when present", () => {
+    const detailWithOpening: PersonDetail = {
+      ...mockDetail,
+      openingBalance: "250.00",
+    };
+    const statement = formatStatementMessage(detailWithOpening);
+    expect(statement).toContain("Opening Balance: ₹250.00 (Pichhla Baaki)");
+  });
+
+  it("handles empty transactions list with Hinglish message", () => {
+    const emptyDetail: PersonDetail = {
+      ...mockDetail,
+      entries: [],
+    };
+    const statement = formatStatementMessage(emptyDetail);
+    expect(statement).toContain("(Koi vyavahar darj nahi hai)");
+  });
+
+  it("formats transactions with due dates as [Due: YYYY-MM-DD]", () => {
+    const detailWithDue: PersonDetail = {
+      ...mockDetail,
+      entries: [
+        {
+          id: "e-due",
+          type: "GAVE",
+          amount: "800",
+          note: "Weekly groceries",
+          dueDate: "2026-11-25",
+          createdAt: "2026-11-15T10:00:00.000Z",
+          running: "800",
+        },
+      ],
+    };
+    const statement = formatStatementMessage(detailWithDue);
+    expect(statement).toContain("Udhar ₹800.00 - Weekly groceries [Due: 2026-11-25]");
+  });
+
+  it("trims whitespace from customer name and shop details in statements", () => {
+    const paddedDetail: PersonDetail = {
+      ...mockDetail,
+      name: "   Pooja Sharma   ",
+      ownerUpi: {
+        upiId: "   pooja@okaxis   ",
+        upiName: "   Pooja General Store   ",
+      },
+    };
+    const statement = formatStatementMessage(paddedDetail);
+    expect(statement).toContain("📒 *Khata Statement: Pooja Sharma*");
+    expect(statement).toContain("Dukan / Malik: Pooja General Store");
+    expect(statement).toContain("💳 *UPI ID:* pooja@okaxis (Pooja General Store)");
+    expect(statement).not.toContain("   ");
+  });
+
+  it("contains no broken Unicode replacement characters in statement", () => {
+    const statement = formatStatementMessage(mockDetail);
+    expect(statement).not.toContain("\uFFFD");
   });
 });
 
