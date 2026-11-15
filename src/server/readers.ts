@@ -596,6 +596,64 @@ export async function getFollowUpQueue(): Promise<FollowUpItem[]> {
 }
 
 /** Returns soft-deleted items currently in Trash within 30-day restore window. */
+export async function getTrashItems(): Promise<TrashItem[]> {
+  const owner = await getOwner();
+  if (!owner) return [];
+
+  const [deletedPeople, deletedEntries] = await Promise.all([
+    peopleCol()
+      .find({ ownerId: owner, deletedAt: { $ne: null } })
+      .sort({ deletedAt: -1 })
+      .toArray(),
+    entriesCol()
+      .find({ ownerId: owner, deletedAt: { $ne: null } })
+      .sort({ deletedAt: -1 })
+      .toArray(),
+  ]);
+
+  const allPeople = await peopleCol()
+    .find({ ownerId: owner }, { projection: { name: 1 } })
+    .toArray();
+  const personNameMap = new Map(allPeople.map((p) => [p._id, p.name]));
+
+  const items: TrashItem[] = [];
+
+  for (const p of deletedPeople) {
+    if (!p.deletedAt) continue;
+    items.push({
+      id: p._id,
+      kind: "PERSON",
+      title: p.name,
+      subtitle: p.phone ? `Phone: ${p.phone}` : "Contact",
+      deletedAt: p.deletedAt.toISOString(),
+      daysRemaining: getDaysRemaining(p.deletedAt),
+    });
+  }
+
+  for (const e of deletedEntries) {
+    if (!e.deletedAt) continue;
+    const pName = personNameMap.get(e.personId) ?? "Unknown Contact";
+    const typeLabel = e.type === "GAVE" ? "Udhar" : "Jama";
+    items.push({
+      id: e._id,
+      kind: "ENTRY",
+      title: `${typeLabel} · ${pName}`,
+      subtitle: e.note ?? undefined,
+      amount: paiseToDecimalString(e.amountCents),
+      deletedAt: e.deletedAt.toISOString(),
+      daysRemaining: getDaysRemaining(e.deletedAt),
+      personId: e.personId,
+    });
+  }
+
+  // Sort newest deleted first
+  items.sort(
+    (a, b) => new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime()
+  );
+
+  return items;
+}
+
 export async function getOwnerProfile(): Promise<OwnerProfile | null> {
   const owner = await getOwner();
   if (!owner) return null;
