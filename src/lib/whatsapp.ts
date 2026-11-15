@@ -71,6 +71,11 @@ export function reminderMessage(detail: PersonDetail): string {
     }
   }
 
+  // Broken promise to pay takes highest priority notice
+  if (detail.promiseDate && isOverdueDate(detail.promiseDate)) {
+    overdueNotice = `⚠️ *Wada Yaad Dihani:* ${detail.promiseDate} tak wada tha, kripya hisab clear karein`;
+  }
+
   const customerName = detail.name?.trim() || detail.name;
   const ownerName = detail.ownerUpi?.upiName?.trim() || undefined;
   const upiId = detail.ownerUpi?.upiId?.trim() || undefined;
