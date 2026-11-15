@@ -180,3 +180,118 @@ export async function restoreBackupJson(
   };
 }
 
+export async function previewCsvImport(
+  csvText: string
+): Promise<{ ok: boolean; preview?: CsvImportPreview; error?: string }> {
+  const owner = await getOwner();
+  if (!owner) return { ok: false, error: "Please sign in again." };
+
+  try {
+    const existingPeople = await peopleCol()
+      .find({ ownerId: owner, ...activeFilter() }, { projection: { name: 1, phone: 1 } })
+      .toArray();
+
+    const preview = parseCsvKhata(
+      csvText,
+      existingPeople.map((p) => ({ id: p._id, name: p.name, phone: p.phone }))
+    );
+
+    return { ok: true, preview };
+  } catch (err) {
+    console.error("Failed to preview CSV:", err);
+    return { ok: false, error: "Failed to parse CSV file." };
+  }
+}
+
+export async function commitCsvImport(
+  csvText: string
+): Promise<ActionState & { importedCount?: number }> {
+  const owner = await getOwner();
+  if (!owner) return { error: "Please sign in again." };
+
+  try {
+    const existingPeople = await peopleCol()
+      .find({ ownerId: owner, ...activeFilter() }, { projection: { name: 1, phone: 1 } })
+      .toArray();
+
+    const preview = parseCsvKhata(
+      csvText,
+      existingPeople.map((p) => ({ id: p._id, name: p.name, phone: p.phone }))
+    );
+
+    const validRows = preview.rows.filter((r) => r.status === "VALID");
+    if (validRows.length === 0) {
+      return { error: "No valid rows found to import." };
+    }
+
+    let session: ClientSession | undefined;
+    try {
+      session = mongoClient().startSession();
+      await session.withTransaction(async () => {
+        // Map of contacts (normalized phone or name -> id)
+        const personIdMap = new Map<string, string>();
+        for (const p of existingPeople) {
+          if (p.phone) {
+            const norm = normalizePhone(p.phone);
+            if (norm) personIdMap.set(norm, p._id);
+          }
+          personIdMap.set(p.name.trim().toLowerCase(), p._id);
+        }
+
+        // Create missing contacts first
+        for (const row of validRows) {
+          const normPhone = row.phone ? normalizePhone(row.phone) : null;
+          const lookupKey = normPhone || row.name.trim().toLowerCase();
+
+          if (!personIdMap.has(lookupKey)) {
+            const newPersonId = randomUUID();
+            await peopleCol().insertOne(
+              {
+                _id: newPersonId,
+                ownerId: owner,
+                name: row.name.trim(),
+                phone: row.phone,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              },
+              { session }
+            );
+            personIdMap.set(lookupKey, newPersonId);
+            if (normPhone) personIdMap.set(row.name.trim().toLowerCase(), newPersonId);
+          }
+        }
+
+        // Insert valid entries
+        for (const row of validRows) {
+          const normPhone = row.phone ? normalizePhone(row.phone) : null;
+          const lookupKey = normPhone || row.name.trim().toLowerCase();
+          const targetPersonId = personIdMap.get(lookupKey);
+          if (!targetPersonId) continue;
+
+          await entriesCol().insertOne(
+            {
+              _id: randomUUID(),
+              ownerId: owner,
+              personId: targetPersonId,
+              type: row.type,
+              amountCents: decimalStringToPaise(row.amount),
+              note: row.note ?? null,
+              dueDate: row.dueDate ? new Date(row.dueDate) : null,
+              createdAt: new Date(),
+            },
+            { session }
+          );
+        }
+      });
+    } finally {
+      if (session) await session.endSession();
+    }
+
+    revalidatePath("/");
+    revalidatePath("/settings");
+    return { ok: true, importedCount: validRows.length };
+  } catch (err) {
+    console.error("Failed to commit CSV import:", err);
+    return { error: "Could not complete import. Try again." };
+  }
+}
