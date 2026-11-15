@@ -19,6 +19,10 @@ export type PersonDoc = {
   ownerId: string;
   name: string;
   phone: string | null;
+  promiseDate?: Date | null;
+  promiseNote?: string | null;
+  lastRemindedAt?: Date | null;
+  deletedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -33,6 +37,7 @@ export type EntryDoc = {
   note: string | null;
   dueDate?: Date | null;
   editedAt?: Date | null;
+  deletedAt?: Date | null;
   createdAt: Date;
 };
 
