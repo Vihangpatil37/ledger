@@ -367,6 +367,235 @@ export async function getPersonDetail(
  * 3. Due today
  * 4. Due soon (<= 3 days)
  */
+export async function getFollowUpQueue(): Promise<FollowUpItem[]> {
+  const owner = await getOwner();
+  if (!owner) return [];
+
+  const istTodayStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+  }).format(new Date());
+  const today = new Date(`${istTodayStr}T00:00:00+05:30`);
+  const threeDaysLater = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+  const [people, balances, debtorEntries, ownerDoc, brokenPromises] =
+    await Promise.all([
+      peopleCol()
+        .find(
+          { ownerId: owner, ...activeFilter() },
+          {
+            projection: {
+              name: 1,
+              phone: 1,
+              promiseDate: 1,
+              promiseNote: 1,
+              lastRemindedAt: 1,
+            },
+          }
+        )
+        .toArray(),
+      entriesCol()
+        .aggregate<{ _id: string; gave: number; received: number }>([
+          { $match: { ownerId: owner, ...activeFilter() } },
+          { $group: { _id: "$personId", ...BALANCE_GROUP } },
+        ])
+        .toArray(),
+      entriesCol()
+        .find(
+          { ownerId: owner, ...activeFilter() },
+          {
+            projection: {
+              personId: 1,
+              type: 1,
+              amountCents: 1,
+              dueDate: 1,
+              createdAt: 1,
+            },
+          }
+        )
+        .toArray(),
+      usersCol().findOne(
+        { _id: owner },
+        { projection: { upiId: 1, upiName: 1 } }
+      ),
+      promisesCol
+        ? promisesCol()
+            .find({ ownerId: owner, status: "BROKEN" })
+            .toArray()
+            .catch(() => [])
+        : Promise.resolve([]),
+    ]);
+
+  const balanceByPerson = new Map(balances.map((b) => [b._id, b]));
+  const entriesByPerson = new Map<string, typeof debtorEntries>();
+  for (const e of debtorEntries) {
+    const list = entriesByPerson.get(e.personId) ?? [];
+    list.push(e);
+    entriesByPerson.set(e.personId, list);
+  }
+
+  const brokenPromisesCountByPerson = new Map<string, number>();
+  for (const bp of brokenPromises) {
+    const count = brokenPromisesCountByPerson.get(bp.personId) ?? 0;
+    brokenPromisesCountByPerson.set(bp.personId, count + 1);
+  }
+
+  const items: FollowUpItem[] = [];
+
+  for (const person of people) {
+    const b = balanceByPerson.get(person._id);
+    const balanceCents = b ? b.gave - b.received : 0;
+    if (balanceCents <= 0) continue; // Only people who owe money
+
+    const pEntries = entriesByPerson.get(person._id) ?? [];
+    const brokenCount = brokenPromisesCountByPerson.get(person._id) ?? 0;
+    const reliability = computeReliabilityScore({
+      entries: pEntries,
+      brokenPromisesCount: brokenCount,
+    });
+
+    const promiseDateStr = person.promiseDate
+      ? person.promiseDate.toISOString().split("T")[0]
+      : null;
+
+    let urgency: FollowUpItem["urgency"] | null = null;
+    let urgencyLabel = "";
+    let urgencyDays = 0;
+
+    // Check 1: Broken Promise
+    if (promiseDateStr) {
+      if (promiseDateStr < istTodayStr) {
+        urgency = "BROKEN_PROMISE";
+        const diffMs =
+          today.getTime() - new Date(`${promiseDateStr}T00:00:00+05:30`).getTime();
+        urgencyDays = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)));
+        urgencyLabel = `Wada tut gaya (${urgencyDays}d)`;
+      } else if (promiseDateStr === istTodayStr) {
+        urgency = "DUE_TODAY";
+        urgencyLabel = "Aaj ka wada";
+        urgencyDays = 0;
+      }
+    }
+
+    // Check 2: Overdue loan or due soon if no promise urgency yet
+    if (!urgency) {
+      // Find overdue loans vs repayments
+      const totalReceived = b ? b.received : 0;
+      const overdueLoans = pEntries
+        .filter(
+          (e) => e.type === "GAVE" && e.dueDate && new Date(e.dueDate) < today
+        )
+        .sort(
+          (a, b) =>
+            new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime()
+        );
+
+      const totalOverdueGave = overdueLoans.reduce(
+        (sum, e) => sum + e.amountCents,
+        0
+      );
+
+      if (totalOverdueGave > totalReceived && overdueLoans[0]?.dueDate) {
+        urgency = "OVERDUE";
+        const oldestDue = new Date(overdueLoans[0].dueDate);
+        const diffMs = today.getTime() - oldestDue.getTime();
+        urgencyDays = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)));
+        urgencyLabel = `Overdue (${urgencyDays}d)`;
+      } else {
+        // Check if any loan is due today or soon (within 3 days)
+        const dueSoonLoans = pEntries.filter(
+          (e) =>
+            e.type === "GAVE" &&
+            e.dueDate &&
+            new Date(e.dueDate) >= today &&
+            new Date(e.dueDate) <= threeDaysLater
+        );
+
+        if (dueSoonLoans.length > 0) {
+          const earliestDue = new Date(
+            Math.min(
+              ...dueSoonLoans.map((l) => new Date(l.dueDate!).getTime())
+            )
+          );
+          const earliestDueStr = earliestDue.toISOString().split("T")[0];
+
+          if (earliestDueStr === istTodayStr) {
+            urgency = "DUE_TODAY";
+            urgencyLabel = "Due Today";
+            urgencyDays = 0;
+          } else {
+            urgency = "DUE_SOON";
+            const diffDays = Math.round(
+              (earliestDue.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+            );
+            urgencyDays = diffDays;
+            urgencyLabel = `Due in ${diffDays}d`;
+          }
+        }
+      }
+    }
+
+    if (!urgency) continue;
+
+    const balanceStr = paiseToDecimalString(balanceCents);
+    const waMessage = buildFollowUpMessage(
+      {
+        name: person.name,
+        balance: balanceStr,
+        urgency,
+        promiseDate: promiseDateStr,
+      },
+      ownerDoc ? { upiId: ownerDoc.upiId, upiName: ownerDoc.upiName } : undefined
+    );
+    const normPhone = person.phone ? normalizeWaPhone(person.phone) : null;
+    const waHref = normPhone ? universalWaLink(waMessage, normPhone) : null;
+
+    items.push({
+      personId: person._id,
+      name: person.name,
+      phone: person.phone,
+      balance: balanceStr,
+      urgency,
+      urgencyLabel,
+      urgencyDays,
+      promiseDate: promiseDateStr,
+      promiseNote: person.promiseNote ?? null,
+      lastRemindedAt: person.lastRemindedAt
+        ? person.lastRemindedAt.toISOString()
+        : null,
+      reliability,
+      waHref,
+    });
+  }
+
+  // Priority sorting:
+  // 1. BROKEN_PROMISE (oldest broken promise first)
+  // 2. OVERDUE (highest balance first, then oldest overdue first)
+  // 3. DUE_TODAY
+  // 4. DUE_SOON
+  const rank: Record<FollowUpItem["urgency"], number> = {
+    BROKEN_PROMISE: 1,
+    OVERDUE: 2,
+    DUE_TODAY: 3,
+    DUE_SOON: 4,
+  };
+
+  items.sort((a, b) => {
+    if (rank[a.urgency] !== rank[b.urgency]) {
+      return rank[a.urgency] - rank[b.urgency];
+    }
+    if (a.urgency === "BROKEN_PROMISE") {
+      return (a.promiseDate ?? "").localeCompare(b.promiseDate ?? "");
+    }
+    if (a.urgency === "OVERDUE") {
+      return Number(b.balance) - Number(a.balance);
+    }
+    return a.urgencyDays - b.urgencyDays;
+  });
+
+  return items;
+}
+
+/** Returns soft-deleted items currently in Trash within 30-day restore window. */
 export async function getOwnerProfile(): Promise<OwnerProfile | null> {
   const owner = await getOwner();
   if (!owner) return null;
