@@ -181,6 +181,11 @@ export function PeopleList({ rows, counts }: PeopleListProps) {
                           {t("home.overdueBadge")}
                         </span>
                       ) : null}
+                      {row.promiseDate ? (
+                        <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold tracking-wider bg-paper text-muted border border-rule">
+                          📅 {row.promiseDate}
+                        </span>
+                      ) : null}
                     </div>
                     <p className="truncate font-mono text-xs text-muted">
                       {row.phone ? row.phone : t("person.noPhone")}
