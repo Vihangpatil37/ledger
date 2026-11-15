@@ -229,3 +229,42 @@ export function universalWaLink(message: string, waNumber?: string | null): stri
   }
   return `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
 }
+
+/** Generates quick follow-up reminder message for Today's Follow-up Queue. */
+export function buildFollowUpMessage(
+  item: {
+    name: string;
+    balance: string;
+    urgency: "BROKEN_PROMISE" | "OVERDUE" | "DUE_TODAY" | "DUE_SOON";
+    promiseDate?: string | null;
+  },
+  ownerUpi?: { upiId?: string | null; upiName?: string | null }
+): string {
+  const customerName = item.name.trim();
+  const ownerName = ownerUpi?.upiName?.trim();
+  const upiId = ownerUpi?.upiId?.trim();
+
+  const lines: string[] = [];
+  const header = ownerName ? `📋 *Khata Reminder* · ${ownerName}` : `📋 *Khata Reminder*`;
+  lines.push(header);
+
+  if (item.urgency === "BROKEN_PROMISE" && item.promiseDate) {
+    lines.push(`Namaste *${customerName}* ji,\nAapne ${item.promiseDate} tak hisab karne ka wada kiya tha.`);
+  } else if (item.urgency === "OVERDUE") {
+    lines.push(`Namaste *${customerName}* ji,\nAapka pichhla udhar overdue ho chuka hai.`);
+  } else if (item.urgency === "DUE_TODAY") {
+    lines.push(`Namaste *${customerName}* ji,\nAapka udhar hisab aaj due hai.`);
+  } else {
+    lines.push(`Namaste *${customerName}* ji,\nAapke hisab ki taaza sthiti:`);
+  }
+
+  lines.push(`💰 *Kul Baaki:* *${formatMoney(item.balance)}*`);
+
+  if (upiId && Number(item.balance) > 0) {
+    const upiNameSuffix = ownerName ? ` (${ownerName})` : "";
+    lines.push(`💳 *UPI se bhejein:* ${upiId}${upiNameSuffix}`);
+  }
+
+  lines.push("Kripya samay par bhugtan karke khata update rakhein.\nDhanyawad!");
+  return lines.join("\n\n");
+}
