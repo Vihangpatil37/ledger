@@ -41,6 +41,17 @@ export type EntryDoc = {
   createdAt: Date;
 };
 
+export type PromiseDoc = {
+  _id: string;
+  ownerId: string;
+  personId: string;
+  promiseDate: Date;
+  note?: string | null;
+  status: "PENDING" | "KEPT" | "BROKEN" | "RESCHEDULED";
+  resolvedAt?: Date | null;
+  createdAt: Date;
+};
+
 declare global {
   var __ledgerMongo: MongoClient | undefined;
 }
@@ -83,4 +94,8 @@ export function peopleCol(): Collection<PersonDoc> {
 
 export function entriesCol(): Collection<EntryDoc> {
   return db().collection<EntryDoc>("entries");
+}
+
+export function promisesCol(): Collection<PromiseDoc> {
+  return db().collection<PromiseDoc>("promises");
 }
