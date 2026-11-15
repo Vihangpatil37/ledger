@@ -139,7 +139,10 @@ export async function deleteEntry(formData: FormData): Promise<void> {
   }
 
   try {
-    await entriesCol().deleteOne({ _id: entryId.data, ownerId: owner });
+    await entriesCol().updateOne(
+      { _id: entryId.data, ownerId: owner },
+      { $set: { deletedAt: new Date() } }
+    );
   } catch (err) {
     console.error("Failed to delete entry:", err);
     return;
