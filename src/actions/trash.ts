@@ -95,3 +95,71 @@ export async function restoreEntryAction(formData: FormData): Promise<void> {
   await restoreEntry({}, formData);
 }
 
+export async function purgeTrashItem(
+  _previous: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const owner = await getOwner();
+  if (!owner) return { error: "Please sign in again." };
+
+  const id = idSchema.safeParse(formData.get("id"));
+  const kind = formData.get("kind");
+  if (!id.success) return { error: "Invalid ID." };
+
+  let session: ClientSession | undefined;
+  try {
+    if (kind === "PERSON") {
+      session = mongoClient().startSession();
+      await session.withTransaction(async () => {
+        await peopleCol().deleteOne({ _id: id.data, ownerId: owner }, { session });
+        await entriesCol().deleteMany({ personId: id.data, ownerId: owner }, { session });
+      });
+    } else {
+      await entriesCol().deleteOne({ _id: id.data, ownerId: owner });
+    }
+  } catch (err) {
+    console.error("Failed to permanently delete item:", err);
+    return { error: "Could not delete permanently. Try again." };
+  } finally {
+    if (session) await session.endSession();
+  }
+
+  revalidatePath("/trash");
+  return { ok: true };
+}
+
+export async function purgeTrashItemAction(formData: FormData): Promise<void> {
+  await purgeTrashItem({}, formData);
+}
+
+export async function emptyTrash(): Promise<ActionState> {
+  const owner = await getOwner();
+  if (!owner) return { error: "Please sign in again." };
+
+  let session: ClientSession | undefined;
+  try {
+    session = mongoClient().startSession();
+    await session.withTransaction(async () => {
+      await peopleCol().deleteMany(
+        { ownerId: owner, deletedAt: { $ne: null } },
+        { session }
+      );
+      await entriesCol().deleteMany(
+        { ownerId: owner, deletedAt: { $ne: null } },
+        { session }
+      );
+    });
+  } catch (err) {
+    console.error("Failed to empty trash:", err);
+    return { error: "Could not empty trash. Try again." };
+  } finally {
+    if (session) await session.endSession();
+  }
+
+  revalidatePath("/trash");
+  return { ok: true };
+}
+
+export async function emptyTrashAction(): Promise<void> {
+  await emptyTrash();
+}
