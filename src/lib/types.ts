@@ -6,6 +6,21 @@ export type PersonListRow = {
   phone: string | null;
   balance: string;
   isOverdue?: boolean;
+  reliability?: ReliabilityScore;
+  lastRemindedAt?: string | null;
+  promiseDate?: string | null;
+};
+
+export type ReliabilityTier = "EXCELLENT" | "MODERATE" | "RISKY" | "NEW";
+
+export type ReliabilityScore = {
+  score: number;
+  tier: ReliabilityTier;
+  label: string;
+  onTimeRate: number;
+  avgRepayDays: number;
+  totalSettledCount: number;
+  brokenPromisesCount: number;
 };
 
 export type RecentEntryItem = {
@@ -63,6 +78,10 @@ export type PersonDetail = {
     upiId: string | null;
     upiName: string | null;
   } | null;
+  reliability?: ReliabilityScore;
+  lastRemindedAt?: string | null;
+  promiseDate?: string | null;
+  promiseNote?: string | null;
   /** Newest first; running balance is after that entry was added. */
   entries: Array<EntryRow & { running: string }>;
 };
