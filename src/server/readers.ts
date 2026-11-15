@@ -200,7 +200,6 @@ export async function getPersonDetail(
         { projection: { type: 1, amountCents: 1, note: 1, dueDate: 1, createdAt: 1 } }
       )
       .sort({ createdAt: 1, _id: 1 })
-      .limit(1000)
       .toArray(),
   ]);
 

@@ -6,7 +6,6 @@ export type PersonListRow = {
   phone: string | null;
   balance: string;
   isOverdue?: boolean;
-  overdueDays?: number;
 };
 
 export type RecentEntryItem = {

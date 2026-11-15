@@ -68,13 +68,22 @@ export async function addEntry(
 /** Used directly as a form action; stays on the person page. */
 export async function deleteEntry(formData: FormData): Promise<void> {
   const owner = await getOwner();
-  const entryId = idSchema.safeParse(formData.get("entryId"));
-  const personId = idSchema.safeParse(formData.get("personId"));
-  if (!owner || !entryId.success || !personId.success) {
+  if (!owner) {
     redirect("/login");
   }
 
-  await entriesCol().deleteOne({ _id: entryId.data, ownerId: owner });
+  const entryId = idSchema.safeParse(formData.get("entryId"));
+  const personId = idSchema.safeParse(formData.get("personId"));
+  if (!entryId.success || !personId.success) {
+    return;
+  }
+
+  try {
+    await entriesCol().deleteOne({ _id: entryId.data, ownerId: owner });
+  } catch (err) {
+    console.error("Failed to delete entry:", err);
+    return;
+  }
 
   revalidatePath("/");
   revalidatePath(`/people/${personId.data}`);

@@ -175,6 +175,42 @@ describe("entrySchema", () => {
     });
     expect(res.success).toBe(false);
   });
+
+  it("accepts valid leap year date 2024-02-29", () => {
+    const res = entrySchema.safeParse({
+      personId: validUUID,
+      type: "GAVE",
+      amount: "100",
+      dueDate: "2024-02-29",
+    });
+    expect(res.success).toBe(true);
+    if (res.success) {
+      expect(res.data.dueDate).toBe("2024-02-29");
+    }
+  });
+
+  it("rejects non-existent calendar dates like 2026-02-31 or 2026-99-99", () => {
+    const invalidDates = [
+      "2026-02-31",
+      "2026-02-29",
+      "2026-04-31",
+      "2026-99-99",
+      "2026-00-10",
+      "2026-13-01",
+    ];
+    for (const d of invalidDates) {
+      const res = entrySchema.safeParse({
+        personId: validUUID,
+        type: "GAVE",
+        amount: "100",
+        dueDate: d,
+      });
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.error.issues[0].message).toBe("Enter a valid calendar date (YYYY-MM-DD)");
+      }
+    }
+  });
 });
 
 describe("idSchema", () => {

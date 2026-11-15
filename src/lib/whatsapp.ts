@@ -1,6 +1,6 @@
 import { getDueStatus, isOverdueDate } from "@/lib/due";
 import { formatWhen } from "@/lib/format";
-import { balanceMeta, formatMoney } from "@/lib/money";
+import { balanceMeta, decimalStringToPaise, formatMoney } from "@/lib/money";
 import type { PersonDetail } from "@/lib/types";
 
 /**
@@ -28,17 +28,46 @@ export function normalizeWaPhone(
 
 /** Hinglish payment reminder built from the person's ledger totals. */
 export function reminderMessage(detail: PersonDetail): string {
+  const totalReceivedCents = decimalStringToPaise(detail.receivedTotal);
+
   // Check if any active Udhar entry is overdue
   const overdueEntries = detail.entries.filter(
     (e) => e.type === "GAVE" && e.dueDate && isOverdueDate(e.dueDate)
   );
 
+  const totalOverdueGaveCents = overdueEntries.reduce(
+    (sum, e) => sum + decimalStringToPaise(e.amount),
+    0
+  );
+
   let overdueNotice = "";
-  if (overdueEntries.length > 0) {
-    const oldestDue = overdueEntries[overdueEntries.length - 1].dueDate;
-    const dueInfo = getDueStatus(oldestDue);
-    if (dueInfo) {
-      overdueNotice = `⚠️ Wada tha: ${oldestDue} tak (${dueInfo.label})\n`;
+  // An overdue notice is only included if total overdue loans exceed total repayments
+  if (totalOverdueGaveCents > totalReceivedCents) {
+    // Sort chronological (oldest dueDate / createdAt first) to identify the oldest un-repaid debt
+    const sortedOverdue = [...overdueEntries].sort((a, b) => {
+      const dueComp = (a.dueDate ?? "").localeCompare(b.dueDate ?? "");
+      if (dueComp !== 0) return dueComp;
+      return a.createdAt.localeCompare(b.createdAt);
+    });
+
+    let coveredCents = totalReceivedCents;
+    let oldestUnrepaid = sortedOverdue[0];
+
+    for (const entry of sortedOverdue) {
+      const entryCents = decimalStringToPaise(entry.amount);
+      if (coveredCents >= entryCents) {
+        coveredCents -= entryCents;
+      } else {
+        oldestUnrepaid = entry;
+        break;
+      }
+    }
+
+    if (oldestUnrepaid?.dueDate) {
+      const dueInfo = getDueStatus(oldestUnrepaid.dueDate);
+      if (dueInfo) {
+        overdueNotice = `⚠️ Wada tha: ${oldestUnrepaid.dueDate} tak (${dueInfo.label})\n`;
+      }
     }
   }
 
@@ -107,9 +136,9 @@ export function formatStatementMessage(
   return lines.join("\n");
 }
 
-/** Click-to-chat link; `waNumber` comes from normalizeWaPhone. */
+/** Click-to-chat link; delegates to universalWaLink. */
 export function waLink(waNumber: string, message: string): string {
-  return `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+  return universalWaLink(message, waNumber);
 }
 
 /**

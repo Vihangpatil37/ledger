@@ -93,9 +93,13 @@ export async function updatePerson(
 /** Used directly as a form action; always ends on the home page. */
 export async function deletePerson(formData: FormData): Promise<void> {
   const owner = await getOwner();
-  const id = idSchema.safeParse(formData.get("id"));
-  if (!owner || !id.success) {
+  if (!owner) {
     redirect("/login");
+  }
+
+  const id = idSchema.safeParse(formData.get("id"));
+  if (!id.success) {
+    return;
   }
 
   // Atomic delete: both the person and their entries are removed in a
@@ -103,10 +107,15 @@ export async function deletePerson(formData: FormData): Promise<void> {
   // operation commits — no orphaned ghosts or destroyed history.
   const session = mongoClient().startSession();
   try {
-    await session.withTransaction(async () => {
-      await peopleCol().deleteOne({ _id: id.data, ownerId: owner }, { session });
-      await entriesCol().deleteMany({ personId: id.data, ownerId: owner }, { session });
-    });
+    try {
+      await session.withTransaction(async () => {
+        await peopleCol().deleteOne({ _id: id.data, ownerId: owner }, { session });
+        await entriesCol().deleteMany({ personId: id.data, ownerId: owner }, { session });
+      });
+    } catch (err) {
+      console.error("Failed to delete person transaction:", err);
+      return;
+    }
   } finally {
     await session.endSession();
   }

@@ -1,6 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { getDueStatus, isOverdueDate } from "@/lib/due";
 
+function getIstDateString(offsetDays = 0): string {
+  const istTodayStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+  }).format(new Date());
+  const [y, m, d] = istTodayStr.split("-").map(Number);
+  const target = new Date(Date.UTC(y, m - 1, d + offsetDays));
+  return target.toISOString().split("T")[0];
+}
+
 describe("getDueStatus", () => {
   it("returns null for empty or invalid input", () => {
     expect(getDueStatus(null)).toBeNull();
@@ -10,9 +19,7 @@ describe("getDueStatus", () => {
   });
 
   it("identifies overdue dates correctly", () => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 3);
-    const dateStr = yesterday.toISOString().split("T")[0];
+    const dateStr = getIstDateString(-3);
 
     const res = getDueStatus(dateStr);
     expect(res).not.toBeNull();
@@ -22,8 +29,7 @@ describe("getDueStatus", () => {
   });
 
   it("identifies due today correctly", () => {
-    const today = new Date();
-    const dateStr = today.toISOString().split("T")[0];
+    const dateStr = getIstDateString(0);
 
     const res = getDueStatus(dateStr);
     expect(res).not.toBeNull();
@@ -33,9 +39,7 @@ describe("getDueStatus", () => {
   });
 
   it("identifies due soon within 7 days", () => {
-    const future = new Date();
-    future.setDate(future.getDate() + 4);
-    const dateStr = future.toISOString().split("T")[0];
+    const dateStr = getIstDateString(4);
 
     const res = getDueStatus(dateStr);
     expect(res).not.toBeNull();

@@ -75,22 +75,6 @@ body {
   outline-offset: 2px;
 }
 
-/* Subtle ledger texture & tactile borders */
-.ledger-border {
-  border-color: var(--color-rule);
-  box-shadow: 0 1px 2px 0 rgba(30, 27, 24, 0.04);
-}
-
-/* Stamp badge styling for settled accounts */
-.stamp-settled {
-  border: 1.5px dashed var(--color-credit);
-  color: var(--color-credit);
-  background-color: var(--color-credit-light);
-  font-family: var(--font-mono);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
 /* Print styling for statement generation */
 @media print {
   body {

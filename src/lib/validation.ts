@@ -37,7 +37,15 @@ export const entrySchema = z.object({
   dueDate: z
     .string()
     .trim()
-    .refine((val) => !val || /^\d{4}-\d{2}-\d{2}$/.test(val), "Use YYYY-MM-DD")
+    .refine(
+      (val) => {
+        if (!val) return true;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(val)) return false;
+        const d = new Date(val + "T00:00:00Z");
+        return !isNaN(d.getTime()) && d.toISOString().startsWith(val);
+      },
+      "Enter a valid calendar date (YYYY-MM-DD)"
+    )
     .transform((val) => (val ? val : undefined))
     .optional(),
 });

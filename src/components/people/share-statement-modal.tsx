@@ -96,7 +96,7 @@ export function ShareStatementModal({ detail }: { detail: PersonDetail }) {
           role="dialog"
           aria-modal="true"
           aria-labelledby="share-modal-title"
-          className="fixed inset-0 z-50 flex items-end justify-center bg-ink/60 p-0 sm:items-center sm:p-4 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-ink/60 p-0 sm:items-center sm:p-4 backdrop-blur-xs print:hidden"
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsOpen(false);
           }}

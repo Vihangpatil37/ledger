@@ -9,22 +9,30 @@ export type DueInfo = {
 
 /**
  * Calculates humanized due status from a YYYY-MM-DD string or ISO timestamp.
+ * Evaluated relative to Asia/Kolkata (IST), matching the server's overdue logic.
  */
-export function getDueStatus(dueDateStr?: string | null): DueInfo | null {
+export function getDueStatus(
+  dueDateStr?: string | null,
+  referenceDate?: Date
+): DueInfo | null {
   if (!dueDateStr) return null;
 
   // Handles both YYYY-MM-DD and full ISO strings
   const [year, month, day] = dueDateStr.split("T")[0].split("-").map(Number);
   if (!year || !month || !day) return null;
 
-  const due = new Date(year, month - 1, day);
-  if (isNaN(due.getTime())) return null;
+  const dueUtc = Date.UTC(year, month - 1, day);
+  if (isNaN(dueUtc)) return null;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  due.setHours(0, 0, 0, 0);
+  // Pin "today" to Asia/Kolkata so overdue checks are stable in IST,
+  // matching readers.ts and not shifted by server UTC clock.
+  const istTodayStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+  }).format(referenceDate ?? new Date());
+  const [tYear, tMonth, tDay] = istTodayStr.split("-").map(Number);
+  const todayUtc = Date.UTC(tYear, tMonth - 1, tDay);
 
-  const diffMs = due.getTime() - today.getTime();
+  const diffMs = dueUtc - todayUtc;
   const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffDays < 0) {
@@ -55,10 +63,11 @@ export function getDueStatus(dueDateStr?: string | null): DueInfo | null {
     };
   }
 
-  const formatted = due.toLocaleDateString("en-IN", {
+  const formatted = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "UTC",
     day: "numeric",
     month: "short",
-  });
+  }).format(new Date(dueUtc));
 
   return {
     status: "DUE_LATER",
@@ -68,8 +77,11 @@ export function getDueStatus(dueDateStr?: string | null): DueInfo | null {
   };
 }
 
-/** Returns true if the date is strictly in the past (before today). */
-export function isOverdueDate(dueDateStr?: string | null): boolean {
-  const info = getDueStatus(dueDateStr);
+/** Returns true if the date is strictly in the past (before today in Asia/Kolkata). */
+export function isOverdueDate(
+  dueDateStr?: string | null,
+  referenceDate?: Date
+): boolean {
+  const info = getDueStatus(dueDateStr, referenceDate);
   return info?.status === "OVERDUE";
 }
