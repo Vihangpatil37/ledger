@@ -97,3 +97,25 @@ export type ActionState = {
   error?: string;
   fieldErrors?: Record<string, string>;
 };
+
+
+export type FollowUpUrgency =
+  | "BROKEN_PROMISE"
+  | "OVERDUE"
+  | "DUE_TODAY"
+  | "DUE_SOON";
+
+export type FollowUpItem = {
+  personId: string;
+  name: string;
+  phone: string | null;
+  balance: string;
+  urgency: FollowUpUrgency;
+  urgencyLabel: string;
+  urgencyDays: number;
+  promiseDate?: string | null;
+  promiseNote?: string | null;
+  lastRemindedAt?: string | null;
+  reliability: ReliabilityScore;
+  waHref: string | null;
+};
