@@ -3,6 +3,7 @@ import { logout } from "@/actions/auth";
 import { LanguageSwitcher } from "@/components/shell/language-switcher";
 import { MobileNav } from "@/components/shell/mobile-nav";
 import { SideNav } from "@/components/shell/nav";
+import { UndoToast } from "@/components/trash/undo-toast";
 import { LanguageProvider } from "@/lib/i18n/client";
 import { getLocale, getServerTranslations } from "@/lib/i18n/server";
 
@@ -50,6 +51,7 @@ export default async function AppLayout({
 
         {/* Mobile bottom nav bar */}
         <MobileNav />
+        <UndoToast />
       </div>
     </LanguageProvider>
   );
