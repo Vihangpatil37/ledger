@@ -21,8 +21,7 @@ export function FollowUpQueue({ items }: { items: FollowUpItem[] }) {
     // Record reminder timestamp in background
     setRemindedMap((prev) => ({ ...prev, [item.personId]: "Just now" }));
     try {
-      // record reminder on click
-    await recordReminder(item.personId);
+      await recordReminder(item.personId);
     } catch {
       // optimistic state is fine for local UX
     }
