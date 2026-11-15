@@ -1,16 +1,25 @@
 import "server-only";
 
 import { paiseToDecimalString } from "@/lib/money";
-import { entriesCol, peopleCol, usersCol } from "@/lib/mongo";
+import { entriesCol, peopleCol, promisesCol, usersCol } from "@/lib/mongo";
 import { resolveIstRange } from "@/lib/range";
+import { computeReliabilityScore } from "@/lib/reliability";
+import { activeFilter, getDaysRemaining } from "@/lib/trash";
+import {
+  buildFollowUpMessage,
+  normalizeWaPhone,
+  universalWaLink,
+} from "@/lib/whatsapp";
 import { getOwner } from "@/server/session";
 import type {
   DateRange,
   EntryType,
+  FollowUpItem,
   HomeSummary,
   OwnerProfile,
   PersonDetail,
   PersonListRow,
+  TrashItem,
 } from "@/lib/types";
 
 const BALANCE_GROUP = {
@@ -45,20 +54,31 @@ export async function getHomeSummary(): Promise<HomeSummary> {
   }).format(new Date());
   const today = new Date(`${istTodayStr}T00:00:00+05:30`);
 
-  // Every query filters by ownerId
+  // Every query filters by ownerId and active (non-soft-deleted) records
   const [people, balances, recentRaw, overdueRaw] = await Promise.all([
     peopleCol()
-      .find({ ownerId: owner }, { projection: { name: 1, phone: 1 } })
+      .find(
+        { ownerId: owner, ...activeFilter() },
+        {
+          projection: {
+            name: 1,
+            phone: 1,
+            promiseDate: 1,
+            promiseNote: 1,
+            lastRemindedAt: 1,
+          },
+        }
+      )
       .sort({ name: 1 })
       .toArray(),
     entriesCol()
       .aggregate<{ _id: string; gave: number; received: number }>([
-        { $match: { ownerId: owner } },
+        { $match: { ownerId: owner, ...activeFilter() } },
         { $group: { _id: "$personId", ...BALANCE_GROUP } },
       ])
       .toArray(),
     entriesCol()
-      .find({ ownerId: owner })
+      .find({ ownerId: owner, ...activeFilter() })
       .sort({ createdAt: -1 })
       .limit(6)
       .toArray(),
@@ -70,6 +90,7 @@ export async function getHomeSummary(): Promise<HomeSummary> {
         {
           $match: {
             ownerId: owner,
+            ...activeFilter(),
             $or: [
               { type: "GAVE", dueDate: { $lt: today, $ne: null } },
               { type: "RECEIVED" },
@@ -106,14 +127,8 @@ export async function getHomeSummary(): Promise<HomeSummary> {
       .toArray(),
   ]);
 
-  const personNameById = new Map(
-    people.map((p) => [p._id, p.name])
-  );
-
-  const balanceByPersonId = new Map(
-    balances.map((row) => [row._id, row])
-  );
-
+  const personNameById = new Map(people.map((p) => [p._id, p.name]));
+  const balanceByPersonId = new Map(balances.map((row) => [row._id, row]));
   const overduePersonIds = new Set(overdueRaw.map((r) => r._id));
 
   let youllGetCents = 0;
@@ -145,6 +160,12 @@ export async function getHomeSummary(): Promise<HomeSummary> {
       phone: person.phone,
       balance: paiseToDecimalString(balance),
       isOverdue,
+      lastRemindedAt: person.lastRemindedAt
+        ? person.lastRemindedAt.toISOString()
+        : null,
+      promiseDate: person.promiseDate
+        ? person.promiseDate.toISOString().split("T")[0]
+        : null,
     };
   });
 
