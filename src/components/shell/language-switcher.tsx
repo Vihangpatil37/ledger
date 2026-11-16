@@ -58,7 +58,7 @@ export function LanguageSwitcher({
     <div
       role="group"
       aria-label="Language selection"
-      className={`inline-flex items-center rounded-lg border border-rule bg-paper/80 p-0.5 shadow-2xs ${className}`}
+      className={`inline-grid grid-cols-3 items-center rounded-xl border border-rule bg-paper p-1 shadow-2xs ${className}`}
     >
       {LOCALES.map((item) => {
         const isSelected = locale === item.code;
@@ -69,10 +69,10 @@ export function LanguageSwitcher({
             onClick={() => setLocale(item.code)}
             aria-pressed={isSelected}
             title={item.label}
-            className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all duration-150 cursor-pointer focus-visible:outline-2 focus-visible:outline-focus ${
+            className={`flex min-h-[36px] sm:min-h-[32px] items-center justify-center px-2 py-1 text-xs font-semibold rounded-lg transition-all duration-150 cursor-pointer focus-visible:outline-2 focus-visible:outline-focus ${
               isSelected
-                ? "bg-ink text-paper shadow-2xs font-bold"
-                : "text-muted hover:text-ink hover:bg-rule/30"
+                ? "bg-surface text-ink font-bold shadow-xs border border-rule/80 dark:bg-surface-subtle dark:border-rule dark:text-ink"
+                : "text-muted hover:text-ink hover:bg-rule/20 border border-transparent"
             }`}
           >
             {item.shortLabel}

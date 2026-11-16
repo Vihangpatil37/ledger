@@ -168,10 +168,10 @@ export function SideNav({
       {/* Footer theme & language toggle & sign out with ample padding to prevent dev badge overlap */}
       <div className="flex flex-col gap-2 p-3 pb-12 border-t border-rule/40">
         <div className="px-1">
-          <ThemeSwitcher variant="compact" className="w-full justify-between" />
+          <ThemeSwitcher variant="compact" className="w-full" />
         </div>
         <div className="px-1">
-          <LanguageSwitcher variant="compact" className="w-full justify-between" />
+          <LanguageSwitcher variant="compact" className="w-full" />
         </div>
         <form action={logout}>
           <button
