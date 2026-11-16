@@ -3,13 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
 import { peopleCol, promisesCol } from "@/lib/mongo";
-import { getOwner } from "@/server/session";
+import { getSession } from "@/server/session";
 import type { ActionState } from "@/lib/types";
 import { idSchema } from "@/lib/validation";
 
 export async function recordReminder(personId: string): Promise<ActionState> {
-  const owner = await getOwner();
-  if (!owner) return { error: "Please sign in again." };
+  const session = await getSession();
+  if (!session) return { error: "Please sign in again." };
+  if (session.role === "STAFF") {
+    return { error: "Staff cannot record reminders." };
+  }
+  const owner = session.userId;
 
   const parsedId = idSchema.safeParse(personId);
   if (!parsedId.success) return { error: "Invalid person ID." };
@@ -33,8 +37,12 @@ export async function setPromiseToPay(
   _previous: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const owner = await getOwner();
-  if (!owner) return { error: "Please sign in again." };
+  const session = await getSession();
+  if (!session) return { error: "Please sign in again." };
+  if (session.role === "STAFF") {
+    return { error: "Staff cannot set promises." };
+  }
+  const owner = session.userId;
 
   const personId = idSchema.safeParse(formData.get("personId"));
   if (!personId.success) return { error: "Invalid person ID." };
@@ -89,8 +97,12 @@ export async function clearPromiseToPay(
   _previous: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const owner = await getOwner();
-  if (!owner) return { error: "Please sign in again." };
+  const session = await getSession();
+  if (!session) return { error: "Please sign in again." };
+  if (session.role === "STAFF") {
+    return { error: "Staff cannot clear promises." };
+  }
+  const owner = session.userId;
 
   const personId = idSchema.safeParse(formData.get("personId"));
   if (!personId.success) return { error: "Invalid person ID." };

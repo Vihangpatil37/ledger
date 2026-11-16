@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
 import type { ClientSession } from "mongodb";
 import { entriesCol, mongoClient, peopleCol } from "@/lib/mongo";
-import { getOwner } from "@/server/session";
+import { getSession } from "@/server/session";
 import type { ActionState } from "@/lib/types";
 import {
   fieldErrorsOf,
@@ -25,8 +25,12 @@ export async function createPerson(
   _previous: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const owner = await getOwner();
-  if (!owner) return { error: "Please sign in again." };
+  const session = await getSession();
+  if (!session) return { error: "Please sign in again." };
+  if (session.role === "STAFF") {
+    return { error: "Staff cannot add customers. Only shop owners can create contacts." };
+  }
+  const owner = session.userId;
 
   const parsed = personSchema.safeParse({
     name: formData.get("name"),
@@ -55,8 +59,12 @@ export async function updatePerson(
   _previous: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const owner = await getOwner();
-  if (!owner) return { error: "Please sign in again." };
+  const session = await getSession();
+  if (!session) return { error: "Please sign in again." };
+  if (session.role === "STAFF") {
+    return { error: "Staff accounts cannot edit customer details." };
+  }
+  const owner = session.userId;
 
   const id = idSchema.safeParse(formData.get("id"));
   if (!id.success) return { error: "Person not found." };
@@ -93,10 +101,14 @@ export async function updatePerson(
 
 /** Used directly as a form action; always ends on the home page. */
 export async function deletePerson(formData: FormData): Promise<void> {
-  const owner = await getOwner();
-  if (!owner) {
+  const auth = await getSession();
+  if (!auth) {
     redirect("/login");
   }
+  if (auth.role === "STAFF") {
+    return; // Staff cannot delete customers
+  }
+  const owner = auth.userId;
 
   const id = idSchema.safeParse(formData.get("id"));
   if (!id.success) {

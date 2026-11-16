@@ -8,7 +8,7 @@ import { decimalStringToPaise } from "@/lib/money";
 import { entriesCol, mongoClient, peopleCol, promisesCol, usersCol } from "@/lib/mongo";
 import { normalizePhone } from "@/lib/phone";
 import { activeFilter } from "@/lib/trash";
-import { getOwner } from "@/server/session";
+import { getSession } from "@/server/session";
 import type { ActionState, BackupPayload, CsvImportPreview } from "@/lib/types";
 
 export async function exportBackupJson(): Promise<{
@@ -16,8 +16,10 @@ export async function exportBackupJson(): Promise<{
   data?: BackupPayload;
   error?: string;
 }> {
-  const owner = await getOwner();
-  if (!owner) return { ok: false, error: "Please sign in again." };
+  const auth = await getSession();
+  if (!auth) return { ok: false, error: "Please sign in again." };
+  if (auth.role === "STAFF") return { ok: false, error: "Staff cannot export backups." };
+  const owner = auth.userId;
 
   try {
     const [user, people, entries, promises] = await Promise.all([
@@ -76,8 +78,10 @@ export async function exportBackupJson(): Promise<{
 export async function restoreBackupJson(
   jsonText: string
 ): Promise<ActionState & { count?: { people: number; entries: number } }> {
-  const owner = await getOwner();
-  if (!owner) return { error: "Please sign in again." };
+  const auth = await getSession();
+  if (!auth) return { error: "Please sign in again." };
+  if (auth.role === "STAFF") return { error: "Staff cannot restore backups." };
+  const owner = auth.userId;
 
   let parsedJson: unknown;
   try {
@@ -183,8 +187,10 @@ export async function restoreBackupJson(
 export async function previewCsvImport(
   csvText: string
 ): Promise<{ ok: boolean; preview?: CsvImportPreview; error?: string }> {
-  const owner = await getOwner();
-  if (!owner) return { ok: false, error: "Please sign in again." };
+  const auth = await getSession();
+  if (!auth) return { ok: false, error: "Please sign in again." };
+  if (auth.role === "STAFF") return { ok: false, error: "Staff cannot import CSV." };
+  const owner = auth.userId;
 
   try {
     const existingPeople = await peopleCol()
@@ -206,8 +212,10 @@ export async function previewCsvImport(
 export async function commitCsvImport(
   csvText: string
 ): Promise<ActionState & { importedCount?: number }> {
-  const owner = await getOwner();
-  if (!owner) return { error: "Please sign in again." };
+  const auth = await getSession();
+  if (!auth) return { error: "Please sign in again." };
+  if (auth.role === "STAFF") return { error: "Staff cannot import CSV." };
+  const owner = auth.userId;
 
   try {
     const existingPeople = await peopleCol()

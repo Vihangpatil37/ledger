@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { usersCol } from "@/lib/mongo";
-import { getOwner } from "@/server/session";
+import { getSession } from "@/server/session";
 import type { ActionState } from "@/lib/types";
 import { fieldErrorsOf, ownerUpiSchema } from "@/lib/validation";
 
@@ -10,8 +10,12 @@ export async function updateOwnerUpi(
   _previous: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const owner = await getOwner();
-  if (!owner) return { error: "Please sign in again." };
+  const session = await getSession();
+  if (!session) return { error: "Please sign in again." };
+  if (session.role === "STAFF") {
+    return { error: "Staff cannot update shop profile settings." };
+  }
+  const owner = session.userId;
 
   const parsed = ownerUpiSchema.safeParse({
     upiId: formData.get("upiId"),

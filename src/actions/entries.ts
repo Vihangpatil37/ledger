@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
 import { decimalStringToPaise } from "@/lib/money";
 import { entriesCol, peopleCol } from "@/lib/mongo";
-import { getOwner } from "@/server/session";
+import { getSession } from "@/server/session";
 import type { ActionState } from "@/lib/types";
 import {
   editEntrySchema,
@@ -18,8 +18,9 @@ export async function addEntry(
   _previous: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const owner = await getOwner();
-  if (!owner) return { error: "Please sign in again." };
+  const session = await getSession();
+  if (!session) return { error: "Please sign in again." };
+  const owner = session.userId;
 
   const parsed = entrySchema.safeParse({
     personId: formData.get("personId"),
@@ -47,8 +48,17 @@ export async function addEntry(
   try {
     const dueDate =
       parsed.data.type === "GAVE" && parsed.data.dueDate
-        ? new Date(parsed.data.dueDate)
+        ? new Date(`${parsed.data.dueDate}T00:00:00+05:30`)
         : null;
+
+    const createdBy =
+      session.role === "STAFF"
+        ? {
+            role: "STAFF" as const,
+            staffId: session.staffId,
+            staffName: session.staffName,
+          }
+        : { role: "OWNER" as const };
 
     // Money crosses the wire as a decimal string; it is stored as an
     // exact integer of paise. ≤ 9,999,999.99 stays within double range.
@@ -60,6 +70,7 @@ export async function addEntry(
       amountCents: decimalStringToPaise(parsed.data.amount),
       note: parsed.data.note ?? null,
       dueDate,
+      createdBy,
       createdAt: new Date(),
     });
   } catch {
@@ -75,8 +86,12 @@ export async function editEntry(
   _previous: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const owner = await getOwner();
-  if (!owner) return { error: "Please sign in again." };
+  const session = await getSession();
+  if (!session) return { error: "Please sign in again." };
+  if (session.role === "STAFF") {
+    return { error: "Staff cannot edit entries. Only shop owners can modify transactions." };
+  }
+  const owner = session.userId;
 
   const parsed = editEntrySchema.safeParse({
     id: formData.get("id"),
@@ -87,11 +102,16 @@ export async function editEntry(
   });
   if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
 
-  let existing: { _id: string; personId: string } | null = null;
+  let existing: {
+    _id: string;
+    personId: string;
+    createdAt: Date;
+    createdBy?: { role: string; staffId?: string; staffName?: string } | null;
+  } | null = null;
   try {
     existing = await entriesCol().findOne(
       { _id: parsed.data.id, ownerId: owner },
-      { projection: { _id: 1, personId: 1 } }
+      { projection: { _id: 1, personId: 1, createdAt: 1, createdBy: 1 } }
     );
   } catch {
     return { error: "Could not find entry. Try again." };
@@ -101,7 +121,7 @@ export async function editEntry(
   try {
     const dueDate =
       parsed.data.type === "GAVE" && parsed.data.dueDate
-        ? new Date(parsed.data.dueDate)
+        ? new Date(`${parsed.data.dueDate}T00:00:00+05:30`)
         : null;
 
     await entriesCol().updateOne(
@@ -127,10 +147,14 @@ export async function editEntry(
 
 /** Used directly as a form action; stays on the person page. */
 export async function deleteEntry(formData: FormData): Promise<void> {
-  const owner = await getOwner();
-  if (!owner) {
+  const session = await getSession();
+  if (!session) {
     redirect("/login");
   }
+  if (session.role === "STAFF") {
+    return; // Munim cannot delete entries
+  }
+  const owner = session.userId;
 
   const entryId = idSchema.safeParse(formData.get("entryId"));
   const personId = idSchema.safeParse(formData.get("personId"));

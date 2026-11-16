@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { ClientSession } from "mongodb";
 import { entriesCol, mongoClient, peopleCol } from "@/lib/mongo";
-import { getOwner } from "@/server/session";
+import { getSession } from "@/server/session";
 import type { ActionState } from "@/lib/types";
 import { idSchema } from "@/lib/validation";
 
@@ -11,8 +11,10 @@ export async function restorePerson(
   _previous: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const owner = await getOwner();
-  if (!owner) return { error: "Please sign in again." };
+  const auth = await getSession();
+  if (!auth) return { error: "Please sign in again." };
+  if (auth.role === "STAFF") return { error: "Staff accounts cannot access trash operations." };
+  const owner = auth.userId;
 
   const id = idSchema.safeParse(formData.get("id"));
   if (!id.success) return { error: "Invalid person ID." };
@@ -53,8 +55,10 @@ export async function restoreEntry(
   _previous: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const owner = await getOwner();
-  if (!owner) return { error: "Please sign in again." };
+  const auth = await getSession();
+  if (!auth) return { error: "Please sign in again." };
+  if (auth.role === "STAFF") return { error: "Staff accounts cannot access trash operations." };
+  const owner = auth.userId;
 
   const entryId = idSchema.safeParse(formData.get("entryId"));
   const personId = idSchema.safeParse(formData.get("personId"));
@@ -99,8 +103,10 @@ export async function purgeTrashItem(
   _previous: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const owner = await getOwner();
-  if (!owner) return { error: "Please sign in again." };
+  const auth = await getSession();
+  if (!auth) return { error: "Please sign in again." };
+  if (auth.role === "STAFF") return { error: "Staff accounts cannot access trash operations." };
+  const owner = auth.userId;
 
   const id = idSchema.safeParse(formData.get("id"));
   const kind = formData.get("kind");
@@ -133,8 +139,10 @@ export async function purgeTrashItemAction(formData: FormData): Promise<void> {
 }
 
 export async function emptyTrash(): Promise<ActionState> {
-  const owner = await getOwner();
-  if (!owner) return { error: "Please sign in again." };
+  const auth = await getSession();
+  if (!auth) return { error: "Please sign in again." };
+  if (auth.role === "STAFF") return { error: "Staff accounts cannot access trash operations." };
+  const owner = auth.userId;
 
   let session: ClientSession | undefined;
   try {
