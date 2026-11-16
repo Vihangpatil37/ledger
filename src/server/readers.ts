@@ -1,7 +1,7 @@
 import "server-only";
 
 import { paiseToDecimalString } from "@/lib/money";
-import { entriesCol, peopleCol, promisesCol, usersCol } from "@/lib/mongo";
+import { entriesCol, peopleCol, promisesCol, staffCol, usersCol } from "@/lib/mongo";
 import { resolveIstRange } from "@/lib/range";
 import { computeReliabilityScore } from "@/lib/reliability";
 import { activeFilter, getDaysRemaining } from "@/lib/trash";
@@ -10,7 +10,7 @@ import {
   normalizeWaPhone,
   universalWaLink,
 } from "@/lib/whatsapp";
-import { getOwner } from "@/server/session";
+import { getOwner, getSession } from "@/server/session";
 import type {
   DateRange,
   EntryType,
@@ -19,6 +19,8 @@ import type {
   OwnerProfile,
   PersonDetail,
   PersonListRow,
+  StaffItem,
+  StaffShiftSummary,
   TrashItem,
 } from "@/lib/types";
 
@@ -182,6 +184,7 @@ export async function getHomeSummary(): Promise<HomeSummary> {
     dueDate: e.dueDate ? e.dueDate.toISOString().split("T")[0] : null,
     editedAt: e.editedAt ? e.editedAt.toISOString() : null,
     createdAt: e.createdAt.toISOString(),
+    createdBy: e.createdBy ?? null,
   }));
 
   const netCents = youllGetCents - youllGiveCents;
@@ -307,11 +310,17 @@ export async function getPersonDetail(
   const opening = openingRes[0] ?? { gave: 0, received: 0 };
   const openingBalanceCents = fromDate ? opening.gave - opening.received : 0;
 
+  const session = await getSession();
+  const isStaff = session?.role === "STAFF";
+
   // Running balance builds up chronologically from opening balance...
   let runningCents = openingBalanceCents;
   const chronological = entries.map((entry) => {
     runningCents +=
       entry.type === "GAVE" ? entry.amountCents : -entry.amountCents;
+
+    const canEdit = isStaff ? false : true;
+
     return {
       id: entry._id,
       type: entry.type as EntryType,
@@ -321,6 +330,8 @@ export async function getPersonDetail(
       editedAt: entry.editedAt ? entry.editedAt.toISOString() : null,
       createdAt: entry.createdAt.toISOString(),
       running: paiseToDecimalString(runningCents),
+      createdBy: entry.createdBy ?? null,
+      canEdit,
     };
   });
   // ...then the list is shown newest first.
@@ -377,7 +388,7 @@ export async function getFollowUpQueue(): Promise<FollowUpItem[]> {
   const today = new Date(`${istTodayStr}T00:00:00+05:30`);
   const threeDaysLater = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000);
 
-  const [people, balances, debtorEntries, ownerDoc, brokenPromises] =
+  const [people, balances, ownerDoc, brokenPromises] =
     await Promise.all([
       peopleCol()
         .find(
@@ -399,20 +410,6 @@ export async function getFollowUpQueue(): Promise<FollowUpItem[]> {
           { $group: { _id: "$personId", ...BALANCE_GROUP } },
         ])
         .toArray(),
-      entriesCol()
-        .find(
-          { ownerId: owner, ...activeFilter() },
-          {
-            projection: {
-              personId: 1,
-              type: 1,
-              amountCents: 1,
-              dueDate: 1,
-              createdAt: 1,
-            },
-          }
-        )
-        .toArray(),
       usersCol().findOne(
         { _id: owner },
         { projection: { upiId: 1, upiName: 1 } }
@@ -426,6 +423,32 @@ export async function getFollowUpQueue(): Promise<FollowUpItem[]> {
     ]);
 
   const balanceByPerson = new Map(balances.map((b) => [b._id, b]));
+  const debtorPersonIds = balances
+    .filter((b) => b.gave > b.received)
+    .map((b) => b._id);
+
+  const debtorEntries =
+    debtorPersonIds.length > 0
+      ? await entriesCol()
+          .find(
+            {
+              ownerId: owner,
+              personId: { $in: debtorPersonIds },
+              ...activeFilter(),
+            },
+            {
+              projection: {
+                personId: 1,
+                type: 1,
+                amountCents: 1,
+                dueDate: 1,
+                createdAt: 1,
+              },
+            }
+          )
+          .toArray()
+      : [];
+
   const entriesByPerson = new Map<string, typeof debtorEntries>();
   for (const e of debtorEntries) {
     const list = entriesByPerson.get(e.personId) ?? [];
@@ -468,10 +491,10 @@ export async function getFollowUpQueue(): Promise<FollowUpItem[]> {
         const diffMs =
           today.getTime() - new Date(`${promiseDateStr}T00:00:00+05:30`).getTime();
         urgencyDays = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)));
-        urgencyLabel = `Wada tut gaya (${urgencyDays}d)`;
+        urgencyLabel = `Broken Promise (${urgencyDays}d)`;
       } else if (promiseDateStr === istTodayStr) {
         urgency = "DUE_TODAY";
-        urgencyLabel = "Aaj ka wada";
+        urgencyLabel = "Promise Due Today";
         urgencyDays = 0;
       }
     }
@@ -660,13 +683,82 @@ export async function getOwnerProfile(): Promise<OwnerProfile | null> {
 
   const user = await usersCol().findOne(
     { _id: owner },
-    { projection: { email: 1, upiId: 1, upiName: 1 } }
+    { projection: { email: 1, shopCode: 1, upiId: 1, upiName: 1 } }
   );
   if (!user) return null;
 
+  let shopCode = user.shopCode;
+  if (!shopCode) {
+    const fallback = `CHAI-${user._id.slice(0, 4).toUpperCase()}`;
+    await usersCol().updateOne(
+      { _id: owner },
+      { $set: { shopCode: fallback } }
+    );
+    shopCode = fallback;
+  }
+
   return {
     email: user.email,
+    shopCode,
     upiId: user.upiId ?? null,
     upiName: user.upiName ?? null,
   };
+}
+
+export async function getStaffShiftSummary(
+  ownerId: string,
+  staffId: string
+): Promise<StaffShiftSummary> {
+  const istTodayStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+  }).format(new Date());
+  const startOfDay = new Date(`${istTodayStr}T00:00:00+05:30`);
+  const endOfDay = new Date(`${istTodayStr}T23:59:59.999+05:30`);
+
+  const [agg, staffMember] = await Promise.all([
+    entriesCol()
+      .aggregate<{ collected: number; given: number; count: number }>([
+        {
+          $match: {
+            ownerId,
+            "createdBy.staffId": staffId,
+            createdAt: { $gte: startOfDay, $lte: endOfDay },
+            deletedAt: null,
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            collected: {
+              $sum: { $cond: [{ $eq: ["$type", "RECEIVED"] }, "$amountCents", 0] },
+            },
+            given: {
+              $sum: { $cond: [{ $eq: ["$type", "GAVE"] }, "$amountCents", 0] },
+            },
+            count: { $sum: 1 },
+          },
+        },
+      ])
+      .toArray(),
+    staffCol().findOne({ _id: staffId, ownerId }),
+  ]);
+
+  const stats = agg[0] ?? { collected: 0, given: 0, count: 0 };
+  return {
+    collectedToday: paiseToDecimalString(stats.collected),
+    givenToday: paiseToDecimalString(stats.given),
+    entriesCount: stats.count,
+    staffName: staffMember?.name ?? "Munim",
+  };
+}
+
+export async function getStaffMembers(ownerId: string): Promise<StaffItem[]> {
+  const staff = await staffCol().find({ ownerId }).sort({ createdAt: -1 }).toArray();
+  return staff.map((s) => ({
+    id: s._id,
+    name: s.name,
+    phone: s.phone ?? null,
+    isActive: s.isActive,
+    createdAt: s.createdAt.toISOString(),
+  }));
 }

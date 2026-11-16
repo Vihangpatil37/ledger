@@ -81,10 +81,8 @@ export function computeReliabilityScore(input: ReliabilityInput): ReliabilitySco
 
           // Check if settled on time
           if (loan.dueDate) {
-            // End of due date day in UTC / IST
-            const dueEnd = new Date(loan.dueDate);
-            dueEnd.setHours(23, 59, 59, 999);
-            if (entryDate.getTime() <= dueEnd.getTime()) {
+            const dueEndMs = new Date(loan.dueDate).getTime() + 86_399_999;
+            if (entryDate.getTime() <= dueEndMs) {
               onTimeCount += 1;
             }
           } else {
@@ -103,9 +101,8 @@ export function computeReliabilityScore(input: ReliabilityInput): ReliabilitySco
   let overdueOpenLoans = 0;
   for (const loan of openLoans) {
     if (loan.unpaidCents > 0 && loan.dueDate) {
-      const dueEnd = new Date(loan.dueDate);
-      dueEnd.setHours(23, 59, 59, 999);
-      if (refTime > dueEnd.getTime()) {
+      const dueEndMs = new Date(loan.dueDate).getTime() + 86_399_999;
+      if (refTime > dueEndMs) {
         overdueOpenLoans += 1;
       }
     }

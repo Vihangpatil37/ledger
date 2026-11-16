@@ -59,6 +59,8 @@ try {
 
   await Promise.all([
     database.collection("users").createIndex({ email: 1 }, { unique: true }),
+    database.collection("users").createIndex({ shopCode: 1 }, { unique: true, sparse: true }),
+    database.collection("staff").createIndex({ ownerId: 1, isActive: 1 }),
     database.collection("people").createIndex({ ownerId: 1, name: 1 }),
     database.collection("people").createIndex({ ownerId: 1, deletedAt: 1, promiseDate: 1 }),
     database
@@ -67,6 +69,9 @@ try {
     database
       .collection("entries")
       .createIndex({ ownerId: 1, createdAt: -1 }),
+    database
+      .collection("entries")
+      .createIndex({ ownerId: 1, "createdBy.staffId": 1, createdAt: -1 }),
     database
       .collection("entries")
       .createIndex({ ownerId: 1, type: 1, dueDate: 1 }),
@@ -82,15 +87,24 @@ try {
   const users = database.collection("users");
   const existing = await users.findOne({ email });
   if (existing) {
-    console.log(`User ${email} already exists — nothing to seed.`);
+    if (!existing.shopCode) {
+      const fallbackCode = `CHAI-${existing._id.slice(0, 4).toUpperCase()}`;
+      await users.updateOne({ _id: existing._id }, { $set: { shopCode: fallbackCode } });
+      console.log(`Updated user ${email} with shopCode ${fallbackCode}.`);
+    } else {
+      console.log(`User ${email} already exists with shopCode ${existing.shopCode} — nothing to seed.`);
+    }
   } else {
+    const userId = randomUUID();
+    const fallbackCode = `CHAI-${userId.slice(0, 4).toUpperCase()}`;
     await users.insertOne({
-      _id: randomUUID(),
+      _id: userId,
       email,
+      shopCode: fallbackCode,
       passwordHash: hashSync(passwordArg, 10),
       createdAt: new Date(),
     });
-    console.log(`Created user ${email}.`);
+    console.log(`Created user ${email} with shopCode ${fallbackCode}.`);
   }
 } finally {
   await client.close();

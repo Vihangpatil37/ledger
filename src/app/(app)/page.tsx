@@ -2,18 +2,31 @@ import Link from "next/link";
 import { FollowUpQueue } from "@/components/home/follow-up-queue";
 import { PeopleList } from "@/components/home/people-list";
 import { RecentActivity } from "@/components/home/recent-activity";
+import { StaffShiftCards } from "@/components/home/staff-shift-cards";
 import { Money } from "@/components/ui";
-import { getFollowUpQueue, getHomeSummary } from "@/server/readers";
+import {
+  getFollowUpQueue,
+  getHomeSummary,
+  getStaffShiftSummary,
+} from "@/server/readers";
+import { getSession } from "@/server/session";
 import { getServerTranslations } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [summary, followUpQueue, { t }] = await Promise.all([
+  const session = await getSession();
+  const isStaff = session?.role === "STAFF";
+
+  const [summary, followUpQueue, { t }, shiftSummary] = await Promise.all([
     getHomeSummary(),
-    getFollowUpQueue(),
+    isStaff ? Promise.resolve([]) : getFollowUpQueue(),
     getServerTranslations(),
+    isStaff && session?.staffId
+      ? getStaffShiftSummary(session.userId, session.staffId)
+      : Promise.resolve(null),
   ]);
+
   const count = summary.rows.length;
   const netValue = Number(summary.netBalance);
   const isNetPositive = netValue > 0;
@@ -28,23 +41,30 @@ export default async function HomePage() {
             {t("nav.dashboard")}
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-muted">
-            {count === 0
-              ? t("home.addFirstPerson")
-              : `${summary.debtorsCount} ${t("home.filterDebtors")} · ${summary.creditorsCount} ${t("home.filterCreditors")} · ${summary.settledCount} ${t("home.filterSettled")}`}
+            {isStaff
+              ? `Counter Shift Mode · ${session.staffName}`
+              : count === 0
+                ? t("home.addFirstPerson")
+                : `${summary.debtorsCount} ${t("home.filterDebtors")} · ${summary.creditorsCount} ${t("home.filterCreditors")} · ${summary.settledCount} ${t("home.filterSettled")}`}
           </p>
         </div>
 
-        <Link
-          href="/people/new"
-          className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl bg-ink px-4 py-2 text-xs sm:text-sm font-semibold text-paper shadow-[0_2px_4px_0_rgba(30,27,24,0.15)] transition-all duration-150 hover:bg-ink/90 active:scale-[0.98] self-start sm:self-auto cursor-pointer"
-        >
-          <span className="text-base leading-none font-bold">+</span>
-          <span>{t("nav.addPerson")}</span>
-        </Link>
+        {!isStaff && (
+          <Link
+            href="/people/new"
+            className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl bg-ink px-4 py-2 text-xs sm:text-sm font-semibold text-paper shadow-[0_2px_4px_0_rgba(30,27,24,0.15)] transition-all duration-150 hover:bg-ink/90 active:scale-[0.98] self-start sm:self-auto cursor-pointer"
+          >
+            <span className="text-base leading-none font-bold">+</span>
+            <span>{t("nav.addPerson")}</span>
+          </Link>
+        )}
       </div>
 
-      {/* Financial Health Summary (3-Card Metrics Bar) */}
-      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
+      {/* Metrics Bar: Staff Shift Summary OR Owner Financial Health */}
+      {shiftSummary ? (
+        <StaffShiftCards summary={shiftSummary} />
+      ) : (
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
         {/* Card 1: Net Balance */}
         <div className="rounded-xl border border-rule bg-surface p-4 sm:p-5 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)] transition-all">
           <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted">
@@ -105,9 +125,10 @@ export default async function HomePage() {
           </p>
         </div>
       </div>
+      )}
 
       {/* Today's Follow-up Queue Banner */}
-      {followUpQueue.length > 0 && <FollowUpQueue items={followUpQueue} />}
+      {!isStaff && followUpQueue.length > 0 && <FollowUpQueue items={followUpQueue} />}
 
       {/* Main Dashboard Grid: People Directory (Left) + Activity & Stats (Right) */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start pt-2">

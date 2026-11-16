@@ -7,6 +7,19 @@ import { formatWhen } from "@/lib/format";
 import { useLanguage } from "@/lib/i18n/client";
 import type { RecentEntryItem } from "@/lib/types";
 
+function DueBadge({ dueDate }: { dueDate: string }) {
+  const { t } = useLanguage();
+  const dueInfo = getDueStatus(dueDate);
+  if (!dueInfo) return null;
+  return (
+    <span
+      className={`inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold tracking-wide ${dueInfo.className}`}
+    >
+      {formatDueLabel(dueInfo, t)}
+    </span>
+  );
+}
+
 export function RecentActivity({ entries }: { entries: RecentEntryItem[] }) {
   const { t } = useLanguage();
 
@@ -53,18 +66,7 @@ export function RecentActivity({ entries }: { entries: RecentEntryItem[] }) {
                     >
                       {isGave ? t("entry.gave") : t("entry.received")}
                     </span>
-                    {entry.dueDate ? (
-                      (() => {
-                        const dueInfo = getDueStatus(entry.dueDate);
-                        return dueInfo ? (
-                          <span
-                            className={`inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold tracking-wide ${dueInfo.className}`}
-                          >
-                            {formatDueLabel(dueInfo, t)}
-                          </span>
-                        ) : null;
-                      })()
-                    ) : null}
+                    {entry.dueDate ? <DueBadge dueDate={entry.dueDate} /> : null}
                     {entry.editedAt ? (
                       <span className="text-[10px] text-muted font-mono" title={new Date(entry.editedAt).toLocaleString()}>
                         {t("person.edited")}
@@ -78,8 +80,13 @@ export function RecentActivity({ entries }: { entries: RecentEntryItem[] }) {
                     </p>
                   ) : null}
 
-                  <p className="mt-1 font-mono text-[10px] text-muted">
-                    {formatWhen(entry.createdAt)}
+                  <p className="mt-1 font-mono text-[10px] text-muted flex items-center gap-1.5 flex-wrap">
+                    <span>{formatWhen(entry.createdAt)}</span>
+                    {entry.createdBy?.role === "STAFF" && entry.createdBy.staffName ? (
+                      <span className="rounded bg-paper px-1 py-0.2 text-[9px] font-sans font-medium text-muted border border-rule/50">
+                        by {entry.createdBy.staffName}
+                      </span>
+                    ) : null}
                   </p>
                 </div>
 
