@@ -26,7 +26,7 @@ export function DeletePersonForm({ personId }: { personId: string }) {
             event.preventDefault();
           }
         }}
-        className="inline-flex items-center justify-center rounded-lg border border-danger/30 bg-surface px-3.5 py-2 text-sm font-semibold text-danger transition-colors hover:bg-danger-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger cursor-pointer"
+        className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-danger/30 bg-surface px-4 py-2.5 text-sm font-semibold text-danger transition-colors hover:bg-danger-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger cursor-pointer"
       >
         {t("form.deletePerson")}
       </button>

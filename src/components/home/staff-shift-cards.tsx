@@ -7,7 +7,7 @@ export function StaffShiftCards({
   summary: StaffShiftSummary;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-ink/5 px-2.5 py-0.5 text-xs font-semibold text-ink">

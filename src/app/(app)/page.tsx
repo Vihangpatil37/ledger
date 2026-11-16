@@ -33,7 +33,7 @@ export default async function HomePage() {
   const isNetNegative = netValue < 0;
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       {/* Top Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-rule/50 pb-5">
         <div>
@@ -52,7 +52,7 @@ export default async function HomePage() {
         {!isStaff && (
           <Link
             href="/people/new"
-            className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl bg-ink px-4 py-2 text-xs sm:text-sm font-semibold text-paper shadow-[0_2px_4px_0_rgba(30,27,24,0.15)] transition-all duration-150 hover:bg-ink/90 active:scale-[0.98] self-start sm:self-auto cursor-pointer"
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-ink px-4 py-2 text-xs sm:text-sm font-semibold text-paper shadow-[0_2px_4px_0_rgba(30,27,24,0.15)] transition-all duration-150 hover:bg-ink/90 active:scale-[0.98] self-start sm:self-auto cursor-pointer focus-visible:outline-2 focus-visible:outline-focus"
           >
             <span className="text-base leading-none font-bold">+</span>
             <span>{t("nav.addPerson")}</span>
@@ -60,71 +60,103 @@ export default async function HomePage() {
         )}
       </div>
 
-      {/* Metrics Bar: Staff Shift Summary OR Owner Financial Health */}
+      {/* Metrics Bar: Staff Shift Summary OR Integrated Cashbook Banner */}
       {shiftSummary ? (
         <StaffShiftCards summary={shiftSummary} />
       ) : (
-        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
-        {/* Card 1: Net Balance */}
-        <div className="rounded-xl border border-rule bg-surface p-4 sm:p-5 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)] transition-all">
-          <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted">
-            {t("home.netBalance")}
-          </p>
-          <Money
-            amount={summary.netBalance}
-            abs
-            className={`mt-2 block text-2xl sm:text-3xl font-bold tracking-tight ${
-              isNetPositive
-                ? "text-debit"
-                : isNetNegative
-                  ? "text-credit"
-                  : "text-ink"
-            }`}
-          />
-          <p className="mt-1.5 text-xs text-muted">
-            {isNetPositive
-              ? t("home.youllGet")
-              : isNetNegative
-                ? t("home.youllGive")
-                : t("home.settledBadge")}
-          </p>
-        </div>
+        <div className="rounded-2xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_12px_0_rgba(30,27,24,0.04)] transition-all">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-rule/60 pb-4">
+            <div>
+              <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted flex items-center gap-2">
+                <span>{t("home.netBalance")}</span>
+                <span
+                  className={`inline-block size-2 rounded-full ${
+                    isNetPositive
+                      ? "bg-debit"
+                      : isNetNegative
+                        ? "bg-credit"
+                        : "bg-ink/40"
+                  }`}
+                  aria-hidden="true"
+                />
+              </p>
+              <div className="flex items-baseline gap-3 mt-1 flex-wrap">
+                <Money
+                  amount={summary.netBalance}
+                  abs
+                  className={`text-3xl sm:text-4xl font-bold tracking-tight ${
+                    isNetPositive
+                      ? "text-debit"
+                      : isNetNegative
+                        ? "text-credit"
+                        : "text-ink"
+                  }`}
+                />
+                <span
+                  className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                    isNetPositive
+                      ? "bg-debit-light text-debit border border-debit/20"
+                      : isNetNegative
+                        ? "bg-credit-light text-credit border border-credit/20"
+                        : "bg-paper text-muted border border-rule"
+                  }`}
+                >
+                  {isNetPositive
+                    ? t("home.youllGet")
+                    : isNetNegative
+                      ? t("home.youllGive")
+                      : t("home.settledBadge")}
+                </span>
+              </div>
+            </div>
 
-        {/* Card 2: Udhar (You will get) */}
-        <div className="rounded-xl border border-rule bg-surface p-4 sm:p-5 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)] transition-all">
-          <div className="flex items-center justify-between">
-            <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted">
-              {t("home.youllGet")}
-            </p>
-            <span className="size-2 rounded-full bg-debit ring-4 ring-debit/10" />
+            {summary.overdueCount > 0 ? (
+              <div className="flex items-center gap-2 rounded-xl bg-debit-light border border-debit/30 px-3.5 py-2 text-xs text-debit font-medium self-start sm:self-auto">
+                <span className="font-bold text-sm">⚠</span>
+                <span>
+                  <strong>{summary.overdueCount}</strong> {t("home.summaryOverdue").toLowerCase()}
+                </span>
+              </div>
+            ) : null}
           </div>
-          <Money
-            amount={summary.youllGet}
-            className="mt-2 block text-2xl sm:text-3xl font-bold text-debit tracking-tight"
-          />
-          <p className="mt-1.5 text-xs text-muted">
-            {summary.debtorsCount} {t("home.filterDebtors")}
-          </p>
-        </div>
 
-        {/* Card 3: Advance Deposit (Jama) */}
-        <div className="rounded-xl border border-rule bg-surface p-4 sm:p-5 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)] transition-all">
-          <div className="flex items-center justify-between">
-            <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted">
-              {t("home.youllGive")}
-            </p>
-            <span className="size-2 rounded-full bg-credit ring-4 ring-credit/10" />
+          <div className="grid grid-cols-2 gap-4 pt-4 sm:divide-x sm:divide-rule/60">
+            {/* Left stream: Udhar (You will get) */}
+            <div className="pr-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted">
+                  {t("home.youllGet")}
+                </span>
+                <span className="size-2 rounded-full bg-debit ring-4 ring-debit/10" aria-hidden="true" />
+              </div>
+              <Money
+                amount={summary.youllGet}
+                className="mt-1.5 block text-xl sm:text-2xl font-bold text-debit tracking-tight"
+              />
+              <p className="mt-1 text-xs text-muted">
+                {summary.debtorsCount} {t("home.filterDebtors")}
+              </p>
+            </div>
+
+            {/* Right stream: Advance Deposit (Jama) */}
+            <div className="sm:pl-4">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted">
+                  {t("home.youllGive")}
+                </span>
+                <span className="size-2 rounded-full bg-credit ring-4 ring-credit/10" aria-hidden="true" />
+              </div>
+              <Money
+                amount={summary.youllGive}
+                abs
+                className="mt-1.5 block text-xl sm:text-2xl font-bold text-credit tracking-tight"
+              />
+              <p className="mt-1 text-xs text-muted">
+                {summary.creditorsCount} {t("home.filterCreditors")}
+              </p>
+            </div>
           </div>
-          <Money
-            amount={summary.youllGive}
-            abs
-            className="mt-2 block text-2xl sm:text-3xl font-bold text-credit tracking-tight"
-          />
-          <p className="mt-1.5 text-xs text-muted">
-            {summary.creditorsCount} {t("home.filterCreditors")}
-          </p>
         </div>
-      </div>
       )}
 
       {/* Today's Follow-up Queue Banner */}
@@ -133,7 +165,7 @@ export default async function HomePage() {
       {/* Main Dashboard Grid: People Directory (Left) + Activity & Stats (Right) */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start pt-2">
         {/* Left Column: People Directory */}
-        <section className="lg:col-span-8 space-y-3">
+        <section className="lg:col-span-8 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-bold text-ink tracking-tight">
               {t("home.directoryTitle")}
@@ -155,15 +187,15 @@ export default async function HomePage() {
         </section>
 
         {/* Right Column: Recent Activity & Quick Stats */}
-        <section className="lg:col-span-4 space-y-4">
+        <section className="lg:col-span-4 flex flex-col gap-4">
           <RecentActivity entries={summary.recentEntries} />
 
           {/* Quick Ledger Overview Card */}
-          <div className="rounded-xl border border-rule bg-surface p-4 sm:p-5 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)] space-y-3">
+          <div className="rounded-xl border border-rule bg-surface p-4 sm:p-5 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)] flex flex-col gap-3">
             <h3 className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted">
               {t("home.summaryTitle")}
             </h3>
-            <div className="space-y-2 text-xs">
+            <div className="flex flex-col gap-2 text-xs">
               <div className="flex justify-between py-1 border-b border-rule/40">
                 <span className="text-muted">{t("home.summaryTotal")}</span>
                 <span className="font-mono font-semibold text-ink">{count}</span>

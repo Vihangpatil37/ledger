@@ -15,16 +15,19 @@ export default async function NewPersonPage() {
   const { t } = await getServerTranslations();
 
   return (
-    <div className="max-w-xl mx-auto space-y-6">
+    <div className="max-w-xl mx-auto flex flex-col gap-6">
       <div className="border-b border-rule/50 pb-5">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-muted transition-colors hover:text-ink"
+          className="inline-flex min-h-[44px] items-center gap-1.5 text-xs sm:text-sm font-medium text-muted transition-colors hover:text-ink"
         >
-          <span>←</span> {t("nav.dashboard")}
+          <span aria-hidden="true">←</span> {t("nav.dashboard")}
         </Link>
         <div className="mt-3 flex items-center gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-ink text-paper font-bold text-base shadow-2xs">
+          <div
+            className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-ink text-paper font-bold text-base shadow-2xs"
+            aria-hidden="true"
+          >
             +
           </div>
           <div>

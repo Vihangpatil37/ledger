@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReliabilityScore } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n/client";
 
@@ -14,20 +14,31 @@ export function ReliabilityBadge({
   const [showDetails, setShowDetails] = useState(false);
   const { t } = useLanguage();
 
+  useEffect(() => {
+    if (!showDetails) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setShowDetails(false);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showDetails]);
+
   if (!score) return null;
 
   let bgClass = "bg-paper text-muted border-rule";
   let dotClass = "bg-muted";
 
   if (score.tier === "EXCELLENT") {
-    bgClass = "bg-emerald-500/10 text-emerald-800 border-emerald-500/30";
-    dotClass = "bg-emerald-600";
+    bgClass = "bg-credit-light text-credit border-credit/30";
+    dotClass = "bg-credit";
   } else if (score.tier === "MODERATE") {
-    bgClass = "bg-amber-500/10 text-amber-800 border-amber-500/30";
-    dotClass = "bg-amber-600";
+    bgClass = "bg-warning-light text-warning border-warning/30";
+    dotClass = "bg-warning";
   } else if (score.tier === "RISKY") {
-    bgClass = "bg-rose-500/10 text-rose-800 border-rose-500/30";
-    dotClass = "bg-rose-600";
+    bgClass = "bg-debit-light text-debit border-debit/30";
+    dotClass = "bg-debit";
   }
 
   const localizedTier =
@@ -46,10 +57,12 @@ export function ReliabilityBadge({
       <button
         type="button"
         onClick={() => setShowDetails(!showDetails)}
-        className={`inline-flex items-center gap-1.5 rounded-full border ${sizeClass} font-semibold font-mono transition-transform hover:scale-[1.02] active:scale-[0.98] ${bgClass}`}
+        aria-expanded={showDetails}
+        aria-haspopup="dialog"
+        className={`inline-flex items-center gap-1.5 rounded-full border ${sizeClass} font-semibold font-mono transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer focus-visible:outline-2 focus-visible:outline-focus ${bgClass}`}
         title={`${t("reliability.title")}: ${score.score}/100`}
       >
-        <span className={`size-1.5 rounded-full ${dotClass}`} />
+        <span className={`size-1.5 rounded-full ${dotClass}`} aria-hidden="true" />
         <span>
           {score.tier === "NEW" ? localizedTier : `${score.score} · ${localizedTier}`}
         </span>
@@ -61,12 +74,16 @@ export function ReliabilityBadge({
             className="fixed inset-0 z-40"
             onClick={() => setShowDetails(false)}
           />
-          <div className="absolute left-0 sm:right-0 sm:left-auto mt-1.5 z-50 w-64 rounded-xl border border-rule bg-surface p-3.5 shadow-lg space-y-2 text-xs">
+          <div
+            role="dialog"
+            aria-label={t("reliability.title")}
+            className="absolute left-0 sm:right-0 sm:left-auto mt-1.5 z-50 w-64 rounded-2xl border border-rule bg-surface p-4 shadow-xl flex flex-col gap-2.5 text-xs animate-in fade-in duration-150"
+          >
             <div className="flex items-center justify-between border-b border-rule/50 pb-2">
               <span className="font-bold text-ink">{t("reliability.title")}</span>
               <span className="font-mono font-bold text-ink">{score.score}/100</span>
             </div>
-            <div className="space-y-1.5 text-muted">
+            <div className="flex flex-col gap-1.5 text-muted">
               <div className="flex justify-between">
                 <span>{t("reliability.onTime")}:</span>
                 <span className="font-mono font-semibold text-ink">{score.onTimeRate}%</span>
@@ -80,9 +97,11 @@ export function ReliabilityBadge({
                 <span className="font-mono font-semibold text-ink">{score.totalSettledCount}</span>
               </div>
               {score.brokenPromisesCount > 0 && (
-                <div className="flex justify-between text-rose-600">
+                <div className="flex justify-between text-debit">
                   <span>Broken promises:</span>
-                  <span className="font-mono font-bold">-{score.brokenPromisesCount * 15} pts ({score.brokenPromisesCount})</span>
+                  <span className="font-mono font-bold">
+                    -{score.brokenPromisesCount * 15} pts ({score.brokenPromisesCount})
+                  </span>
                 </div>
               )}
             </div>

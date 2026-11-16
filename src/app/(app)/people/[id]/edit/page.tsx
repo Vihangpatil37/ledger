@@ -31,15 +31,15 @@ export default async function EditPersonPage({
   const { t } = await getServerTranslations();
 
   return (
-    <div className="max-w-xl mx-auto space-y-6">
+    <div className="max-w-xl mx-auto flex flex-col gap-6">
       <div className="border-b border-rule/50 pb-5">
         <Link
           href={`/people/${detail.id}`}
-          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-muted transition-colors hover:text-ink"
+          className="inline-flex min-h-[44px] items-center gap-1.5 text-xs sm:text-sm font-medium text-muted transition-colors hover:text-ink"
         >
-          <span>←</span> {t("common.back")} · {detail.name}
+          <span aria-hidden="true">←</span> {t("common.back")} · {detail.name}
         </Link>
-        <h1 className="mt-3 font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+        <h1 className="mt-2 font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
           {t("person.editPerson")}
         </h1>
       </div>
@@ -52,7 +52,7 @@ export default async function EditPersonPage({
         }}
       />
 
-      <section className="rounded-xl border border-danger/25 bg-danger-light/40 p-5 space-y-2">
+      <section className="rounded-2xl border border-danger/25 bg-danger-light/40 p-5 flex flex-col gap-2">
         <h2 className="text-sm font-semibold text-danger">{t("form.deletePerson")}</h2>
         <p className="text-xs text-muted">
           {t("form.deletePersonWarning")}

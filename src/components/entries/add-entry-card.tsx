@@ -46,7 +46,7 @@ export function AddEntryCard({ personId }: { personId: string }) {
     <form
       ref={formRef}
       action={formAction}
-      className="space-y-4 rounded-xl border border-rule bg-surface p-4 sm:p-6 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)]"
+      className="flex flex-col gap-4 rounded-2xl border border-rule bg-surface p-4 sm:p-6 shadow-[0_2px_12px_0_rgba(30,27,24,0.04)]"
     >
       <input type="hidden" name="personId" value={personId} />
       <input type="hidden" name="type" value={type} />
@@ -60,7 +60,7 @@ export function AddEntryCard({ personId }: { personId: string }) {
               type="button"
               aria-pressed={active}
               onClick={() => setType(option.value)}
-              className={`min-h-[54px] rounded-xl border px-3 py-2 sm:px-4 sm:py-2.5 text-left transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus active:scale-[0.98] ${
+              className={`min-h-[54px] rounded-xl border px-3 py-2 sm:px-4 sm:py-2.5 text-left transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus active:scale-[0.98] cursor-pointer ${
                 active
                   ? option.activeClass
                   : "border-rule bg-surface text-ink hover:bg-paper active:bg-rule/20"
@@ -82,7 +82,7 @@ export function AddEntryCard({ personId }: { personId: string }) {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-1.5">
           <Label htmlFor="amount">{t("entry.amount")} (₹)</Label>
           <div className="relative">
             <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm font-semibold text-muted">
@@ -101,7 +101,7 @@ export function AddEntryCard({ personId }: { personId: string }) {
           <FieldError message={state.fieldErrors?.amount} />
         </div>
 
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-1.5">
           <Label htmlFor="note">{t("entry.note")}</Label>
           <input
             id="note"
@@ -115,7 +115,7 @@ export function AddEntryCard({ personId }: { personId: string }) {
         </div>
 
         {type === "GAVE" ? (
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="dueDate">{t("entry.dueDate")}</Label>
             <input
               id="dueDate"
@@ -131,20 +131,28 @@ export function AddEntryCard({ personId }: { personId: string }) {
       {state.error ? (
         <p
           role="alert"
-          className="rounded-lg border border-danger/20 bg-danger-light px-3 py-2 text-xs sm:text-sm font-medium text-danger"
+          className="rounded-xl border border-danger/20 bg-danger-light px-3.5 py-2 text-xs sm:text-sm font-medium text-danger"
         >
           {state.error}
         </p>
       ) : null}
       {state.ok ? (
-        <p role="status" className="text-xs sm:text-sm font-medium text-credit">
-          ✓
+        <p role="status" className="text-xs sm:text-sm font-medium text-credit flex items-center gap-1.5">
+          <span>✓</span>
+          <span>Transaction recorded successfully</span>
         </p>
       ) : null}
 
-      <Button type="submit" disabled={pending} className="w-full sm:w-auto cursor-pointer">
-        {pending ? t("entry.saving") : t("entry.saveEntry")}
-      </Button>
+      <div className="pt-1">
+        <Button
+          type="submit"
+          disabled={pending}
+          isLoading={pending}
+          className="w-full sm:w-auto min-w-[140px] cursor-pointer"
+        >
+          {pending ? t("entry.saving") : t("entry.saveEntry")}
+        </Button>
+      </div>
     </form>
   );
 }

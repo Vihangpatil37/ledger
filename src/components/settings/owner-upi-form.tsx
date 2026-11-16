@@ -16,7 +16,7 @@ export function OwnerUpiForm({ profile }: { profile: OwnerProfile }) {
   return (
     <form
       action={formAction}
-      className="space-y-4 rounded-xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)]"
+      className="flex flex-col gap-4 rounded-2xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_12px_0_rgba(30,27,24,0.04)]"
     >
       <div>
         <h2 className="font-display text-base font-bold text-ink tracking-tight">
@@ -27,7 +27,7 @@ export function OwnerUpiForm({ profile }: { profile: OwnerProfile }) {
         </p>
       </div>
 
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-1.5">
         <Label htmlFor="upiId">{t("settings.upiIdLabel")}</Label>
         <input
           id="upiId"
@@ -44,7 +44,7 @@ export function OwnerUpiForm({ profile }: { profile: OwnerProfile }) {
         <FieldError message={state.fieldErrors?.upiId} />
       </div>
 
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-1.5">
         <Label htmlFor="upiName">{t("settings.upiNameLabel")}</Label>
         <input
           id="upiName"
@@ -61,19 +61,25 @@ export function OwnerUpiForm({ profile }: { profile: OwnerProfile }) {
       {state.error ? (
         <p
           role="alert"
-          className="rounded-lg border border-danger/20 bg-danger-light px-3 py-2 text-xs font-medium text-danger"
+          className="rounded-xl border border-danger/20 bg-danger-light px-3.5 py-2 text-xs font-medium text-danger"
         >
           {state.error}
         </p>
       ) : null}
       {state.ok ? (
-        <p role="status" className="text-xs font-medium text-credit">
-          {t("settings.upiSaved")}
+        <p role="status" className="text-xs font-medium text-credit flex items-center gap-1.5">
+          <span>✓</span>
+          <span>{t("settings.upiSaved")}</span>
         </p>
       ) : null}
 
-      <div className="pt-2">
-        <Button type="submit" disabled={pending} className="w-full sm:w-auto cursor-pointer">
+      <div className="pt-1">
+        <Button
+          type="submit"
+          disabled={pending}
+          isLoading={pending}
+          className="w-full sm:w-auto min-w-[130px] cursor-pointer"
+        >
           {pending ? t("entry.saving") : t("settings.upiSaveBtn")}
         </Button>
       </div>

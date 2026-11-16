@@ -24,7 +24,7 @@ export function RecentActivity({ entries }: { entries: RecentEntryItem[] }) {
   const { t } = useLanguage();
 
   return (
-    <div className="rounded-xl border border-rule bg-surface p-4 sm:p-5 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)]">
+    <div className="rounded-2xl border border-rule bg-surface p-4 sm:p-5 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)]">
       <div className="flex items-center justify-between pb-3 border-b border-rule/50">
         <h2 className="font-display text-base font-bold text-ink tracking-tight">
           {t("home.recentActivity")}

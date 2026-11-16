@@ -27,13 +27,13 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="max-w-xl mx-auto space-y-6">
+    <div className="max-w-xl mx-auto flex flex-col gap-6">
       <div className="border-b border-rule/50 pb-5">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-muted transition-colors hover:text-ink"
+          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-focus"
         >
-          <span>←</span> {t("settings.backToDashboard")}
+          <span aria-hidden="true">←</span> {t("settings.backToDashboard")}
         </Link>
         <div className="mt-3 flex items-start justify-between gap-3">
           <div>
@@ -47,9 +47,9 @@ export default async function SettingsPage() {
 
           <Link
             href="/trash"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-rule bg-surface px-3 py-1.5 text-xs font-semibold text-muted hover:text-ink hover:bg-paper transition-all"
+            className="inline-flex min-h-[38px] items-center gap-1.5 rounded-xl border border-rule bg-surface px-3.5 py-1.5 text-xs font-semibold text-muted hover:text-ink hover:bg-paper transition-all focus-visible:outline-2 focus-visible:outline-focus"
           >
-            <span>🗑️</span>
+            <span aria-hidden="true">🗑️</span>
             <span>{t("nav.trash")}</span>
           </Link>
         </div>
@@ -59,7 +59,7 @@ export default async function SettingsPage() {
       <StaffManagementSection shopCode={profile.shopCode ?? ""} staff={staff} />
 
       {/* Language Preferences Card */}
-      <section className="rounded-xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)] space-y-3">
+      <section className="rounded-2xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_12px_0_rgba(30,27,24,0.04)] flex flex-col gap-3">
         <div>
           <h2 className="text-sm font-bold text-ink tracking-tight">
             {t("settings.languageTitle")}

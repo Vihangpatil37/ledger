@@ -22,12 +22,14 @@ export function MobileNav({ isStaff }: { isStaff?: boolean }) {
       <div
         className={`grid ${
           isStaff ? "grid-cols-2" : "grid-cols-3"
-        } h-14 max-w-md mx-auto items-center px-4`}
+        } h-14 max-w-md mx-auto items-center px-3 gap-1`}
       >
         <Link
           href="/"
-          className={`flex flex-col items-center justify-center gap-1 py-1 transition-colors ${
-            isHome ? "text-ink font-semibold" : "text-muted hover:text-ink"
+          className={`flex flex-col items-center justify-center min-h-[44px] gap-1 py-1 rounded-xl transition-all ${
+            isHome
+              ? "text-ink font-bold bg-paper shadow-2xs"
+              : "text-muted hover:text-ink active:bg-paper/50"
           }`}
         >
           <svg
@@ -52,18 +54,20 @@ export function MobileNav({ isStaff }: { isStaff?: boolean }) {
 
         <Link
           href="/people/new"
-          className={`flex flex-col items-center justify-center gap-1 py-1 transition-colors ${
-            isAddPerson ? "text-ink font-semibold" : "text-muted hover:text-ink"
+          className={`flex flex-col items-center justify-center min-h-[44px] gap-1 py-1 rounded-xl transition-all ${
+            isAddPerson
+              ? "text-ink font-bold bg-paper shadow-2xs"
+              : "text-muted hover:text-ink active:bg-paper/50"
           }`}
         >
           <div
-            className={`flex size-6 items-center justify-center rounded-full transition-colors ${
+            className={`flex size-5 items-center justify-center rounded-full transition-colors ${
               isAddPerson
                 ? "bg-ink text-white"
                 : "border border-rule bg-paper text-muted"
             }`}
           >
-            <span className="text-sm font-bold leading-none">+</span>
+            <span className="text-xs font-bold leading-none">+</span>
           </div>
           <span className="text-[11px] leading-none">{t("nav.addPerson")}</span>
         </Link>
@@ -71,8 +75,10 @@ export function MobileNav({ isStaff }: { isStaff?: boolean }) {
         {!isStaff ? (
           <Link
             href="/settings"
-            className={`flex flex-col items-center justify-center gap-1 py-1 transition-colors ${
-              isSettings ? "text-ink font-semibold" : "text-muted hover:text-ink"
+            className={`flex flex-col items-center justify-center min-h-[44px] gap-1 py-1 rounded-xl transition-all ${
+              isSettings
+                ? "text-ink font-bold bg-paper shadow-2xs"
+                : "text-muted hover:text-ink active:bg-paper/50"
             }`}
           >
             <svg

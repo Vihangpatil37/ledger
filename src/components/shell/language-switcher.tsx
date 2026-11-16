@@ -69,9 +69,9 @@ export function LanguageSwitcher({
             onClick={() => setLocale(item.code)}
             aria-pressed={isSelected}
             title={item.label}
-            className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all duration-150 cursor-pointer ${
+            className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all duration-150 cursor-pointer focus-visible:outline-2 focus-visible:outline-focus ${
               isSelected
-                ? "bg-ink text-paper shadow-2xs"
+                ? "bg-ink text-paper shadow-2xs font-bold"
                 : "text-muted hover:text-ink hover:bg-rule/30"
             }`}
           >

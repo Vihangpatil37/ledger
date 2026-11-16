@@ -3,6 +3,12 @@
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { addEntry } from "@/actions/entries";
+import {
+  Dialog,
+  DialogCloseButton,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button, FieldError, Label, Money, inputClass } from "@/components/ui";
 import { UpiQrCode } from "@/components/qr-code";
 import { calculateSettleSplits, decimalStringToPaise, formatMoney } from "@/lib/money";
@@ -41,15 +47,9 @@ export function SettleBalanceModal({ detail }: { detail: PersonDetail }) {
   // Lock background scroll when open and initialize presets
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden";
       setAmount(fullAmount);
       setNote("Full account settlement");
-    } else {
-      document.body.style.overflow = "";
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [isOpen, fullAmount]);
 
   function handleSelectFull() {
@@ -96,198 +96,193 @@ export function SettleBalanceModal({ detail }: { detail: PersonDetail }) {
         <span>{t("person.settleBalance")}</span>
       </button>
 
-      {isOpen ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="settle-modal-title"
-          className="fixed inset-0 z-50 flex items-end justify-center bg-ink/60 p-0 sm:items-center sm:p-4 backdrop-blur-xs"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setIsOpen(false);
-          }}
-        >
-          <div className="w-full max-w-md rounded-t-2xl border-t border-rule bg-surface p-5 shadow-2xl sm:rounded-2xl sm:border max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-150">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-rule/60 pb-3.5">
-              <div>
-                <h3
-                  id="settle-modal-title"
-                  className="font-display text-lg font-bold tracking-tight text-ink"
-                >
-                  {t("settle.title")}
-                </h3>
-                <p className="font-mono text-xs text-muted">
-                  {detail.name}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="inline-flex size-8 items-center justify-center rounded-lg text-muted hover:bg-paper hover:text-ink transition-colors cursor-pointer"
-                aria-label={t("common.close")}
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Overview Banner */}
-            <div className="my-4 rounded-xl border border-rule bg-paper/70 p-3.5 text-center">
-              <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted block">
-                {isOwesYou ? t("home.youllGet") : t("home.youllGive")}
-              </span>
-              <Money
-                amount={fullAmount}
-                className="mt-1 block text-2xl font-bold font-mono tracking-tight text-ink"
-              />
-            </div>
-
-            {/* Settle Form */}
-            <form action={formAction} className="space-y-4">
-              <input type="hidden" name="personId" value={detail.id} />
-              <input type="hidden" name="type" value={settleType} />
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="settle-amount">{t("settle.customAmount")} (₹)</Label>
-                  <div className="inline-flex gap-1.5">
-                    <button
-                      type="button"
-                      onClick={handleSelectFull}
-                      className={`rounded-md border px-2 py-0.5 font-mono text-[11px] font-semibold transition-colors cursor-pointer ${
-                        amount === fullAmount
-                          ? "border-ink bg-ink text-paper shadow-2xs"
-                          : "border-rule bg-paper text-muted hover:text-ink"
-                      }`}
-                    >
-                      {t("settle.fullOption")} ({formatMoney(fullAmount)})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSelectHalf}
-                      disabled={halfPaise === 0}
-                      className={`rounded-md border px-2 py-0.5 font-mono text-[11px] font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${
-                        amount === halfAmount
-                          ? "border-ink bg-ink text-paper shadow-2xs"
-                          : "border-rule bg-paper text-muted hover:text-ink"
-                      }`}
-                    >
-                      {t("settle.halfOption")} ({formatMoney(halfAmount)})
-                    </button>
-                  </div>
-                </div>
-
-                <div className="relative">
-                  <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm font-semibold text-muted">
-                    ₹
-                  </span>
-                  <input
-                    id="settle-amount"
-                    name="amount"
-                    type="text"
-                    inputMode="decimal"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    required
-                    className={`${inputClass} pl-8 font-mono font-bold tracking-tight`}
-                  />
-                </div>
-                <FieldError message={state.fieldErrors?.amount} />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="settle-note">{t("settle.note")}</Label>
-                <input
-                  id="settle-note"
-                  name="note"
-                  type="text"
-                  maxLength={200}
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder={t("settle.notePlaceholder")}
-                  className={inputClass}
-                />
-                <FieldError message={state.fieldErrors?.note} />
-              </div>
-
-              {/* UPI Action Section (when contact owes you) */}
-              {isOwesYou ? (
-                <div className="border-t border-rule/60 pt-3">
-                  {ownerUpiUrl ? (
-                    <div className="space-y-2">
-                      <button
-                        type="button"
-                        onClick={() => setShowQr(!showQr)}
-                        className="inline-flex w-full items-center justify-between rounded-lg border border-rule bg-paper px-3 py-2 text-xs font-semibold text-ink hover:bg-surface transition-colors cursor-pointer"
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-3.5 text-focus">
-                            <rect x="3" y="3" width="7" height="7" />
-                            <rect x="14" y="3" width="7" height="7" />
-                            <rect x="14" y="14" width="7" height="7" />
-                            <rect x="3" y="14" width="7" height="7" />
-                          </svg>
-                          <span>{showQr ? t("settle.hideQr") : t("settle.showQr")}</span>
-                        </span>
-                        <span className="font-mono text-[10px] text-muted">
-                          {showQr ? "▲" : "▼"}
-                        </span>
-                      </button>
-
-                      {showQr ? (
-                        <div className="rounded-xl border border-rule bg-surface p-3 text-center space-y-2 animate-in fade-in duration-150">
-                          <div className="flex justify-center">
-                            <UpiQrCode upiUrl={ownerUpiUrl} size={150} />
-                          </div>
-                          <p className="font-mono text-[11px] font-semibold text-ink">
-                            UPI ID: {detail.ownerUpi?.upiId}
-                          </p>
-                          <p className="text-[10px] text-muted">
-                            {t("settle.qrInstruction")}
-                          </p>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <div className="rounded-lg border border-dashed border-rule bg-paper/50 px-3 py-2 text-center text-xs text-muted">
-                      {t("settle.noOwnerUpi")}{" "}
-                      <Link href="/settings" className="font-semibold text-focus hover:underline">
-                        {t("settle.setUpiInSettings")}
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              ) : null}
-
-              {state.error ? (
-                <p
-                  role="alert"
-                  className="rounded-lg border border-danger/20 bg-danger-light px-3 py-2 text-xs font-medium text-danger"
-                >
-                  {state.error}
-                </p>
-              ) : null}
-
-              <div className="pt-2 flex flex-col sm:flex-row gap-2">
-                <Button
-                  type="submit"
-                  disabled={pending}
-                  className="w-full flex-1"
-                >
-                  {pending ? t("settle.recording") : t("settle.confirmBtn")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsOpen(false)}
-                  className="w-full sm:w-auto"
-                >
-                  {t("common.cancel")}
-                </Button>
-              </div>
-            </form>
+      <Dialog
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        titleId="settle-modal-title"
+      >
+        <DialogHeader>
+          <div>
+            <DialogTitle id="settle-modal-title">
+              {t("settle.title")}
+            </DialogTitle>
+            <p className="font-mono text-xs text-muted mt-0.5">
+              {detail.name}
+            </p>
           </div>
+          <DialogCloseButton
+            onClose={() => setIsOpen(false)}
+            ariaLabel={t("common.close")}
+          />
+        </DialogHeader>
+
+        <div className="overflow-y-auto flex flex-col gap-4 pt-3">
+          {/* Overview Banner */}
+          <div className="rounded-xl border border-rule bg-paper/70 p-3.5 text-center">
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted block">
+              {isOwesYou ? t("home.youllGet") : t("home.youllGive")}
+            </span>
+            <Money
+              amount={fullAmount}
+              className="mt-1 block text-2xl font-bold font-mono tracking-tight text-ink"
+            />
+          </div>
+
+          {/* Settle Form */}
+          <form action={formAction} className="flex flex-col gap-4">
+            <input type="hidden" name="personId" value={detail.id} />
+            <input type="hidden" name="type" value={settleType} />
+
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="settle-amount">{t("settle.customAmount")} (₹)</Label>
+                <div className="inline-flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleSelectFull}
+                    className={`rounded-lg border px-2.5 py-1 font-mono text-[11px] font-semibold transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-focus ${
+                      amount === fullAmount
+                        ? "border-ink bg-ink text-paper shadow-2xs"
+                        : "border-rule bg-paper text-muted hover:text-ink"
+                    }`}
+                  >
+                    {t("settle.fullOption")} ({formatMoney(fullAmount)})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSelectHalf}
+                    disabled={halfPaise === 0}
+                    className={`rounded-lg border px-2.5 py-1 font-mono text-[11px] font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-focus ${
+                      amount === halfAmount
+                        ? "border-ink bg-ink text-paper shadow-2xs"
+                        : "border-rule bg-paper text-muted hover:text-ink"
+                    }`}
+                  >
+                    {t("settle.halfOption")} ({formatMoney(halfAmount)})
+                  </button>
+                </div>
+              </div>
+
+              <div className="relative">
+                <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm font-semibold text-muted">
+                  ₹
+                </span>
+                <input
+                  id="settle-amount"
+                  name="amount"
+                  type="text"
+                  inputMode="decimal"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  required
+                  className={`${inputClass} pl-8 font-mono font-bold tracking-tight`}
+                />
+              </div>
+              <FieldError message={state.fieldErrors?.amount} />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="settle-note">{t("settle.note")}</Label>
+              <input
+                id="settle-note"
+                name="note"
+                type="text"
+                maxLength={200}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder={t("settle.notePlaceholder")}
+                className={inputClass}
+              />
+              <FieldError message={state.fieldErrors?.note} />
+            </div>
+
+            {/* UPI Action Section (when contact owes you) */}
+            {isOwesYou ? (
+              <div className="border-t border-rule/60 pt-3 flex flex-col gap-2">
+                {ownerUpiUrl ? (
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowQr(!showQr)}
+                      aria-expanded={showQr}
+                      className="inline-flex min-h-[40px] w-full items-center justify-between rounded-xl border border-rule bg-paper px-3.5 py-2 text-xs font-semibold text-ink hover:bg-surface transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-focus"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="size-4 text-focus"
+                          aria-hidden="true"
+                        >
+                          <rect x="3" y="3" width="7" height="7" />
+                          <rect x="14" y="3" width="7" height="7" />
+                          <rect x="14" y="14" width="7" height="7" />
+                          <rect x="3" y="14" width="7" height="7" />
+                        </svg>
+                        <span>{showQr ? t("settle.hideQr") : t("settle.showQr")}</span>
+                      </span>
+                      <span className="font-mono text-[10px] text-muted">
+                        {showQr ? "▲" : "▼"}
+                      </span>
+                    </button>
+
+                    {showQr ? (
+                      <div className="rounded-xl border border-rule bg-surface p-4 text-center flex flex-col items-center gap-2 animate-in fade-in duration-150">
+                        <div className="flex justify-center">
+                          <UpiQrCode upiUrl={ownerUpiUrl} size={150} />
+                        </div>
+                        <p className="font-mono text-xs font-semibold text-ink">
+                          UPI ID: {detail.ownerUpi?.upiId}
+                        </p>
+                        <p className="text-[11px] text-muted">
+                          {t("settle.qrInstruction")}
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-rule bg-paper/50 px-3 py-2 text-center text-xs text-muted">
+                    {t("settle.noOwnerUpi")}{" "}
+                    <Link href="/settings" className="font-semibold text-focus hover:underline">
+                      {t("settle.setUpiInSettings")}
+                    </Link>
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            {state.error ? (
+              <p
+                role="alert"
+                className="rounded-xl border border-danger/20 bg-danger-light px-3 py-2 text-xs font-medium text-danger"
+              >
+                {state.error}
+              </p>
+            ) : null}
+
+            <div className="pt-2 flex flex-col sm:flex-row gap-2">
+              <Button
+                type="submit"
+                disabled={pending}
+                isLoading={pending}
+                className="w-full flex-1"
+              >
+                {pending ? t("settle.recording") : t("settle.confirmBtn")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsOpen(false)}
+                className="w-full sm:w-auto"
+              >
+                {t("common.cancel")}
+              </Button>
+            </div>
+          </form>
         </div>
-      ) : null}
+      </Dialog>
     </>
   );
 }

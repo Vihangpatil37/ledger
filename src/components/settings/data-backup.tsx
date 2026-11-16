@@ -7,6 +7,13 @@ import {
   previewCsvImport,
   restoreBackupJson,
 } from "@/actions/backup";
+import {
+  Dialog,
+  DialogCloseButton,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useLanguage } from "@/lib/i18n/client";
 import type { CsvImportPreview } from "@/lib/types";
 
@@ -115,7 +122,7 @@ export function DataBackupSection() {
   }
 
   return (
-    <section className="rounded-xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)] space-y-5">
+    <section className="rounded-2xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_12px_0_rgba(30,27,24,0.04)] flex flex-col gap-5">
       <div>
         <h2 className="text-sm font-bold text-ink tracking-tight">
           {t("backup.title")}
@@ -126,20 +133,20 @@ export function DataBackupSection() {
       </div>
 
       {restoreMessage && (
-        <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 p-3 text-xs text-emerald-800 font-medium">
+        <div className="rounded-xl bg-credit-light border border-credit/30 p-3 text-xs text-credit font-medium">
           {restoreMessage}
         </div>
       )}
 
       {importMessage && (
-        <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 p-3 text-xs text-emerald-800 font-medium">
+        <div className="rounded-xl bg-credit-light border border-credit/30 p-3 text-xs text-credit font-medium">
           {importMessage}
         </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         {/* Card 1: Full JSON Backup */}
-        <div className="rounded-xl border border-rule bg-paper p-4 space-y-3">
+        <div className="rounded-xl border border-rule bg-paper p-4 flex flex-col gap-3">
           <div>
             <h3 className="font-bold text-xs text-ink">Full JSON Backup</h3>
             <p className="text-[11px] text-muted mt-0.5">
@@ -150,21 +157,21 @@ export function DataBackupSection() {
             type="button"
             onClick={handleExportJson}
             disabled={isExporting}
-            className="w-full inline-flex items-center justify-center rounded-lg bg-ink px-3 py-2 text-xs font-semibold text-paper hover:bg-ink/90 transition-colors cursor-pointer"
+            className="w-full inline-flex min-h-[40px] items-center justify-center rounded-xl bg-ink px-3 py-2 text-xs font-semibold text-paper hover:bg-ink/90 active:scale-[0.98] transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-focus"
           >
             {isExporting ? "Generating…" : t("backup.exportBtn")}
           </button>
         </div>
 
         {/* Card 2: Restore JSON Backup */}
-        <div className="rounded-xl border border-rule bg-paper p-4 space-y-3">
+        <div className="rounded-xl border border-rule bg-paper p-4 flex flex-col gap-3">
           <div>
             <h3 className="font-bold text-xs text-ink">{t("backup.restoreTitle")}</h3>
             <p className="text-[11px] text-muted mt-0.5">
               Restore from a previously downloaded .json backup file.
             </p>
           </div>
-          <label className="w-full inline-flex items-center justify-center rounded-lg border border-rule bg-surface px-3 py-2 text-xs font-semibold text-ink hover:bg-paper transition-colors cursor-pointer">
+          <label className="w-full inline-flex min-h-[40px] items-center justify-center rounded-xl border border-rule bg-surface px-3 py-2 text-xs font-semibold text-ink hover:bg-paper active:scale-[0.98] transition-all cursor-pointer focus-within:outline-2 focus-within:outline-focus">
             <span>{isRestoring ? "Restoring…" : t("backup.restoreBtn")}</span>
             <input
               type="file"
@@ -178,7 +185,7 @@ export function DataBackupSection() {
       </div>
 
       {/* Card 3: CSV Import from Paper Khata / Excel */}
-      <div className="rounded-xl border border-rule bg-paper p-4 space-y-3">
+      <div className="rounded-xl border border-rule bg-paper p-4 flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
             <h3 className="font-bold text-xs text-ink">{t("backup.csvTitle")}</h3>
@@ -186,7 +193,7 @@ export function DataBackupSection() {
               Import ledger entries from CSV (Name, Phone, Type, Amount, Note, DueDate).
             </p>
           </div>
-          <label className="inline-flex items-center justify-center rounded-lg bg-ink px-3.5 py-2 text-xs font-semibold text-paper hover:bg-ink/90 transition-colors cursor-pointer self-start sm:self-auto shrink-0">
+          <label className="inline-flex min-h-[40px] items-center justify-center rounded-xl bg-ink px-4 py-2 text-xs font-semibold text-paper hover:bg-ink/90 active:scale-[0.98] transition-all cursor-pointer self-start sm:self-auto shrink-0 focus-within:outline-2 focus-within:outline-focus">
             <span>{t("backup.csvBtn")}</span>
             <input
               type="file"
@@ -199,42 +206,44 @@ export function DataBackupSection() {
       </div>
 
       {/* CSV Dry-Run Preview Modal */}
-      {isPreviewOpen && csvPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-xs">
-          <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-rule bg-surface p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-rule/50 pb-3">
-              <div>
-                <h3 className="font-display text-lg font-bold text-ink">
-                  {t("backup.csvPreview")}
-                </h3>
-                <p className="text-xs text-muted mt-0.5">
-                  Review matched contacts and entries before importing.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsPreviewOpen(false)}
-                className="text-muted hover:text-ink text-sm p-1 rounded-lg"
-              >
-                ✕
-              </button>
+      {csvPreview && (
+        <Dialog
+          isOpen={isPreviewOpen}
+          onClose={() => setIsPreviewOpen(false)}
+          titleId="csv-preview-title"
+          className="max-w-2xl"
+        >
+          <DialogHeader>
+            <div>
+              <DialogTitle id="csv-preview-title">
+                {t("backup.csvPreview")}
+              </DialogTitle>
+              <DialogDescription>
+                Review matched contacts and entries before importing.
+              </DialogDescription>
             </div>
+            <DialogCloseButton
+              onClose={() => setIsPreviewOpen(false)}
+              ariaLabel={t("common.close")}
+            />
+          </DialogHeader>
 
+          <div className="overflow-y-auto flex flex-col gap-4 pt-3">
             {/* Metrics Chips */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-              <div className="rounded-lg border border-rule bg-paper p-2.5">
+              <div className="rounded-xl border border-rule bg-paper p-2.5">
                 <span className="text-muted block text-[10px] uppercase font-mono">Total Rows</span>
                 <span className="font-mono font-bold text-ink text-sm">{csvPreview.totalRows}</span>
               </div>
-              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2.5">
-                <span className="text-emerald-800 block text-[10px] uppercase font-mono">Valid Entries</span>
-                <span className="font-mono font-bold text-emerald-800 text-sm">{csvPreview.validCount}</span>
+              <div className="rounded-xl border border-credit/30 bg-credit-light p-2.5">
+                <span className="text-credit block text-[10px] uppercase font-mono">Valid Entries</span>
+                <span className="font-mono font-bold text-credit text-sm">{csvPreview.validCount}</span>
               </div>
-              <div className="rounded-lg border border-rule bg-paper p-2.5">
+              <div className="rounded-xl border border-rule bg-paper p-2.5">
                 <span className="text-muted block text-[10px] uppercase font-mono">Existing Contacts</span>
                 <span className="font-mono font-bold text-ink text-sm">{csvPreview.existingPeopleCount}</span>
               </div>
-              <div className="rounded-lg border border-rule bg-paper p-2.5">
+              <div className="rounded-xl border border-rule bg-paper p-2.5">
                 <span className="text-muted block text-[10px] uppercase font-mono">New Contacts</span>
                 <span className="font-mono font-bold text-focus text-sm">{csvPreview.newPeopleCount}</span>
               </div>
@@ -255,7 +264,7 @@ export function DataBackupSection() {
                 </thead>
                 <tbody className="divide-y divide-rule/40 font-mono text-[11px]">
                   {csvPreview.rows.slice(0, 50).map((r) => (
-                    <tr key={r.line} className={r.status === "ERROR" ? "bg-rose-50" : ""}>
+                    <tr key={r.line} className={r.status === "ERROR" ? "bg-debit-light/50" : ""}>
                       <td className="p-2 text-muted">{r.line}</td>
                       <td className="p-2 font-sans font-semibold text-ink">{r.name}</td>
                       <td className="p-2">
@@ -275,9 +284,9 @@ export function DataBackupSection() {
                       </td>
                       <td className="p-2">
                         {r.status === "VALID" ? (
-                          <span className="text-emerald-700 font-bold">✓ Valid</span>
+                          <span className="text-credit font-bold">✓ Valid</span>
                         ) : (
-                          <span className="text-rose-600 font-bold" title={r.error}>
+                          <span className="text-debit font-bold" title={r.error}>
                             ✕ Error
                           </span>
                         )}
@@ -299,7 +308,7 @@ export function DataBackupSection() {
               <button
                 type="button"
                 onClick={() => setIsPreviewOpen(false)}
-                className="rounded-xl border border-rule px-4 py-2 text-xs font-semibold text-muted hover:bg-paper"
+                className="min-h-[38px] rounded-xl border border-rule px-4 py-2 text-xs font-semibold text-muted hover:bg-paper cursor-pointer focus-visible:outline-2 focus-visible:outline-focus"
               >
                 {t("common.cancel")}
               </button>
@@ -307,13 +316,13 @@ export function DataBackupSection() {
                 type="button"
                 onClick={handleCommitImport}
                 disabled={isImporting || csvPreview.validCount === 0}
-                className="rounded-xl bg-ink px-4 py-2 text-xs font-semibold text-paper hover:bg-ink/90 disabled:opacity-50 cursor-pointer"
+                className="min-h-[38px] rounded-xl bg-ink px-4 py-2 text-xs font-semibold text-paper hover:bg-ink/90 disabled:opacity-50 cursor-pointer focus-visible:outline-2 focus-visible:outline-focus"
               >
                 {isImporting ? "Importing…" : `${t("backup.csvCommit")} (${csvPreview.validCount})`}
               </button>
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
     </section>
   );

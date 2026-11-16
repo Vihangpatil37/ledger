@@ -36,6 +36,11 @@
   --color-focus-light: #edf2ff;
   --color-danger: #b93826;
   --color-danger-light: #fdf2f0;
+  --color-warning: #b45309;
+  --color-warning-light: #fef9ee;
+  --color-whatsapp: #128c7e;
+  --color-whatsapp-hover: #075e54;
+  --color-whatsapp-light: #e8f5e9;
   --color-stamp: #8b1e1e;
 }
 

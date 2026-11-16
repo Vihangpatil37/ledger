@@ -30,15 +30,21 @@ export function LoginForm({
   const pending = mode === "OWNER" ? ownerPending : staffPending;
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col gap-5">
       {/* Segmented Switcher */}
-      <div className="grid grid-cols-2 rounded-xl bg-paper p-1 border border-rule/60 text-xs font-semibold">
+      <div
+        role="tablist"
+        aria-label="Account Type"
+        className="grid grid-cols-2 rounded-xl bg-paper p-1 border border-rule/60 text-xs font-semibold"
+      >
         <button
           type="button"
+          role="tab"
+          aria-selected={mode === "OWNER"}
           onClick={() => setMode("OWNER")}
-          className={`rounded-lg py-2 transition-all ${
+          className={`min-h-[38px] rounded-lg py-2 transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-focus ${
             mode === "OWNER"
-              ? "bg-surface text-ink shadow-[0_1px_3px_0_rgba(30,27,24,0.1)]"
+              ? "bg-surface text-ink shadow-[0_1px_3px_0_rgba(30,27,24,0.1)] font-bold"
               : "text-muted hover:text-ink"
           }`}
         >
@@ -46,10 +52,12 @@ export function LoginForm({
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={mode === "STAFF"}
           onClick={() => setMode("STAFF")}
-          className={`rounded-lg py-2 transition-all ${
+          className={`min-h-[38px] rounded-lg py-2 transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-focus ${
             mode === "STAFF"
-              ? "bg-surface text-ink shadow-[0_1px_3px_0_rgba(30,27,24,0.1)]"
+              ? "bg-surface text-ink shadow-[0_1px_3px_0_rgba(30,27,24,0.1)] font-bold"
               : "text-muted hover:text-ink"
           }`}
         >
@@ -58,10 +66,10 @@ export function LoginForm({
       </div>
 
       {mode === "OWNER" ? (
-        <form action={ownerAction} className="space-y-4">
+        <form action={ownerAction} className="flex flex-col gap-4">
           <input type="hidden" name="next" value={next ?? ""} />
 
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="email">Owner Email</Label>
             <input
               id="email"
@@ -76,7 +84,7 @@ export function LoginForm({
             <FieldError message={ownerState.fieldErrors?.email} />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="password">Password</Label>
             <input
               id="password"
@@ -93,21 +101,26 @@ export function LoginForm({
           {ownerState.error ? (
             <p
               role="alert"
-              className="rounded-lg border border-danger/20 bg-danger-light px-3 py-2 text-sm font-medium text-danger"
+              className="rounded-xl border border-danger/20 bg-danger-light px-3.5 py-2 text-sm font-medium text-danger"
             >
               {ownerState.error}
             </p>
           ) : null}
 
-          <Button type="submit" disabled={pending} className="w-full">
+          <Button
+            type="submit"
+            disabled={pending}
+            isLoading={pending}
+            className="w-full cursor-pointer mt-1"
+          >
             {pending ? "Signing in…" : "Sign in as Owner"}
           </Button>
         </form>
       ) : (
-        <form action={staffAction} className="space-y-4">
+        <form action={staffAction} className="flex flex-col gap-4">
           <input type="hidden" name="next" value={next ?? ""} />
 
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="shopIdentifier">Shop Code or Owner Email</Label>
             <input
               id="shopIdentifier"
@@ -125,7 +138,7 @@ export function LoginForm({
             <FieldError message={staffState.fieldErrors?.shopIdentifier} />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="pin">4-Digit Staff PIN</Label>
             <input
               id="pin"
@@ -144,13 +157,18 @@ export function LoginForm({
           {staffState.error ? (
             <p
               role="alert"
-              className="rounded-lg border border-danger/20 bg-danger-light px-3 py-2 text-sm font-medium text-danger"
+              className="rounded-xl border border-danger/20 bg-danger-light px-3.5 py-2 text-sm font-medium text-danger"
             >
               {staffState.error}
             </p>
           ) : null}
 
-          <Button type="submit" disabled={pending} className="w-full">
+          <Button
+            type="submit"
+            disabled={pending}
+            isLoading={pending}
+            className="w-full cursor-pointer mt-1"
+          >
             {pending ? "Verifying PIN…" : "Enter Counter Shift"}
           </Button>
         </form>

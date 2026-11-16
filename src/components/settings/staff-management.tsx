@@ -55,7 +55,7 @@ export function StaffManagementSection({
   };
 
   return (
-    <section className="rounded-xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)] space-y-6">
+    <section className="rounded-2xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_12px_0_rgba(30,27,24,0.04)] flex flex-col gap-6">
       {/* Header */}
       <div>
         <h2 className="text-sm font-bold text-ink tracking-tight">
@@ -67,7 +67,7 @@ export function StaffManagementSection({
       </div>
 
       {/* Shop Code & Invite Card */}
-      <div className="rounded-xl border border-rule/70 bg-paper/60 p-4 space-y-3">
+      <div className="rounded-xl border border-rule/70 bg-paper/60 p-4 flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted">
@@ -80,14 +80,14 @@ export function StaffManagementSection({
               <button
                 type="button"
                 onClick={copyCode}
-                className="rounded-lg border border-rule bg-surface px-2.5 py-1 text-xs font-semibold text-muted hover:text-ink hover:bg-paper transition-all cursor-pointer"
+                className="min-h-[36px] rounded-lg border border-rule bg-surface px-2.5 py-1 text-xs font-semibold text-muted hover:text-ink hover:bg-paper transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-focus"
               >
                 {copied ? "Copied! ✓" : "Copy"}
               </button>
               <button
                 type="button"
                 onClick={() => setEditingCode((v) => !v)}
-                className="text-xs font-medium text-muted hover:text-ink underline ml-1 cursor-pointer"
+                className="text-xs font-medium text-muted hover:text-ink underline ml-1 cursor-pointer focus-visible:outline-2 focus-visible:outline-focus"
               >
                 {editingCode ? "Cancel" : "Change"}
               </button>
@@ -97,16 +97,17 @@ export function StaffManagementSection({
           <button
             type="button"
             onClick={() => setShowQr((v) => !v)}
-            className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl border border-rule bg-surface px-3 py-1.5 text-xs font-semibold text-ink shadow-2xs hover:bg-paper transition-all cursor-pointer"
+            aria-expanded={showQr}
+            className="inline-flex min-h-[38px] items-center gap-1.5 self-start sm:self-auto rounded-xl border border-rule bg-surface px-3 py-1.5 text-xs font-semibold text-ink shadow-2xs hover:bg-paper transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-focus"
           >
-            <span>📱</span>
+            <span aria-hidden="true">📱</span>
             <span>{showQr ? "Hide QR Invite" : "Show QR Invite"}</span>
           </button>
         </div>
 
         {/* Change Shop Code Form */}
         {editingCode ? (
-          <form action={codeAction} className="pt-2 border-t border-rule/50 space-y-2">
+          <form action={codeAction} className="pt-2 border-t border-rule/50 flex flex-col gap-2">
             <Label htmlFor="shopCode">New Shop Code (3-20 letters/digits)</Label>
             <div className="flex items-center gap-2">
               <input
@@ -117,7 +118,7 @@ export function StaffManagementSection({
                 required
                 className={`${inputClass} max-w-xs uppercase font-mono`}
               />
-              <Button type="submit" disabled={codePending}>
+              <Button type="submit" disabled={codePending} isLoading={codePending}>
                 {codePending ? "Saving…" : "Save Code"}
               </Button>
             </div>
@@ -127,11 +128,13 @@ export function StaffManagementSection({
 
         {/* QR Code view */}
         {showQr && origin ? (
-          <div className="flex flex-col items-center pt-3 border-t border-rule/50 space-y-2 text-center">
+          <div className="flex flex-col items-center pt-3 border-t border-rule/50 gap-2 text-center">
             <p className="text-xs text-muted">
               Staff can scan this code to open the login page with your shop pre-filled:
             </p>
-            <UpiQrCode upiUrl={inviteUrl} size={150} />
+            <div className="flex justify-center">
+              <UpiQrCode upiUrl={inviteUrl} size={150} />
+            </div>
             <p className="font-mono text-[10px] text-muted max-w-xs truncate">
               {inviteUrl}
             </p>
@@ -140,7 +143,7 @@ export function StaffManagementSection({
       </div>
 
       {/* Staff Accounts List */}
-      <div className="space-y-3">
+      <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h3 className="font-mono text-xs font-semibold uppercase tracking-wider text-muted">
             Staff Members ({staff.length})
@@ -148,7 +151,7 @@ export function StaffManagementSection({
           <Button
             type="button"
             onClick={() => setShowAddForm((v) => !v)}
-            className="text-xs py-1 px-2.5 h-auto"
+            className="text-xs py-1.5 px-3 min-h-[36px]"
           >
             {showAddForm ? "Cancel" : "+ Add Staff"}
           </Button>
@@ -158,11 +161,11 @@ export function StaffManagementSection({
         {showAddForm ? (
           <form
             action={addAction}
-            className="rounded-xl border border-rule/80 bg-surface p-4 space-y-3.5 shadow-2xs"
+            className="rounded-xl border border-rule/80 bg-surface p-4 flex flex-col gap-3.5 shadow-2xs"
           >
             <h4 className="text-xs font-bold text-ink">New Staff Profile</h4>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="space-y-1">
+              <div className="flex flex-col gap-1">
                 <Label htmlFor="staffName">Staff Name *</Label>
                 <input
                   id="staffName"
@@ -175,7 +178,7 @@ export function StaffManagementSection({
                 <FieldError message={addState.fieldErrors?.name} />
               </div>
 
-              <div className="space-y-1">
+              <div className="flex flex-col gap-1">
                 <Label htmlFor="staffPin">4-Digit PIN *</Label>
                 <input
                   id="staffPin"
@@ -191,7 +194,7 @@ export function StaffManagementSection({
                 <FieldError message={addState.fieldErrors?.pin} />
               </div>
 
-              <div className="space-y-1">
+              <div className="flex flex-col gap-1">
                 <Label htmlFor="staffPhone">Phone (Optional)</Label>
                 <input
                   id="staffPhone"
@@ -211,11 +214,11 @@ export function StaffManagementSection({
               <button
                 type="button"
                 onClick={() => setShowAddForm(false)}
-                className="px-3 py-1.5 text-xs font-semibold text-muted hover:text-ink"
+                className="min-h-[38px] px-3.5 py-1.5 text-xs font-semibold text-muted hover:text-ink cursor-pointer focus-visible:outline-2 focus-visible:outline-focus"
               >
                 Cancel
               </button>
-              <Button type="submit" disabled={addPending}>
+              <Button type="submit" disabled={addPending} isLoading={addPending}>
                 {addPending ? "Adding…" : "Create Staff Account"}
               </Button>
             </div>
@@ -240,6 +243,7 @@ export function StaffManagementSection({
                       className={`inline-block size-2 rounded-full ${
                         s.isActive ? "bg-credit" : "bg-muted"
                       }`}
+                      aria-hidden="true"
                     />
                     <span className="text-[10px] text-muted">
                       {s.isActive ? "Active" : "Disabled"}
@@ -258,7 +262,7 @@ export function StaffManagementSection({
                     <input type="hidden" name="id" value={s.id} />
                     <button
                       type="submit"
-                      className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all cursor-pointer ${
+                      className={`min-h-[32px] rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-focus ${
                         s.isActive
                           ? "bg-paper text-muted hover:text-ink hover:bg-rule/40"
                           : "bg-credit/10 text-credit hover:bg-credit/20"
@@ -274,7 +278,8 @@ export function StaffManagementSection({
                     <button
                       type="submit"
                       title="Remove Staff"
-                      className="rounded-lg p-1.5 text-muted hover:text-danger hover:bg-danger/10 transition-all cursor-pointer"
+                      aria-label={`Remove staff member ${s.name}`}
+                      className="min-h-[32px] min-w-[32px] inline-flex items-center justify-center rounded-lg text-muted hover:text-danger hover:bg-danger-light transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-focus"
                     >
                       ✕
                     </button>

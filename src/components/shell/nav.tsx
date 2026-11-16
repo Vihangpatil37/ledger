@@ -143,14 +143,14 @@ export function SideNav({
           </Link>
         </div>
 
-        <div className="space-y-1 p-3">
+        <div className="flex flex-col gap-1 p-3">
           {items.map((item) => {
             const active = pathname === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all duration-150 ${
+                className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm transition-all duration-150 ${
                   active
                     ? "bg-ink text-paper shadow-[0_1px_2px_0_rgba(30,27,24,0.12)] font-semibold"
                     : "font-medium text-muted hover:bg-rule/30 hover:text-ink active:scale-[0.99]"
@@ -165,14 +165,14 @@ export function SideNav({
       </div>
 
       {/* Footer language toggle & sign out with ample padding to prevent dev badge overlap */}
-      <div className="p-3 pb-12 border-t border-rule/40 space-y-2">
+      <div className="flex flex-col gap-2 p-3 pb-12 border-t border-rule/40">
         <div className="px-1">
           <LanguageSwitcher variant="compact" className="w-full justify-between" />
         </div>
         <form action={logout}>
           <button
             type="submit"
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-semibold text-muted transition-colors hover:bg-danger-light hover:text-danger active:bg-danger-light/80 cursor-pointer"
+            className="flex w-full min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold text-muted transition-colors hover:bg-danger-light hover:text-danger active:bg-danger-light/80 cursor-pointer"
           >
             <svg
               width="16"
@@ -184,6 +184,7 @@ export function SideNav({
               strokeLinecap="round"
               strokeLinejoin="round"
               className="size-4 shrink-0"
+              aria-hidden="true"
             >
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <polyline points="16 17 21 12 16 7" />

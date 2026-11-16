@@ -80,9 +80,13 @@ export function UndoToast() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border border-rule bg-ink px-4 py-3 text-paper shadow-2xl transition-all animate-in fade-in slide-in-from-bottom-4">
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border border-rule bg-ink px-4 py-3 text-paper shadow-2xl transition-all animate-in fade-in slide-in-from-bottom-4"
+    >
       <div className="flex items-center gap-2 text-xs">
-        <span className="size-2 rounded-full bg-amber-400 animate-pulse" />
+        <span className="size-2 rounded-full bg-amber-400 animate-pulse" aria-hidden="true" />
         <span>
           {toast.title} {t("undo.itemDeleted")} ({countdown}s)
         </span>
@@ -92,7 +96,7 @@ export function UndoToast() {
         type="button"
         onClick={handleUndo}
         disabled={isUndoing}
-        className="rounded-lg bg-paper px-3 py-1 text-xs font-bold text-ink hover:bg-paper/90 active:scale-[0.98] transition-transform cursor-pointer"
+        className="inline-flex min-h-[36px] items-center justify-center rounded-lg bg-paper px-3.5 py-1.5 text-xs font-bold text-ink hover:bg-paper/90 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-paper transition-transform cursor-pointer"
       >
         {isUndoing ? "Restoring…" : t("undo.btn")}
       </button>
@@ -100,9 +104,10 @@ export function UndoToast() {
       <button
         type="button"
         onClick={() => setToast(null)}
-        className="text-muted/60 hover:text-paper text-xs ml-1"
+        aria-label="Dismiss undo notification"
+        className="flex size-8 min-h-[32px] min-w-[32px] items-center justify-center rounded-lg text-paper/60 hover:text-paper hover:bg-white/10 transition-colors text-xs"
       >
-        ✕
+        <span aria-hidden="true">✕</span>
       </button>
     </div>
   );

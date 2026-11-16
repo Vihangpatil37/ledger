@@ -28,10 +28,10 @@ export function FollowUpQueue({ items }: { items: FollowUpItem[] }) {
   }
 
   return (
-    <div className="rounded-2xl border border-rule bg-surface p-4 sm:p-5 shadow-[0_2px_12px_0_rgba(30,27,24,0.04)] space-y-3.5 transition-all">
+    <div className="rounded-2xl border border-rule bg-surface p-4 sm:p-5 shadow-[0_2px_12px_0_rgba(30,27,24,0.04)] flex flex-col gap-3.5 transition-all">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <span className="flex size-6 items-center justify-center rounded-full bg-debit text-paper text-xs font-bold">
+          <span className="flex size-6 items-center justify-center rounded-full bg-debit text-paper text-xs font-bold" aria-label={`${items.length} follow-up items`}>
             {items.length}
           </span>
           <div>
@@ -45,7 +45,8 @@ export function FollowUpQueue({ items }: { items: FollowUpItem[] }) {
         <button
           type="button"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="text-xs font-semibold text-muted hover:text-ink px-2.5 py-1 rounded-lg border border-rule/60 hover:bg-paper transition-colors"
+          aria-expanded={!isCollapsed}
+          className="min-h-[36px] text-xs font-semibold text-muted hover:text-ink px-3 py-1.5 rounded-xl border border-rule/60 hover:bg-paper transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-focus"
         >
           {isCollapsed ? `Show (${items.length})` : "Collapse"}
         </button>
@@ -63,13 +64,13 @@ export function FollowUpQueue({ items }: { items: FollowUpItem[] }) {
             let urgencyStyle = "bg-paper text-muted border-rule";
             if (item.urgency === "BROKEN_PROMISE") {
               urgencyStyle =
-                "bg-rose-500/10 text-rose-800 border-rose-500/30 font-bold";
+                "bg-debit-light text-debit border-debit/30 font-bold";
             } else if (item.urgency === "OVERDUE") {
               urgencyStyle =
                 "bg-debit-light text-debit border-debit/30 font-bold";
             } else if (item.urgency === "DUE_TODAY") {
               urgencyStyle =
-                "bg-amber-500/10 text-amber-800 border-amber-500/30 font-semibold";
+                "bg-warning-light text-warning border-warning/30 font-semibold";
             } else {
               urgencyStyle =
                 "bg-focus-light text-focus border-focus/30 font-semibold";
@@ -93,7 +94,7 @@ export function FollowUpQueue({ items }: { items: FollowUpItem[] }) {
                   <div className="mt-2 flex items-baseline justify-between">
                     <Link
                       href={`/people/${item.personId}`}
-                      className="truncate font-bold text-sm text-ink hover:underline"
+                      className="truncate font-bold text-sm text-ink hover:underline focus-visible:outline-2 focus-visible:outline-focus"
                     >
                       {item.name}
                     </Link>
@@ -127,8 +128,9 @@ export function FollowUpQueue({ items }: { items: FollowUpItem[] }) {
                       href={item.waHref}
                       target="_blank"
                       rel="noopener noreferrer"
+                      aria-label={`Send WhatsApp reminder to ${item.name}`}
                       onClick={() => handleWhatsAppClick(item)}
-                      className="flex-1 inline-flex min-h-[34px] items-center justify-center gap-1.5 rounded-lg bg-[#25d366] px-3 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-[#20ba5a] active:scale-[0.98] transition-all"
+                      className="flex-1 inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-xl bg-whatsapp px-3 py-1.5 text-xs font-semibold text-white shadow-2xs hover:bg-whatsapp-hover active:scale-[0.98] transition-all focus-visible:outline-2 focus-visible:outline-whatsapp"
                     >
                       <svg
                         viewBox="0 0 24 24"
@@ -143,7 +145,7 @@ export function FollowUpQueue({ items }: { items: FollowUpItem[] }) {
                   ) : (
                     <Link
                       href={`/people/${item.personId}/edit`}
-                      className="flex-1 inline-flex min-h-[34px] items-center justify-center rounded-lg border border-rule bg-surface px-2.5 py-1.5 text-xs font-semibold text-muted hover:text-ink"
+                      className="flex-1 inline-flex min-h-[38px] items-center justify-center rounded-xl border border-rule bg-surface px-2.5 py-1.5 text-xs font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-focus"
                     >
                       + Phone
                     </Link>
@@ -154,7 +156,7 @@ export function FollowUpQueue({ items }: { items: FollowUpItem[] }) {
                     currentPromiseDate={item.promiseDate}
                     currentPromiseNote={item.promiseNote}
                     triggerLabel={t("queue.promise")}
-                    className="inline-flex min-h-[34px] items-center gap-1 rounded-lg border border-rule bg-surface px-2.5 py-1.5 text-xs font-semibold text-ink hover:bg-paper"
+                    className="inline-flex min-h-[38px] items-center gap-1 rounded-xl border border-rule bg-surface px-3 py-1.5 text-xs font-semibold text-ink hover:bg-paper focus-visible:outline-2 focus-visible:outline-focus"
                   />
                 </div>
               </div>

@@ -36,9 +36,9 @@ export function DeleteEntryForm({
             event.preventDefault();
           }
         }}
-        className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-xs text-faint transition-colors hover:bg-danger-light hover:text-danger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger cursor-pointer"
+        className="inline-flex size-9 min-h-[36px] min-w-[36px] shrink-0 items-center justify-center rounded-xl text-xs text-faint transition-colors hover:bg-danger-light hover:text-danger focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger cursor-pointer"
       >
-        ✕
+        <span aria-hidden="true">✕</span>
       </button>
     </form>
   );

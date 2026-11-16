@@ -61,14 +61,14 @@ export default async function PersonPage({
     : null;
 
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <div className="flex flex-col gap-5 sm:gap-6">
       {/* Header bar */}
       <div>
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-muted transition-colors hover:text-ink"
+          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-focus"
         >
-          <span>←</span> {t("person.backToPeople")}
+          <span aria-hidden="true">←</span> {t("person.backToPeople")}
         </Link>
         <div className="mt-2 flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -81,7 +81,7 @@ export default async function PersonPage({
             {detail.phone ? (
               <a
                 href={`tel:${detail.phone.replace(/\s+/g, "")}`}
-                className="mt-0.5 inline-block font-mono text-xs sm:text-sm text-muted hover:text-ink hover:underline"
+                className="mt-0.5 inline-block font-mono text-xs sm:text-sm text-muted hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-focus"
               >
                 {detail.phone}
               </a>
@@ -90,7 +90,7 @@ export default async function PersonPage({
           {!isStaff && (
             <Link
               href={`/people/${detail.id}/edit`}
-              className="inline-flex min-h-[36px] items-center rounded-xl border border-rule bg-surface px-3 py-1.5 text-xs font-semibold text-ink shadow-[0_1px_2px_0_rgba(30,27,24,0.05)] transition-all duration-150 hover:bg-paper active:scale-[0.98]"
+              className="inline-flex min-h-[40px] items-center rounded-xl border border-rule bg-surface px-3.5 py-1.5 text-xs font-semibold text-ink shadow-[0_1px_2px_0_rgba(30,27,24,0.05)] transition-all duration-150 hover:bg-paper active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-focus"
             >
               {t("person.editPerson")}
             </Link>
@@ -99,7 +99,7 @@ export default async function PersonPage({
       </div>
 
       {/* Balance overview card */}
-      <div className="rounded-xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)]">
+      <div className="rounded-2xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_12px_0_rgba(30,27,24,0.04)]">
         <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted">
           {t("person.runningBalance")}
         </p>
@@ -127,7 +127,7 @@ export default async function PersonPage({
           <div className="flex items-center gap-2">
             {detail.promiseDate ? (
               <span className="font-medium text-ink">
-                📅 {t("promise.title")}: <strong className="font-mono text-ink">{detail.promiseDate}</strong>
+                <span aria-hidden="true">📅 </span>{t("promise.title")}: <strong className="font-mono text-ink">{detail.promiseDate}</strong>
                 {detail.promiseNote ? <span className="text-muted italic"> &ldquo;{detail.promiseNote}&rdquo;</span> : ""}
               </span>
             ) : null}
@@ -142,7 +142,7 @@ export default async function PersonPage({
 
       {/* Action Buttons: Settle Up + Share Statement + WhatsApp Reminder + Set Promise */}
       {!isStaff && (
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <SettleBalanceModal detail={detail} />
             <ShareStatementModal detail={detail} />
@@ -152,7 +152,7 @@ export default async function PersonPage({
               currentPromiseDate={detail.promiseDate}
               currentPromiseNote={detail.promiseNote}
               triggerLabel={t("promise.title")}
-              className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-rule bg-surface px-4 py-2.5 text-sm font-semibold text-ink shadow-2xs transition-colors hover:bg-paper active:scale-[0.98]"
+              className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-rule bg-surface px-4 py-2.5 text-sm font-semibold text-ink shadow-2xs transition-colors hover:bg-paper active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-focus cursor-pointer"
             />
 
             {waHref ? (
@@ -160,7 +160,7 @@ export default async function PersonPage({
                 href={waHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#25d366] px-4 py-2.5 text-sm font-semibold text-white shadow-2xs transition-colors hover:bg-[#20ba5a] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#25d366]"
+                className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-whatsapp px-4 py-2.5 text-sm font-semibold text-white shadow-2xs transition-colors hover:bg-whatsapp-hover active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-whatsapp"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -176,11 +176,11 @@ export default async function PersonPage({
           </div>
 
           {owesMoney && !waNumber ? (
-            <div className="rounded-lg border border-dashed border-rule bg-surface px-4 py-2.5 text-center text-xs text-muted">
+            <div className="rounded-xl border border-dashed border-rule bg-surface px-4 py-2.5 text-center text-xs text-muted">
               {t("person.addPhoneNotice")} ·{" "}
               <Link
                 href={`/people/${detail.id}/edit`}
-                className="font-medium text-focus hover:underline"
+                className="font-medium text-focus hover:underline focus-visible:outline-2 focus-visible:outline-focus"
               >
                 {t("person.addNumberLink")}
               </Link>
@@ -193,7 +193,7 @@ export default async function PersonPage({
       <AddEntryCard personId={detail.id} />
 
       {/* Entry History */}
-      <section className="space-y-3 pt-2">
+      <section className="flex flex-col gap-3 pt-2">
         <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-display text-lg font-bold text-ink tracking-tight">
@@ -205,10 +205,10 @@ export default async function PersonPage({
           </div>
 
           {/* Date range filter pills */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
             <Link
               href={`/people/${detail.id}`}
-              className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors ${
+              className={`min-h-[36px] inline-flex items-center rounded-xl px-3 py-1 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-focus ${
                 isAll
                   ? "bg-ink text-paper shadow-2xs"
                   : "border border-rule bg-surface text-muted hover:bg-paper hover:text-ink"
@@ -218,7 +218,7 @@ export default async function PersonPage({
             </Link>
             <Link
               href={`/people/${detail.id}?from=${thisMonth.from}&to=${thisMonth.to}`}
-              className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors ${
+              className={`min-h-[36px] inline-flex items-center rounded-xl px-3 py-1 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-focus ${
                 isThisMonth
                   ? "bg-ink text-paper shadow-2xs"
                   : "border border-rule bg-surface text-muted hover:bg-paper hover:text-ink"
@@ -228,7 +228,7 @@ export default async function PersonPage({
             </Link>
             <Link
               href={`/people/${detail.id}?from=${last30.from}&to=${last30.to}`}
-              className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors ${
+              className={`min-h-[36px] inline-flex items-center rounded-xl px-3 py-1 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-focus ${
                 isLast30
                   ? "bg-ink text-paper shadow-2xs"
                   : "border border-rule bg-surface text-muted hover:bg-paper hover:text-ink"
@@ -240,11 +240,11 @@ export default async function PersonPage({
         </div>
 
         {detail.entries.length === 0 && !detail.openingBalance ? (
-          <div className="rounded-lg border border-dashed border-rule bg-surface px-4 py-8 sm:px-6 sm:py-8 text-center text-xs sm:text-sm text-muted">
+          <div className="rounded-2xl border border-dashed border-rule bg-surface px-4 py-8 sm:px-6 sm:py-8 text-center text-xs sm:text-sm text-muted">
             {t("person.noEntriesInRange")}
           </div>
         ) : (
-          <ul className="divide-y divide-rule/60 overflow-hidden rounded-lg border border-rule bg-surface">
+          <ul className="divide-y divide-rule/60 overflow-hidden rounded-2xl border border-rule bg-surface">
             {detail.openingBalance !== null && detail.openingBalance !== undefined ? (
               <li className="flex items-center justify-between gap-2.5 bg-paper/70 px-3.5 py-2.5 text-xs sm:px-4 border-b border-rule/70">
                 <div>
@@ -285,6 +285,7 @@ export default async function PersonPage({
                         className={`inline-block size-2 rounded-full shrink-0 ${
                           isGave ? "bg-debit" : "bg-credit"
                         }`}
+                        aria-hidden="true"
                       />
                       <p
                         className={`text-sm font-semibold truncate ${
@@ -329,7 +330,7 @@ export default async function PersonPage({
                       />
                     </p>
                   </div>
-                  <div className="flex items-center gap-0.5 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0">
                     {entry.canEdit !== false ? <EditEntryModal entry={entry} /> : null}
                     {!isStaff && <DeleteEntryForm entryId={entry.id} personId={detail.id} />}
                   </div>
