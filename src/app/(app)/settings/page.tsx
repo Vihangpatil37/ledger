@@ -2,20 +2,29 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DataBackupSection } from "@/components/settings/data-backup";
 import { OwnerUpiForm } from "@/components/settings/owner-upi-form";
+import { StaffManagementSection } from "@/components/settings/staff-management";
 import { LanguageSwitcher } from "@/components/shell/language-switcher";
-import { getOwnerProfile } from "@/server/readers";
+import { getOwnerProfile, getStaffMembers } from "@/server/readers";
+import { getSession } from "@/server/session";
 import { getServerTranslations } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Settings · Chai Ledger" };
 
 export default async function SettingsPage() {
-  const profile = await getOwnerProfile();
+  const session = await getSession();
+  if (!session || session.role === "STAFF") {
+    redirect("/");
+  }
+
+  const [profile, staff, { t }] = await Promise.all([
+    getOwnerProfile(),
+    getStaffMembers(session.userId),
+    getServerTranslations(),
+  ]);
   if (!profile) {
     redirect("/login");
   }
-
-  const { t } = await getServerTranslations();
 
   return (
     <div className="max-w-xl mx-auto space-y-6">
@@ -28,7 +37,7 @@ export default async function SettingsPage() {
         </Link>
         <div className="mt-3 flex items-start justify-between gap-3">
           <div>
-            <h1 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-4xl">
               {t("settings.title")}
             </h1>
             <p className="font-mono text-xs text-muted mt-1">
@@ -45,6 +54,9 @@ export default async function SettingsPage() {
           </Link>
         </div>
       </div>
+
+      {/* Staff & Munim Management Card */}
+      <StaffManagementSection shopCode={profile.shopCode ?? ""} staff={staff} />
 
       {/* Language Preferences Card */}
       <section className="rounded-xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_8px_0_rgba(30,27,24,0.03)] space-y-3">
