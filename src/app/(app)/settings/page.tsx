@@ -4,6 +4,7 @@ import { DataBackupSection } from "@/components/settings/data-backup";
 import { OwnerUpiForm } from "@/components/settings/owner-upi-form";
 import { StaffManagementSection } from "@/components/settings/staff-management";
 import { LanguageSwitcher } from "@/components/shell/language-switcher";
+import { ThemeSwitcher } from "@/components/shell/theme-switcher";
 import { getOwnerProfile, getStaffMembers } from "@/server/readers";
 import { getSession } from "@/server/session";
 import { getServerTranslations } from "@/lib/i18n/server";
@@ -57,6 +58,19 @@ export default async function SettingsPage() {
 
       {/* Staff & Munim Management Card */}
       <StaffManagementSection shopCode={profile.shopCode ?? ""} staff={staff} />
+
+      {/* Appearance & Theme Card */}
+      <section className="rounded-2xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_12px_0_rgba(30,27,24,0.04)] flex flex-col gap-3">
+        <div>
+          <h2 className="text-sm font-bold text-ink tracking-tight">
+            {t("settings.themeTitle")}
+          </h2>
+          <p className="text-xs text-muted mt-0.5">
+            {t("settings.themeSubtitle")}
+          </p>
+        </div>
+        <ThemeSwitcher variant="card" />
+      </section>
 
       {/* Language Preferences Card */}
       <section className="rounded-2xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_12px_0_rgba(30,27,24,0.04)] flex flex-col gap-3">

@@ -103,6 +103,8 @@ export const en = {
   // Settings page
   "settings.title": "Settings",
   "settings.subtitle": "Manage your khata profile, UPI payment handle, and language preferences.",
+  "settings.themeTitle": "Appearance & Theme",
+  "settings.themeSubtitle": "Choose light, dark, or automatic system appearance.",
   "settings.languageTitle": "Language / ભાષા / भाषा",
   "settings.languageSubtitle": "Select your preferred application language.",
   "settings.upiTitle": "Your UPI Payment Details",
@@ -115,6 +117,14 @@ export const en = {
   "settings.accountTitle": "Account",
   "settings.signedInAs": "Signed in as",
   "settings.backToDashboard": "Back to Dashboard",
+
+  // Theme labels
+  "theme.light": "Light",
+  "theme.dark": "Dark",
+  "theme.system": "System",
+  "theme.lightDesc": "Warm parchment paper & black ink",
+  "theme.darkDesc": "Deep charcoal ledger & mint emeralds",
+  "theme.systemDesc": "Automatically match your device preference",
 
   // Due status
   "due.overdue": "Overdue",

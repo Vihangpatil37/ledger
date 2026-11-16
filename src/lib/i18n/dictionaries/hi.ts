@@ -105,6 +105,8 @@ export const hi: Dictionary = {
   // Settings page
   "settings.title": "सेटिंग्स",
   "settings.subtitle": "अपनी खाता बही प्रोफ़ाइल, UPI भुगतान विवरण और भाषा प्राथमिकताओं का प्रबंधन करें।",
+  "settings.themeTitle": "दिखावट और थीम",
+  "settings.themeSubtitle": "लाइट, डार्क या सिस्टम के अनुसार थीम चुनें।",
   "settings.languageTitle": "भाषा / Language / ભાષા",
   "settings.languageSubtitle": "अपनी पसंदीदा ऐप भाषा चुनें।",
   "settings.upiTitle": "आपका UPI भुगतान विवरण",
@@ -117,6 +119,14 @@ export const hi: Dictionary = {
   "settings.accountTitle": "खाता",
   "settings.signedInAs": "लॉगिन खाता",
   "settings.backToDashboard": "डैशबोर्ड पर वापस जाएं",
+
+  // Theme labels
+  "theme.light": "लाइट",
+  "theme.dark": "डार्क",
+  "theme.system": "सिस्टम",
+  "theme.lightDesc": "पारंपरिक बही-खाता कागज़ और काली स्याही",
+  "theme.darkDesc": "गहरा चारकोल लेज़र और मिंट रंग",
+  "theme.systemDesc": "अपने डिवाइस की सेटिंग के अनुसार अपने आप",
 
   // Due status
   "due.overdue": "अतिदेय",

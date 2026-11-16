@@ -1,10 +1,72 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400;1,500&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Gujarati:wght@400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,400..700;1,400..700&display=swap");
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --font-newsreader: "Newsreader", Georgia, Cambria, "Times New Roman", Times, serif;
   --font-plus-jakarta: "Plus Jakarta Sans", "Noto Sans Gujarati", "Noto Sans Devanagari", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-dm-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Heritage Khata Palette - Light */
+  --ink: #1e1b18;
+  --ink-muted: #6b665f;
+  --ink-faint: #a8a299;
+  --paper: #f8f6f0;
+  --surface: #ffffff;
+  --surface-subtle: #fcfbf8;
+  --rule: #e5e0d4;
+  --rule-subtle: #f0ece3;
+
+  --muted: #6b665f;
+  --faint: #a8a299;
+
+  --debit: #b93826;
+  --debit-light: #fdf2f0;
+  --credit: #246645;
+  --credit-light: #edf6f0;
+
+  --focus: #3b5bdb;
+  --focus-light: #edf2ff;
+  --danger: #b93826;
+  --danger-light: #fdf2f0;
+  --warning: #b45309;
+  --warning-light: #fef9ee;
+  --whatsapp: #128c7e;
+  --whatsapp-hover: #075e54;
+  --whatsapp-light: #e8f5e9;
+  --stamp: #8b1e1e;
+}
+
+.dark {
+  /* Heritage Khata Palette - Dark (Deep Charcoal Ledger) */
+  --ink: #f5f2eb;
+  --ink-muted: #a39d91;
+  --ink-faint: #6c665c;
+  --paper: #121110;
+  --surface: #1c1a17;
+  --surface-subtle: #24221e;
+  --rule: #2d2a25;
+  --rule-subtle: #22201b;
+
+  --muted: #a39d91;
+  --faint: #6c665c;
+
+  --debit: #f87171;
+  --debit-light: #2d1514;
+  --credit: #34d399;
+  --credit-light: #0d281e;
+
+  --focus: #818cf8;
+  --focus-light: #1e1b4b;
+  --danger: #f87171;
+  --danger-light: #2d1514;
+  --warning: #fbbf24;
+  --warning-light: #2a2007;
+  --whatsapp: #25d366;
+  --whatsapp-hover: #20ba5a;
+  --whatsapp-light: #0b2e1c;
+  --stamp: #f87171;
 }
 
 @theme inline {
@@ -12,41 +74,42 @@
   --font-sans: var(--font-plus-jakarta);
   --font-mono: var(--font-dm-mono);
 
-  /* Heritage Khata & Editorial Banknote Palette */
-  --color-ink: #1e1b18;
-  --color-ink-muted: #6b665f;
-  --color-ink-faint: #a8a299;
-  --color-paper: #f8f6f0;
-  --color-surface: #ffffff;
-  --color-surface-subtle: #fcfbf8;
-  --color-rule: #e5e0d4;
-  --color-rule-subtle: #f0ece3;
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-rule: var(--rule);
+  --color-rule-subtle: var(--rule-subtle);
 
-  --color-muted: #6b665f;
-  --color-faint: #a8a299;
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
 
-  /* Accounting Semantics */
-  --color-debit: #b93826;
-  --color-debit-light: #fdf2f0;
-  --color-credit: #246645;
-  --color-credit-light: #edf6f0;
+  --color-debit: var(--debit);
+  --color-debit-light: var(--debit-light);
+  --color-credit: var(--credit);
+  --color-credit-light: var(--credit-light);
 
-  /* Interactive & Focus */
-  --color-focus: #3b5bdb;
-  --color-focus-light: #edf2ff;
-  --color-danger: #b93826;
-  --color-danger-light: #fdf2f0;
-  --color-warning: #b45309;
-  --color-warning-light: #fef9ee;
-  --color-whatsapp: #128c7e;
-  --color-whatsapp-hover: #075e54;
-  --color-whatsapp-light: #e8f5e9;
-  --color-stamp: #8b1e1e;
+  --color-focus: var(--focus);
+  --color-focus-light: var(--focus-light);
+  --color-danger: var(--danger);
+  --color-danger-light: var(--danger-light);
+  --color-warning: var(--warning);
+  --color-warning-light: var(--warning-light);
+  --color-whatsapp: var(--whatsapp);
+  --color-whatsapp-hover: var(--whatsapp-hover);
+  --color-whatsapp-light: var(--whatsapp-light);
+  --color-stamp: var(--stamp);
 }
 
 html {
   color-scheme: light;
   -webkit-text-size-adjust: 100%;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 /* Safety constraint: prevent any unconstrained SVG flash or layout shift */

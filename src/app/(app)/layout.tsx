@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { logout } from "@/actions/auth";
 import { LanguageSwitcher } from "@/components/shell/language-switcher";
+import { ThemeSwitcher } from "@/components/shell/theme-switcher";
 import { MobileNav } from "@/components/shell/mobile-nav";
 import { SideNav } from "@/components/shell/nav";
 import { UndoToast } from "@/components/trash/undo-toast";
@@ -36,6 +37,7 @@ export default async function AppLayout({
             <span className="font-display text-lg font-bold tracking-tight text-ink">Ledger</span>
           </Link>
           <div className="flex items-center gap-2">
+            <ThemeSwitcher variant="compact" />
             <LanguageSwitcher variant="compact" />
             <form action={logout}>
               <button

@@ -105,6 +105,8 @@ export const gu: Dictionary = {
   // Settings page
   "settings.title": "સેટિંગ્સ",
   "settings.subtitle": "તમારી ખાતાવહી પ્રોફાઇલ, UPI પેમેન્ટ વિગતો અને ભાષા પસંદગીનું સંચાલન કરો.",
+  "settings.themeTitle": "દેખાવ અને થીમ",
+  "settings.themeSubtitle": "લાઇટ, ડાર્ક અથવા સિસ્ટમ અનુસાર થીમ પસંદ કરો.",
   "settings.languageTitle": "ભાષા / Language / भाषा",
   "settings.languageSubtitle": "તમારી પસંદગીની એપ્લિકેશન ભાષા પસંદ કરો.",
   "settings.upiTitle": "તમારી UPI ચુકવણી વિગતો",
@@ -117,6 +119,14 @@ export const gu: Dictionary = {
   "settings.accountTitle": "એકાઉન્ટ",
   "settings.signedInAs": "લૉગિન થયેલ એકાઉન્ટ",
   "settings.backToDashboard": "ડેશબોર્ડ પર પાછા જાઓ",
+
+  // Theme labels
+  "theme.light": "લાઇટ",
+  "theme.dark": "ડાર્ક",
+  "theme.system": "સિસ્ટમ",
+  "theme.lightDesc": "પારંપરિક ચોપડા કાગળ અને કાળી શાહી",
+  "theme.darkDesc": "ઊંડો કોલસા ખાતાવહી અને મિન્ટ કલર",
+  "theme.systemDesc": "તમારા ઉપકરણની થીમ આપમેળે અનુસરો",
 
   // Due status
   "due.overdue": "મુદત વીતી",

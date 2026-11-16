@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/actions/auth";
 import { LanguageSwitcher } from "./language-switcher";
+import { ThemeSwitcher } from "./theme-switcher";
 import { useLanguage } from "@/lib/i18n/client";
 import type { TranslationKey } from "@/lib/i18n/dictionaries/en";
 
@@ -164,8 +165,11 @@ export function SideNav({
         </div>
       </div>
 
-      {/* Footer language toggle & sign out with ample padding to prevent dev badge overlap */}
+      {/* Footer theme & language toggle & sign out with ample padding to prevent dev badge overlap */}
       <div className="flex flex-col gap-2 p-3 pb-12 border-t border-rule/40">
+        <div className="px-1">
+          <ThemeSwitcher variant="compact" className="w-full justify-between" />
+        </div>
         <div className="px-1">
           <LanguageSwitcher variant="compact" className="w-full justify-between" />
         </div>
