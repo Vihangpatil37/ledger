@@ -1,10 +1,17 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { PersonForm } from "@/components/people/person-form";
 import { getServerTranslations } from "@/lib/i18n/server";
+import { getSession } from "@/server/session";
 
 export const metadata = { title: "Add person" };
 
 export default async function NewPersonPage() {
+  const session = await getSession();
+  if (!session || session.role === "STAFF") {
+    redirect("/");
+  }
+
   const { t } = await getServerTranslations();
 
   return (

@@ -99,9 +99,24 @@ const ITEMS: Array<{
   },
 ];
 
-export function SideNav() {
+export function SideNav({
+  isStaff,
+  staffName,
+}: {
+  isStaff?: boolean;
+  staffName?: string;
+}) {
   const pathname = usePathname();
   const { t } = useLanguage();
+
+  const items = isStaff
+    ? ITEMS.filter(
+        (item) =>
+          item.href !== "/trash" &&
+          item.href !== "/settings" &&
+          item.href !== "/people/new"
+      )
+    : ITEMS;
 
   return (
     <nav className="flex h-full flex-col justify-between">
@@ -115,15 +130,21 @@ export function SideNav() {
               <span className="font-display text-xl font-bold tracking-tight text-ink block leading-none">
                 Ledger
               </span>
-              <span className="font-mono text-[10px] uppercase tracking-wider text-muted block mt-1.5 leading-none">
-                {t("nav.brandSub")}
-              </span>
+              {isStaff ? (
+                <span className="font-mono text-[10px] uppercase tracking-wider text-credit font-semibold block mt-1.5 leading-none">
+                  Munim · {staffName ?? "Counter"}
+                </span>
+              ) : (
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted block mt-1.5 leading-none">
+                  {t("nav.brandSub")}
+                </span>
+              )}
             </div>
           </Link>
         </div>
 
         <div className="space-y-1 p-3">
-          {ITEMS.map((item) => {
+          {items.map((item) => {
             const active = pathname === item.href;
             return (
               <Link

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   emptyTrashAction,
   purgeTrashItemAction,
@@ -8,11 +9,17 @@ import {
 import { formatWhen } from "@/lib/format";
 import { getServerTranslations } from "@/lib/i18n/server";
 import { getTrashItems } from "@/server/readers";
+import { getSession } from "@/server/session";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Trash · Chai Ledger" };
 
 export default async function TrashPage() {
+  const session = await getSession();
+  if (!session || session.role === "STAFF") {
+    redirect("/");
+  }
+
   const [trashItems, { t }] = await Promise.all([
     getTrashItems(),
     getServerTranslations(),

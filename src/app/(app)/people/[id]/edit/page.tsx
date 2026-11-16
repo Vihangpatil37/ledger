@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { DeletePersonForm } from "@/components/people/delete-person-form";
 import { PersonForm } from "@/components/people/person-form";
 import { getServerTranslations } from "@/lib/i18n/server";
 import { idSchema } from "@/lib/validation";
 import { getPersonDetail } from "@/server/readers";
+import { getSession } from "@/server/session";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Edit person" };
@@ -14,8 +15,15 @@ export default async function EditPersonPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const session = await getSession();
+  if (!session) redirect("/login");
+
   const { id } = await params;
   if (!idSchema.safeParse(id).success) notFound();
+
+  if (session.role === "STAFF") {
+    redirect(`/people/${id}`);
+  }
 
   const detail = await getPersonDetail(id);
   if (!detail) notFound();
