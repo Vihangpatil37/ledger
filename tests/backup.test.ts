@@ -34,7 +34,9 @@ describe("JSON Backup Validation", () => {
 
     const res = validateBackupPayload(valid);
     expect(res.ok).toBe(true);
-    expect(res.data?.people.length).toBe(1);
+    if (res.ok) {
+      expect(res.data.people.length).toBe(1);
+    }
   });
 
   it("rejects invalid payload or version mismatch", () => {
