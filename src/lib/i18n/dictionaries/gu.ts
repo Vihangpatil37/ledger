@@ -153,6 +153,7 @@ export const gu: Dictionary = {
   "queue.brokenPromise": "વાયદો તૂટ્યો",
   "queue.remindedAgo": "રિમાઇન્ડર મોકલ્યું",
   "queue.remindWhatsApp": "વોટ્સએપ",
+  "queue.promise": "વાયદો",
   "queue.setPromise": "વાયદો નક્કી કરો",
 
   // Promise to pay
@@ -192,4 +193,14 @@ export const gu: Dictionary = {
   "backup.csvBtn": "CSV ફાઇલ પસંદ કરો",
   "backup.csvPreview": "CSV પૂર્વાવલોકન",
   "backup.csvCommit": "વ્યવહારો આયાત કરો",
+
+  // Staff & Munim Mode
+  "staff.title": "સ્ટાફ અને મુનીમ એક્સેસ",
+  "staff.subtitle": "કર્મચારી લોગિન, કાઉન્ટર પિન અને શિફ્ટ એક્સેસ મેનેજ કરો",
+  "staff.shopCode": "દુકાન કોડ",
+  "staff.addStaff": "નવો સ્ટાફ ઉમેરો",
+  "staff.shiftCollected": "આજે જમા આવ્યું",
+  "staff.shiftGiven": "આજે ઉધાર આપ્યું",
+  "staff.shiftEntries": "કાઉન્ટર એન્ટ્રીઓ",
+  "staff.addedBy": "નોંધનાર",
 };

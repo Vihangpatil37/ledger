@@ -153,6 +153,7 @@ export const hi: Dictionary = {
   "queue.brokenPromise": "वादा टूटा",
   "queue.remindedAgo": "रिमाइंडर भेजा",
   "queue.remindWhatsApp": "व्हाट्सएप",
+  "queue.promise": "वादा",
   "queue.setPromise": "तारीख तय करें",
 
   // Promise to pay
@@ -192,4 +193,14 @@ export const hi: Dictionary = {
   "backup.csvBtn": "CSV फाइल चुनें",
   "backup.csvPreview": "CSV प्रीव्यू",
   "backup.csvCommit": "लेनदेन इम्पोर्ट करें",
+
+  // Staff & Munim Mode
+  "staff.title": "स्टाफ और मुनीम एक्सेस",
+  "staff.subtitle": "कर्मचारी लॉगिन, काउंटर पिन और शिफ्ट एक्सेस प्रबंधित करें",
+  "staff.shopCode": "दुकान कोड",
+  "staff.addStaff": "नया स्टाफ जोड़ें",
+  "staff.shiftCollected": "आज जमा आया",
+  "staff.shiftGiven": "आज उधार दिया",
+  "staff.shiftEntries": "काउंटर एंट्रीज",
+  "staff.addedBy": "दर्जकर्ता",
 };

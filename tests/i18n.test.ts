@@ -41,13 +41,19 @@ describe("i18n dictionaries and key parity", () => {
     const enServer = await getServerTranslations("en");
     expect(enServer.t("nav.dashboard")).toBe("Dashboard");
     expect(enServer.t("entry.gave")).toBe("Udhar");
+    expect(enServer.t("queue.remindWhatsApp")).toBe("WhatsApp");
+    expect(enServer.t("queue.promise")).toBe("Promise");
 
     const guServer = await getServerTranslations("gu");
     expect(guServer.t("nav.dashboard")).toBe("ડેશબોર્ડ");
     expect(guServer.t("entry.gave")).toBe("ઉધાર આપ્યા");
+    expect(guServer.t("queue.remindWhatsApp")).toBe("વોટ્સએપ");
+    expect(guServer.t("queue.promise")).toBe("વાયદો");
 
     const hiServer = await getServerTranslations("hi");
     expect(hiServer.t("nav.dashboard")).toBe("डैशबोर्ड");
     expect(hiServer.t("entry.gave")).toBe("उधार दिया");
+    expect(hiServer.t("queue.remindWhatsApp")).toBe("व्हाट्सएप");
+    expect(hiServer.t("queue.promise")).toBe("वादा");
   });
 });

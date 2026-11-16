@@ -151,6 +151,7 @@ export const en = {
   "queue.brokenPromise": "Broken Promise",
   "queue.remindedAgo": "Reminded",
   "queue.remindWhatsApp": "WhatsApp",
+  "queue.promise": "Promise",
   "queue.setPromise": "Set Promise",
 
   // Promise to pay
@@ -190,6 +191,16 @@ export const en = {
   "backup.csvBtn": "Choose CSV File",
   "backup.csvPreview": "CSV Import Preview",
   "backup.csvCommit": "Import Transactions",
+
+  // Staff & Munim Mode
+  "staff.title": "Staff & Munim Access",
+  "staff.subtitle": "Manage employee logins, counter PINs, and shift access",
+  "staff.shopCode": "Shop Identifier",
+  "staff.addStaff": "Add Staff Member",
+  "staff.shiftCollected": "Today Collected (Jama)",
+  "staff.shiftGiven": "Today Given (Udhar)",
+  "staff.shiftEntries": "Shift Entries",
+  "staff.addedBy": "Added by",
 } as const;
 
 export type TranslationKey = keyof typeof en;
