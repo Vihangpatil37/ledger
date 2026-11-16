@@ -2,13 +2,18 @@ import "server-only";
 
 import { MongoClient, type Collection } from "mongodb";
 import { MONGODB_DB, getMongoUri } from "@/server/env";
-import type { EntryType } from "@/lib/types";
+import type { EntryAttribution, EntryType, StaffDoc } from "@/lib/types";
+
+export type { StaffDoc };
 
 export type UserDoc = {
   _id: string;
   /** Stored lowercase; unique index enforced by setup script. */
   email: string;
   passwordHash: string;
+  shopCode?: string | null;
+  shopName?: string | null;
+  phone?: string | null;
   upiId?: string | null;
   upiName?: string | null;
   createdAt: Date;
@@ -38,6 +43,7 @@ export type EntryDoc = {
   dueDate?: Date | null;
   editedAt?: Date | null;
   deletedAt?: Date | null;
+  createdBy?: EntryAttribution | null;
   createdAt: Date;
 };
 
@@ -98,4 +104,8 @@ export function entriesCol(): Collection<EntryDoc> {
 
 export function promisesCol(): Collection<PromiseDoc> {
   return db().collection<PromiseDoc>("promises");
+}
+
+export function staffCol(): Collection<StaffDoc> {
+  return db().collection<StaffDoc>("staff");
 }
