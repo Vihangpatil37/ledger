@@ -20,6 +20,13 @@ describe("decimalStringToPaise (zero float drift parsing)", () => {
     expect(decimalStringToPaise("0.01")).toBe(1);
     expect(decimalStringToPaise("9999999.99")).toBe(999999999);
   });
+
+  it("accurately rounds sub-paise fractions to the nearest paisa instead of truncating", () => {
+    expect(decimalStringToPaise("150.999")).toBe(15100);
+    expect(decimalStringToPaise("100.006")).toBe(10001);
+    expect(decimalStringToPaise("100.004")).toBe(10000);
+    expect(decimalStringToPaise("250.555")).toBe(25056);
+  });
 });
 
 describe("paiseToDecimalString (zero float drift serialization)", () => {

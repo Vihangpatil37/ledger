@@ -354,4 +354,41 @@ describe("Staff Management & Collision Protections", () => {
       "This shop code was just taken by another store. Try another."
     );
   });
+
+  it("locks out staff login after 5 consecutive failed attempts", async () => {
+    const { loginStaff, resetStaffLoginAttempts } = await import("@/actions/auth");
+    const testShop = "TEST-LOCKOUT-SHOP";
+    await resetStaffLoginAttempts(testShop);
+
+    // Mock shop owner exists but staff has different PIN
+    mockUsersFindOne.mockResolvedValue({ _id: "owner-123" });
+    mockStaffFindToArray.mockResolvedValue([
+      { _id: "staff-1", name: "Clerk", pinHash: "$2a$10$invalidhashhere", isActive: true },
+    ]);
+
+    // Attempts 1 to 4 should return remaining attempts
+    for (let i = 1; i <= 4; i++) {
+      const fd = new FormData();
+      fd.append("shopIdentifier", testShop);
+      fd.append("pin", "9999");
+      const res = await loginStaff({}, fd);
+      expect(res.error).toContain(`${5 - i} attempt`);
+    }
+
+    // 5th attempt locks the shop
+    const fd5 = new FormData();
+    fd5.append("shopIdentifier", testShop);
+    fd5.append("pin", "9999");
+    const res5 = await loginStaff({}, fd5);
+    expect(res5.error).toContain("This shop login is locked for 15 minutes");
+
+    // 6th attempt is blocked immediately by lockout
+    const res6 = await loginStaff({}, fd5);
+    expect(res6.error).toContain("Too many failed attempts. Login is locked for");
+
+    // Resetting clears the lock
+    await resetStaffLoginAttempts(testShop);
+    const resAfterReset = await loginStaff({}, fd5);
+    expect(resAfterReset.error).toContain("4 attempts left");
+  });
 });

@@ -20,6 +20,7 @@ const mockUpdateOnePerson = vi.fn();
 const mockDeleteManyEntries = vi.fn();
 const mockUpdateManyEntries = vi.fn();
 const mockUpdateOneUser = vi.fn();
+const mockUpdateManyPromises = vi.fn();
 
 const mockWithTransaction = vi.fn();
 const mockEndSession = vi.fn();
@@ -58,6 +59,11 @@ vi.mock("@/lib/mongo", () => ({
   }),
   usersCol: () => ({
     updateOne: mockUpdateOneUser,
+  }),
+  promisesCol: () => ({
+    updateMany: mockUpdateManyPromises,
+    find: vi.fn().mockReturnValue({ toArray: vi.fn().mockResolvedValue([]) }),
+    insertOne: vi.fn(),
   }),
   mongoClient: () => ({
     startSession: mockStartSession,
@@ -418,6 +424,10 @@ describe("addEntry", () => {
         amountCents: 10000,
         dueDate: null,
       })
+    );
+    expect(mockUpdateManyPromises).toHaveBeenCalledWith(
+      { personId, ownerId: "owner-1", status: "PENDING" },
+      expect.objectContaining({ $set: expect.objectContaining({ status: "KEPT" }) })
     );
   });
 

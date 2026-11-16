@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { peopleCol, promisesCol } from "@/lib/mongo";
 import { getSession } from "@/server/session";
 import type { ActionState } from "@/lib/types";
-import { idSchema } from "@/lib/validation";
+import { idSchema, isValidCalendarDate } from "@/lib/validation";
 
 export async function recordReminder(personId: string): Promise<ActionState> {
   const session = await getSession();
@@ -48,8 +48,8 @@ export async function setPromiseToPay(
   if (!personId.success) return { error: "Invalid person ID." };
 
   const rawDate = formData.get("promiseDate")?.toString().trim();
-  if (!rawDate || !/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
-    return { error: "Valid promise date (YYYY-MM-DD) is required." };
+  if (!rawDate || !isValidCalendarDate(rawDate)) {
+    return { error: "Valid calendar date (YYYY-MM-DD) is required." };
   }
 
   const rawNote = formData.get("note")?.toString().trim() || null;
@@ -116,6 +116,12 @@ export async function clearPromiseToPay(
           promiseNote: null,
         },
       }
+    );
+
+    // Resolve any pending promise audit log as rescheduled
+    await promisesCol().updateMany(
+      { personId: personId.data, ownerId: owner, status: "PENDING" },
+      { $set: { status: "RESCHEDULED", resolvedAt: new Date() } }
     );
   } catch (err) {
     console.error("Failed to clear promise:", err);

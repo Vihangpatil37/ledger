@@ -15,8 +15,13 @@ export function decimalStringToPaise(amount: string): number {
   const isNegative = trimmed.startsWith("-");
   const clean = isNegative ? trimmed.slice(1) : trimmed;
   const [rupees, paise = ""] = clean.split(".");
-  const paisePadded = (paise + "00").slice(0, 2);
-  const total = Number(rupees || 0) * 100 + Number(paisePadded);
+  let paiseInt = 0;
+  if (paise.length > 2) {
+    paiseInt = Math.round(Number(`0.${paise}`) * 100);
+  } else {
+    paiseInt = Number((paise + "00").slice(0, 2));
+  }
+  const total = Number(rupees || 0) * 100 + paiseInt;
   return isNegative ? -total : total;
 }
 

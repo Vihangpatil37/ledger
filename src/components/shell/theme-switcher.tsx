@@ -132,14 +132,14 @@ export function ThemeSwitcher({
               onClick={() => setTheme(item.code)}
               className={`flex items-start justify-between p-3.5 rounded-xl border text-left transition-all duration-150 cursor-pointer min-h-[44px] focus-visible:outline-2 focus-visible:outline-focus ${
                 isSelected
-                  ? "border-ink bg-surface shadow-xs ring-1 ring-ink"
+                  ? "border-focus/80 bg-surface shadow-xs ring-2 ring-focus/20"
                   : "border-rule/80 bg-paper/60 hover:bg-surface hover:border-rule"
               }`}
             >
               <div className="flex items-start gap-3">
                 <div
-                  className={`p-2 rounded-lg shrink-0 ${
-                    isSelected ? "bg-ink text-paper" : "bg-rule/40 text-muted"
+                  className={`p-2 rounded-lg shrink-0 transition-colors ${
+                    isSelected ? "bg-focus/15 text-focus font-bold" : "bg-rule/40 text-muted"
                   }`}
                 >
                   {item.icon("size-4")}
@@ -154,10 +154,10 @@ export function ThemeSwitcher({
                 </div>
               </div>
               <span
-                className={`size-4 rounded-full border flex items-center justify-center text-[10px] shrink-0 mt-0.5 ${
+                className={`size-4 rounded-full border flex items-center justify-center text-[10px] shrink-0 mt-0.5 transition-colors ${
                   isSelected
-                    ? "border-ink bg-ink text-paper font-bold"
-                    : "border-rule bg-surface"
+                    ? "border-focus bg-focus text-white font-bold"
+                    : "border-rule bg-surface text-transparent"
                 }`}
                 aria-hidden="true"
               >
@@ -192,7 +192,7 @@ export function ThemeSwitcher({
             aria-label={t(item.labelKey)}
             className={`flex min-h-[36px] sm:min-h-[32px] items-center justify-center gap-1.5 px-2 py-1 text-[11px] sm:text-xs font-semibold rounded-lg transition-all duration-150 cursor-pointer focus-visible:outline-2 focus-visible:outline-focus ${
               isSelected
-                ? "bg-surface text-ink font-bold shadow-xs border border-rule/80 dark:bg-surface-subtle dark:border-rule dark:text-ink"
+                ? "bg-surface-subtle text-ink font-bold shadow-xs border border-rule/80 dark:border-rule/60"
                 : "text-muted hover:text-ink hover:bg-rule/20 border border-transparent"
             }`}
           >

@@ -64,10 +64,16 @@ declare global {
 
 /** One MongoClient per process, safe across dev-server hot reloads. */
 function getClient(): MongoClient {
-  globalThis.__ledgerMongo ??= new MongoClient(getMongoUri(), {
+  const uri = getMongoUri();
+  const requiresTls =
+    uri.startsWith("mongodb+srv://") ||
+    uri.includes("tls=true") ||
+    uri.includes("ssl=true");
+
+  globalThis.__ledgerMongo ??= new MongoClient(uri, {
     appName: "ledger",
     serverSelectionTimeoutMS: 8_000,
-    tls: true,
+    tls: requiresTls,
     connectTimeoutMS: 10_000,
     // Vercel serverless: containers freeze between requests and AWS NAT
     // drops idle TCP sockets. Cull stale connections after 10 s so the

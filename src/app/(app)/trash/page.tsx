@@ -48,7 +48,7 @@ export default async function TrashPage() {
           <form action={emptyTrashAction}>
             <button
               type="submit"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-rose-300 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500 transition-colors cursor-pointer"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-danger/30 bg-danger-light px-4 py-2 text-xs font-semibold text-danger hover:bg-danger-light/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger transition-colors cursor-pointer"
             >
               {t("trash.emptyBtn")}
             </button>
@@ -84,7 +84,7 @@ export default async function TrashPage() {
                 <div className="flex items-center gap-2 text-xs text-muted">
                   {item.subtitle && <span>{item.subtitle} · </span>}
                   <span>Deleted {formatWhen(item.deletedAt)}</span>
-                  <span className="text-amber-700 font-medium">
+                  <span className="text-warning font-medium">
                     ({item.daysRemaining} {t("trash.daysLeft")})
                   </span>
                 </div>

@@ -26,7 +26,7 @@ export async function exportBackupJson(): Promise<{
       usersCol().findOne({ _id: owner }),
       peopleCol().find({ ownerId: owner, ...activeFilter() }).toArray(),
       entriesCol().find({ ownerId: owner, ...activeFilter() }).toArray(),
-      promisesCol ? promisesCol().find({ ownerId: owner }).toArray().catch(() => []) : Promise.resolve([]),
+      promisesCol().find({ ownerId: owner }).toArray().catch(() => []),
     ]);
 
     if (!user) return { ok: false, error: "User profile not found." };
@@ -246,49 +246,71 @@ export async function commitCsvImport(
           personIdMap.set(p.name.trim().toLowerCase(), p._id);
         }
 
-        // Create missing contacts first
+        // Collect missing contacts first
+        const newPeopleToInsert: Array<{
+          _id: string;
+          ownerId: string;
+          name: string;
+          phone: string | null;
+          createdAt: Date;
+          updatedAt: Date;
+        }> = [];
+
         for (const row of validRows) {
           const normPhone = row.phone ? normalizePhone(row.phone) : null;
           const lookupKey = normPhone || row.name.trim().toLowerCase();
 
           if (!personIdMap.has(lookupKey)) {
             const newPersonId = randomUUID();
-            await peopleCol().insertOne(
-              {
-                _id: newPersonId,
-                ownerId: owner,
-                name: row.name.trim(),
-                phone: row.phone,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              },
-              { session }
-            );
+            newPeopleToInsert.push({
+              _id: newPersonId,
+              ownerId: owner,
+              name: row.name.trim(),
+              phone: row.phone ?? null,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
             personIdMap.set(lookupKey, newPersonId);
             if (normPhone) personIdMap.set(row.name.trim().toLowerCase(), newPersonId);
           }
         }
 
-        // Insert valid entries
+        if (newPeopleToInsert.length > 0) {
+          await peopleCol().insertMany(newPeopleToInsert, { session });
+        }
+
+        // Collect valid entries for bulk insert
+        const newEntriesToInsert: Array<{
+          _id: string;
+          ownerId: string;
+          personId: string;
+          type: "GAVE" | "RECEIVED";
+          amountCents: number;
+          note: string | null;
+          dueDate: Date | null;
+          createdAt: Date;
+        }> = [];
+
         for (const row of validRows) {
           const normPhone = row.phone ? normalizePhone(row.phone) : null;
           const lookupKey = normPhone || row.name.trim().toLowerCase();
           const targetPersonId = personIdMap.get(lookupKey);
           if (!targetPersonId) continue;
 
-          await entriesCol().insertOne(
-            {
-              _id: randomUUID(),
-              ownerId: owner,
-              personId: targetPersonId,
-              type: row.type,
-              amountCents: decimalStringToPaise(row.amount),
-              note: row.note ?? null,
-              dueDate: row.dueDate ? new Date(row.dueDate) : null,
-              createdAt: new Date(),
-            },
-            { session }
-          );
+          newEntriesToInsert.push({
+            _id: randomUUID(),
+            ownerId: owner,
+            personId: targetPersonId,
+            type: row.type,
+            amountCents: decimalStringToPaise(row.amount),
+            note: row.note ?? null,
+            dueDate: row.dueDate ? new Date(row.dueDate) : null,
+            createdAt: new Date(),
+          });
+        }
+
+        if (newEntriesToInsert.length > 0) {
+          await entriesCol().insertMany(newEntriesToInsert, { session });
         }
       });
     } finally {

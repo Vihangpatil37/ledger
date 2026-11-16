@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
 import { decimalStringToPaise } from "@/lib/money";
-import { entriesCol, peopleCol } from "@/lib/mongo";
+import { entriesCol, peopleCol, promisesCol } from "@/lib/mongo";
 import { getSession } from "@/server/session";
 import type { ActionState } from "@/lib/types";
 import {
@@ -73,6 +73,18 @@ export async function addEntry(
       createdBy,
       createdAt: new Date(),
     });
+
+    // When payment is received, mark pending promise to pay as KEPT and clear customer card
+    if (parsed.data.type === "RECEIVED") {
+      await promisesCol().updateMany(
+        { personId: parsed.data.personId, ownerId: owner, status: "PENDING" },
+        { $set: { status: "KEPT", resolvedAt: new Date() } }
+      );
+      await peopleCol().updateOne(
+        { _id: parsed.data.personId, ownerId: owner },
+        { $set: { promiseDate: null, promiseNote: null } }
+      );
+    }
   } catch {
     return { error: "Could not save entry. Try again." };
   }

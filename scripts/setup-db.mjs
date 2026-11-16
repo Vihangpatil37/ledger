@@ -47,9 +47,12 @@ if (!passwordArg || passwordArg.length < 6) {
   process.exit(1);
 }
 
-const client = new MongoClient(process.env.MONGODB_URI, {
+const uri = process.env.MONGODB_URI;
+const requiresTls = uri.startsWith("mongodb+srv://") || uri.includes("tls=true") || uri.includes("ssl=true");
+
+const client = new MongoClient(uri, {
   serverSelectionTimeoutMS: 15_000,
-  tls: true,
+  tls: requiresTls,
   connectTimeoutMS: 10_000,
 });
 
@@ -60,6 +63,7 @@ try {
   await Promise.all([
     database.collection("users").createIndex({ email: 1 }, { unique: true }),
     database.collection("users").createIndex({ shopCode: 1 }, { unique: true, sparse: true }),
+    database.collection("users").createIndex({ phone: 1 }, { sparse: true }),
     database.collection("staff").createIndex({ ownerId: 1, isActive: 1 }),
     database.collection("people").createIndex({ ownerId: 1, name: 1 }),
     database.collection("people").createIndex({ ownerId: 1, deletedAt: 1, promiseDate: 1 }),
@@ -78,6 +82,9 @@ try {
     database
       .collection("entries")
       .createIndex({ ownerId: 1, deletedAt: 1, createdAt: -1 }),
+    database
+      .collection("entries")
+      .createIndex({ ownerId: 1, deletedAt: 1, personId: 1, type: 1, amountCents: 1 }),
     database
       .collection("promises")
       .createIndex({ ownerId: 1, personId: 1, createdAt: -1 }),

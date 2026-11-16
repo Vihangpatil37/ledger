@@ -25,6 +25,21 @@ const COOKIE_OPTIONS = {
 // Constant-time dummy hash prevents user enumeration via bcrypt timing
 const DUMMY_HASH = "$2a$10$e8wNuUuY.1zO81k.U386r.Zg9737.mC3yH4G9V8q7NlU8O2YfD1uK";
 
+const MAX_STAFF_ATTEMPTS = 5;
+const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes
+
+type AttemptRecord = {
+  count: number;
+  lockedUntil?: number;
+};
+
+// In-memory rate-limiter keyed by normalized shop identifier
+const staffLoginAttempts = new Map<string, AttemptRecord>();
+
+export async function resetStaffLoginAttempts(identifier: string): Promise<void> {
+  staffLoginAttempts.delete(identifier.trim().toUpperCase());
+}
+
 export async function login(
   _previous: ActionState,
   formData: FormData
@@ -75,6 +90,17 @@ export async function loginStaff(
   if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
 
   const rawIdent = parsed.data.shopIdentifier.trim();
+  const lookupKey = rawIdent.toUpperCase();
+  const now = Date.now();
+  const attempt = staffLoginAttempts.get(lookupKey);
+
+  if (attempt?.lockedUntil && attempt.lockedUntil > now) {
+    const minutesLeft = Math.ceil((attempt.lockedUntil - now) / 60000);
+    return {
+      error: `Too many failed attempts. Login is locked for ${minutesLeft} more minute${minutesLeft === 1 ? "" : "s"}.`,
+    };
+  }
+
   const phoneIdent = normalizeIndianPhone(rawIdent);
 
   let owner: { _id: string } | null = null;
@@ -119,8 +145,27 @@ export async function loginStaff(
   }
 
   if (!matchedStaff) {
-    return { error: "Invalid PIN or inactive staff account." };
+    const nextCount = (attempt?.count ?? 0) + 1;
+    if (nextCount >= MAX_STAFF_ATTEMPTS) {
+      staffLoginAttempts.set(lookupKey, {
+        count: nextCount,
+        lockedUntil: now + LOCKOUT_MS,
+      });
+      return {
+        error: "Too many failed attempts. This shop login is locked for 15 minutes.",
+      };
+    }
+
+    staffLoginAttempts.set(lookupKey, { count: nextCount });
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    const remaining = MAX_STAFF_ATTEMPTS - nextCount;
+    return {
+      error: `Invalid PIN or inactive staff account. (${remaining} attempt${remaining === 1 ? "" : "s"} left)`,
+    };
   }
+
+  // Successful login clears any failed attempt counter
+  staffLoginAttempts.delete(lookupKey);
 
   const jar = await cookies();
   jar.set(

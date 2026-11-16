@@ -49,7 +49,7 @@ export function getDueStatus(
     return {
       status: "DUE_TODAY",
       label: "Due today",
-      className: "bg-amber-500/10 text-amber-800 border border-amber-500/30",
+      className: "bg-warning-light text-warning border border-warning/30",
       daysDiff: 0,
     };
   }

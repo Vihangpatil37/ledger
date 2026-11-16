@@ -226,6 +226,11 @@ export async function getPersonDetail(
 
   const { fromDate, toDateExclusive } = resolveIstRange(range);
 
+  const istTodayStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+  }).format(new Date());
+  const today = new Date(`${istTodayStr}T00:00:00+05:30`);
+
   const createdAtFilter: Record<string, unknown> = {};
   if (fromDate) createdAtFilter.$gte = fromDate;
   if (toDateExclusive) createdAtFilter.$lt = toDateExclusive;
@@ -281,13 +286,18 @@ export async function getPersonDetail(
         { _id: owner },
         { projection: { upiId: 1, upiName: 1 } }
       ),
-      // Broken promises count for reliability scoring
-      promisesCol
-        ? promisesCol()
-            .find({ personId: id, ownerId: owner, status: "BROKEN" })
-            .toArray()
-            .catch(() => [])
-        : Promise.resolve([]),
+      // Broken promises count for reliability scoring (explicit BROKEN or past-due PENDING)
+      promisesCol()
+        .find({
+          personId: id,
+          ownerId: owner,
+          $or: [
+            { status: "BROKEN" },
+            { status: "PENDING", promiseDate: { $lt: today } },
+          ],
+        })
+        .toArray()
+        .catch(() => []),
       // All lifetime entries if range was filtered, otherwise entries is already all
       fromDate || toDateExclusive
         ? entriesCol()
@@ -414,12 +424,16 @@ export async function getFollowUpQueue(): Promise<FollowUpItem[]> {
         { _id: owner },
         { projection: { upiId: 1, upiName: 1 } }
       ),
-      promisesCol
-        ? promisesCol()
-            .find({ ownerId: owner, status: "BROKEN" })
-            .toArray()
-            .catch(() => [])
-        : Promise.resolve([]),
+      promisesCol()
+        .find({
+          ownerId: owner,
+          $or: [
+            { status: "BROKEN" },
+            { status: "PENDING", promiseDate: { $lt: today } },
+          ],
+        })
+        .toArray()
+        .catch(() => []),
     ]);
 
   const balanceByPerson = new Map(balances.map((b) => [b._id, b]));
@@ -687,15 +701,8 @@ export async function getOwnerProfile(): Promise<OwnerProfile | null> {
   );
   if (!user) return null;
 
-  let shopCode = user.shopCode;
-  if (!shopCode) {
-    const fallback = `CHAI-${user._id.slice(0, 4).toUpperCase()}`;
-    await usersCol().updateOne(
-      { _id: owner },
-      { $set: { shopCode: fallback } }
-    );
-    shopCode = fallback;
-  }
+  const shopCode =
+    user.shopCode || `CHAI-${user._id.slice(0, 4).toUpperCase()}`;
 
   return {
     email: user.email,

@@ -12,6 +12,7 @@ import {
   loginSchema,
   idSchema,
   fieldErrorsOf,
+  isValidCalendarDate,
 } from "@/lib/validation";
 
 describe("loginSchema", () => {
@@ -475,5 +476,37 @@ describe("formatIndianPhone formatter", () => {
     expect(formatIndianPhone("+919876543210")).toBe("+91 98765 43210");
     expect(formatIndianPhone("+91 98765 43210")).toBe("+91 98765 43210");
     expect(formatIndianPhone("09876543210")).toBe("+91 98765 43210");
+  });
+});
+
+describe("isValidCalendarDate (strict calendar verification)", () => {
+  it("accepts valid real calendar dates", () => {
+    expect(isValidCalendarDate("2026-02-28")).toBe(true);
+    expect(isValidCalendarDate("2024-02-29")).toBe(true); // Leap year
+    expect(isValidCalendarDate("2026-11-16")).toBe(true);
+    expect(isValidCalendarDate("2026-12-31")).toBe(true);
+  });
+
+  it("rejects impossible days in February and leap-year mismatches", () => {
+    expect(isValidCalendarDate("2026-02-29")).toBe(false); // 2026 is not a leap year
+    expect(isValidCalendarDate("2026-02-30")).toBe(false);
+    expect(isValidCalendarDate("2026-02-31")).toBe(false);
+  });
+
+  it("rejects 31st on 30-day months and invalid months", () => {
+    expect(isValidCalendarDate("2026-04-31")).toBe(false);
+    expect(isValidCalendarDate("2026-06-31")).toBe(false);
+    expect(isValidCalendarDate("2026-09-31")).toBe(false);
+    expect(isValidCalendarDate("2026-11-31")).toBe(false);
+    expect(isValidCalendarDate("2026-13-01")).toBe(false);
+    expect(isValidCalendarDate("2026-00-10")).toBe(false);
+    expect(isValidCalendarDate("2026-19-99")).toBe(false);
+  });
+
+  it("rejects malformed date strings", () => {
+    expect(isValidCalendarDate("")).toBe(false);
+    expect(isValidCalendarDate("abc")).toBe(false);
+    expect(isValidCalendarDate("2026/11/16")).toBe(false);
+    expect(isValidCalendarDate("16-11-2026")).toBe(false);
   });
 });
