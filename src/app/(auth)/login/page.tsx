@@ -8,10 +8,13 @@ export const metadata = { title: "Sign in" };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string | string[] }>;
+  searchParams: Promise<{ next?: string | string[]; shop?: string | string[] }>;
 }) {
   const params = await searchParams;
   if (await getOwner()) redirect("/");
+
+  const next = typeof params.next === "string" ? params.next : undefined;
+  const defaultShop = typeof params.shop === "string" ? params.shop : undefined;
 
   return (
     <main className="flex min-h-svh items-center justify-center bg-paper px-4 py-12">
@@ -28,7 +31,7 @@ export default async function LoginPage({
           </p>
         </div>
         <div className="rounded-2xl border border-rule bg-surface p-6 sm:p-7 shadow-[0_4px_16px_0_rgba(30,27,24,0.05)]">
-          <LoginForm next={typeof params.next === "string" ? params.next : undefined} />
+          <LoginForm next={next} defaultShop={defaultShop} />
         </div>
         <p className="mt-6 text-center text-xs text-muted/80">
           Stateless, end-to-end encrypted private session
