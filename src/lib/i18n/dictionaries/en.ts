@@ -202,15 +202,16 @@ export const en = {
   "backup.csvPreview": "CSV Import Preview",
   "backup.csvCommit": "Import Transactions",
 
-  // Staff & Munim Mode
-  "staff.title": "Staff & Munim Access",
-  "staff.subtitle": "Manage employee logins, counter PINs, and shift access",
-  "staff.shopCode": "Shop Identifier",
-  "staff.addStaff": "Add Staff Member",
-  "staff.shiftCollected": "Today Collected (Jama)",
-  "staff.shiftGiven": "Today Given (Udhar)",
-  "staff.shiftEntries": "Shift Entries",
-  "staff.addedBy": "Added by",
+  // Calculator
+  "calculator.title": "Calculator",
+  "calculator.subtitle": "Calculate ledger amounts and totals",
+  "calculator.useAsAmount": "Use as Amount",
+  "calculator.history": "History",
+  "calculator.clearHistory": "Clear History",
+  "calculator.noHistory": "No calculations yet",
+  "calculator.copied": "Copied to clipboard",
+  "calculator.openButton": "Calculator",
+  "calculator.copy": "Copy",
 } as const;
 
 export type TranslationKey = keyof typeof en;
