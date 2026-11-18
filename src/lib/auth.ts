@@ -14,31 +14,17 @@ function secret(): Uint8Array {
 
 export type SessionUser = {
   userId: string;
-  role?: "OWNER" | "STAFF";
-  staffId?: string;
-  staffName?: string;
 };
 
 export type VerifiedSession = {
   userId: string;
-  role: "OWNER" | "STAFF";
-  staffId?: string;
-  staffName?: string;
 };
 
-/** Signs a 30-day session token carrying the user id and optional staff claims. */
+/** Signs a 30-day session token carrying the user id. */
 export function signSession(userOrId: string | SessionUser): Promise<string> {
-  const payload: Record<string, unknown> =
-    typeof userOrId === "string"
-      ? { sub: userOrId, role: "OWNER" }
-      : {
-          sub: userOrId.userId,
-          role: userOrId.role ?? "OWNER",
-          ...(userOrId.staffId ? { staffId: userOrId.staffId } : {}),
-          ...(userOrId.staffName ? { staffName: userOrId.staffName } : {}),
-        };
+  const userId = typeof userOrId === "string" ? userOrId : userOrId.userId;
 
-  return new SignJWT(payload)
+  return new SignJWT({ sub: userId })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("30d")
@@ -53,7 +39,7 @@ export async function verifySession(
   return full ? full.userId : null;
 }
 
-/** Returns full session claims (role, staff attribution), or null. Never throws. */
+/** Returns full session claims, or null. Never throws. */
 export async function verifyFullSession(
   token: string | undefined | null
 ): Promise<VerifiedSession | null> {
@@ -65,9 +51,6 @@ export async function verifyFullSession(
     if (typeof payload.sub !== "string" || !payload.sub) return null;
     return {
       userId: payload.sub,
-      role: payload.role === "STAFF" ? "STAFF" : "OWNER",
-      staffId: typeof payload.staffId === "string" ? payload.staffId : undefined,
-      staffName: typeof payload.staffName === "string" ? payload.staffName : undefined,
     };
   } catch {
     return null;
