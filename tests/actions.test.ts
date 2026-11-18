@@ -30,7 +30,7 @@ vi.mock("@/server/session", () => ({
   getOwner: () => mockGetOwner(),
   getSession: async () => {
     const owner = await mockGetOwner();
-    return owner ? { userId: owner, role: "OWNER" } : null;
+    return owner ? { userId: owner } : null;
   },
 }));
 
