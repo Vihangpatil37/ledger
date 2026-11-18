@@ -11,7 +11,7 @@ import {
 export type { VerifiedSession };
 
 /**
- * The full session context with role and staff details, or null.
+ * The full session context, or null.
  * Cached per request across all Server Components, Readers, and Layouts.
  */
 export const getSession = cache(async (): Promise<VerifiedSession | null> => {
