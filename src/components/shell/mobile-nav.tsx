@@ -4,11 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/client";
 
-export function MobileNav({ isStaff }: { isStaff?: boolean }) {
+export function MobileNav() {
   const pathname = usePathname();
   const { t } = useLanguage();
-
-  if (isStaff) return null;
 
   const isHome = pathname === "/";
   const isAddPerson = pathname === "/people/new";
@@ -19,11 +17,7 @@ export function MobileNav({ isStaff }: { isStaff?: boolean }) {
       aria-label="Mobile Navigation"
       className="fixed bottom-0 inset-x-0 z-30 border-t border-rule bg-surface/95 backdrop-blur-md pb-[env(safe-area-inset-bottom,0px)] lg:hidden print:hidden"
     >
-      <div
-        className={`grid ${
-          isStaff ? "grid-cols-2" : "grid-cols-3"
-        } h-14 max-w-md mx-auto items-center px-3 gap-1`}
-      >
+      <div className="grid grid-cols-3 h-14 max-w-md mx-auto items-center px-3 gap-1">
         <Link
           href="/"
           className={`flex flex-col items-center justify-center min-h-[44px] gap-1 py-1 rounded-xl transition-all ${
@@ -72,33 +66,31 @@ export function MobileNav({ isStaff }: { isStaff?: boolean }) {
           <span className="text-[11px] leading-none">{t("nav.addPerson")}</span>
         </Link>
 
-        {!isStaff ? (
-          <Link
-            href="/settings"
-            className={`flex flex-col items-center justify-center min-h-[44px] gap-1 py-1 rounded-xl transition-all ${
-              isSettings
-                ? "text-ink font-bold bg-paper shadow-2xs"
-                : "text-muted hover:text-ink active:bg-paper/50"
-            }`}
+        <Link
+          href="/settings"
+          className={`flex flex-col items-center justify-center min-h-[44px] gap-1 py-1 rounded-xl transition-all ${
+            isSettings
+              ? "text-ink font-bold bg-paper shadow-2xs"
+              : "text-muted hover:text-ink active:bg-paper/50"
+          }`}
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={`size-5 ${isSettings ? "text-ink" : "text-muted"}`}
+            aria-hidden="true"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className={`size-5 ${isSettings ? "text-ink" : "text-muted"}`}
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-            <span className="text-[11px] leading-none">{t("nav.settings")}</span>
-          </Link>
-        ) : null}
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+          <span className="text-[11px] leading-none">{t("nav.settings")}</span>
+        </Link>
       </div>
     </nav>
   );
