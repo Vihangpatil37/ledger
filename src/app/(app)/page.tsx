@@ -2,29 +2,20 @@ import Link from "next/link";
 import { FollowUpQueue } from "@/components/home/follow-up-queue";
 import { PeopleList } from "@/components/home/people-list";
 import { RecentActivity } from "@/components/home/recent-activity";
-import { StaffShiftCards } from "@/components/home/staff-shift-cards";
 import { Money } from "@/components/ui";
 import {
   getFollowUpQueue,
   getHomeSummary,
-  getStaffShiftSummary,
 } from "@/server/readers";
-import { getSession } from "@/server/session";
 import { getServerTranslations } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const session = await getSession();
-  const isStaff = session?.role === "STAFF";
-
-  const [summary, followUpQueue, { t }, shiftSummary] = await Promise.all([
+  const [summary, followUpQueue, { t }] = await Promise.all([
     getHomeSummary(),
-    isStaff ? Promise.resolve([]) : getFollowUpQueue(),
+    getFollowUpQueue(),
     getServerTranslations(),
-    isStaff && session?.staffId
-      ? getStaffShiftSummary(session.userId, session.staffId)
-      : Promise.resolve(null),
   ]);
 
   const count = summary.rows.length;
@@ -41,30 +32,23 @@ export default async function HomePage() {
             {t("nav.dashboard")}
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-muted">
-            {isStaff
-              ? `Counter Shift Mode · ${session.staffName}`
-              : count === 0
-                ? t("home.addFirstPerson")
-                : `${summary.debtorsCount} ${t("home.filterDebtors")} · ${summary.creditorsCount} ${t("home.filterCreditors")} · ${summary.settledCount} ${t("home.filterSettled")}`}
+            {count === 0
+              ? t("home.addFirstPerson")
+              : `${summary.debtorsCount} ${t("home.filterDebtors")} · ${summary.creditorsCount} ${t("home.filterCreditors")} · ${summary.settledCount} ${t("home.filterSettled")}`}
           </p>
         </div>
 
-        {!isStaff && (
-          <Link
-            href="/people/new"
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-ink px-4 py-2 text-xs sm:text-sm font-semibold text-paper shadow-[0_2px_4px_0_rgba(30,27,24,0.15)] transition-all duration-150 hover:bg-ink/90 active:scale-[0.98] self-start sm:self-auto cursor-pointer focus-visible:outline-2 focus-visible:outline-focus"
-          >
-            <span className="text-base leading-none font-bold">+</span>
-            <span>{t("nav.addPerson")}</span>
-          </Link>
-        )}
+        <Link
+          href="/people/new"
+          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-ink px-4 py-2 text-xs sm:text-sm font-semibold text-paper shadow-[0_2px_4px_0_rgba(30,27,24,0.15)] transition-all duration-150 hover:bg-ink/90 active:scale-[0.98] self-start sm:self-auto cursor-pointer focus-visible:outline-2 focus-visible:outline-focus"
+        >
+          <span className="text-base leading-none font-bold">+</span>
+          <span>{t("nav.addPerson")}</span>
+        </Link>
       </div>
 
-      {/* Metrics Bar: Staff Shift Summary OR Integrated Cashbook Banner */}
-      {shiftSummary ? (
-        <StaffShiftCards summary={shiftSummary} />
-      ) : (
-        <div className="rounded-2xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_12px_0_rgba(30,27,24,0.04)] transition-all">
+      {/* Metrics Bar: Integrated Cashbook Banner */}
+      <div className="rounded-2xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_12px_0_rgba(30,27,24,0.04)] transition-all">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-rule/60 pb-4">
             <div>
               <p className="font-mono text-[11px] font-semibold uppercase tracking-wider text-muted flex items-center gap-2">
@@ -157,10 +141,9 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
-      )}
 
       {/* Today's Follow-up Queue Banner */}
-      {!isStaff && followUpQueue.length > 0 && <FollowUpQueue items={followUpQueue} />}
+      {followUpQueue.length > 0 && <FollowUpQueue items={followUpQueue} />}
 
       {/* Main Dashboard Grid: People Directory (Left) + Activity & Stats (Right) */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start pt-2">
