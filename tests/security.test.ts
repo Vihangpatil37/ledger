@@ -36,12 +36,6 @@ const mockPromisesUpdateMany = vi.fn().mockResolvedValue({ matchedCount: 1, modi
 const mockUsersFindOne = vi.fn().mockResolvedValue(null);
 const mockUsersUpdateOne = vi.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
 
-const mockStaffFindToArray = vi.fn().mockResolvedValue([]);
-const mockStaffFindOne = vi.fn().mockResolvedValue(null);
-const mockStaffInsertOne = vi.fn().mockResolvedValue({ insertedId: "staff-1" });
-const mockStaffUpdateOne = vi.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
-const mockStaffDeleteOne = vi.fn().mockResolvedValue({ deletedCount: 1 });
-
 const mockWithTransaction = vi.fn(async (cb: () => Promise<unknown>) => cb());
 const mockEndSession = vi.fn().mockResolvedValue(undefined);
 const mockStartSession = vi.fn(() => ({
@@ -117,16 +111,6 @@ vi.mock("@/lib/mongo", () => ({
     findOne: mockUsersFindOne,
     updateOne: mockUsersUpdateOne,
   }),
-  staffCol: () => ({
-    find: () => ({
-      sort: vi.fn().mockReturnThis(),
-      toArray: mockStaffFindToArray,
-    }),
-    findOne: mockStaffFindOne,
-    insertOne: mockStaffInsertOne,
-    updateOne: mockStaffUpdateOne,
-    deleteOne: mockStaffDeleteOne,
-  }),
   mongoClient: () => ({
     startSession: mockStartSession,
   }),
@@ -134,26 +118,16 @@ vi.mock("@/lib/mongo", () => ({
 
 // Imports of modules under test
 import { signSession, verifySession, verifyFullSession } from "@/lib/auth";
-import { loginStaff, resetStaffLoginAttempts } from "@/actions/auth";
 import { safeNextPath } from "@/lib/safe-next";
-import { createPerson, updatePerson, deletePerson } from "@/actions/people";
+import { updatePerson, deletePerson } from "@/actions/people";
 import { addEntry, editEntry, deleteEntry } from "@/actions/entries";
-import {
-  restorePerson,
-  restoreEntry,
-  purgeTrashItem,
-  emptyTrash,
-} from "@/actions/trash";
-import { createStaff, toggleStaffStatus, deleteStaff, updateShopCode } from "@/actions/staff";
-import { updateOwnerUpi } from "@/actions/profile";
-import { exportBackupJson, commitCsvImport } from "@/actions/backup";
+import { restorePerson, purgeTrashItem } from "@/actions/trash";
 import { getPersonDetail, getTrashItems } from "@/server/readers";
 import {
   idSchema,
   entrySchema,
   personSchema,
   loginSchema,
-  staffLoginSchema,
   ownerUpiSchema,
   isValidCalendarDate,
 } from "@/lib/validation";
@@ -237,13 +211,10 @@ describe("Chai Ledger Automated Security Penetration Suite", () => {
       });
 
       it("rejects payload tampering without valid signature re-generation", async () => {
-        const token = await signSession({
-          userId: "staff-clerk",
-          role: "STAFF",
-        });
+        const token = await signSession("user-clerk");
         const [h, , s] = token.split(".");
         const elevatedPayload = Buffer.from(
-          JSON.stringify({ sub: "shop-owner", role: "OWNER" })
+          JSON.stringify({ sub: "shop-owner" })
         ).toString("base64url");
         const tampered = `${h}.${elevatedPayload}.${s}`;
 
@@ -266,54 +237,6 @@ describe("Chai Ledger Automated Security Penetration Suite", () => {
         expect(await verifySession(undefined)).toBeNull();
         expect(await verifySession("")).toBeNull();
         expect(await verifyFullSession(null)).toBeNull();
-      });
-    });
-
-    describe("Staff PIN Brute-Force Rate Limiting & Lockout", () => {
-      const TEST_SHOP = "SECURITY-LOCKOUT-SHOP";
-
-      it("enforces 5-attempt limit and 15-minute lockout on failed PIN attempts", async () => {
-        await resetStaffLoginAttempts(TEST_SHOP);
-
-        mockUsersFindOne.mockResolvedValue({ _id: "owner-sec-1" });
-        mockStaffFindToArray.mockResolvedValue([
-          {
-            _id: "staff-sec-1",
-            name: "Ramesh",
-            pinHash: "$2a$10$invalidhashherepreventingmatch",
-            isActive: true,
-          },
-        ]);
-
-        // Failed attempts 1 to 4: should indicate remaining attempts
-        for (let i = 1; i <= 4; i++) {
-          const fd = new FormData();
-          fd.append("shopIdentifier", TEST_SHOP);
-          fd.append("pin", "0000");
-
-          const res = await loginStaff({}, fd);
-          expect(res.error).toContain(`${5 - i} attempt`);
-        }
-
-        // 5th failed attempt: triggers lockout
-        const fd5 = new FormData();
-        fd5.append("shopIdentifier", TEST_SHOP);
-        fd5.append("pin", "0000");
-        const res5 = await loginStaff({}, fd5);
-        expect(res5.error).toContain(
-          "Too many failed attempts. This shop login is locked for 15 minutes."
-        );
-
-        // 6th attempt: immediately blocked by active lockout without DB lookup
-        const res6 = await loginStaff({}, fd5);
-        expect(res6.error).toContain(
-          "Too many failed attempts. Login is locked for"
-        );
-
-        // Resetting the attempts counter clears the lockout
-        await resetStaffLoginAttempts(TEST_SHOP);
-        const resAfterReset = await loginStaff({}, fd5);
-        expect(resAfterReset.error).toContain("4 attempts left");
       });
     });
 
@@ -484,176 +407,7 @@ describe("Chai Ledger Automated Security Penetration Suite", () => {
   });
 
   // =========================================================================
-  // 3. STAFF PRIVILEGE ESCALATION DEFENSE (RBAC)
-  // =========================================================================
-  describe("Staff Privilege Escalation Defense (RBAC)", () => {
-    const STAFF_OWNER_ID = "owner-uuid-shop-1";
-    const STAFF_ID = "staff-clerk-uuid-1";
-
-    beforeEach(() => {
-      // Authenticated as STAFF
-      mockSession.mockReturnValue({
-        userId: STAFF_OWNER_ID,
-        role: "STAFF",
-        staffId: STAFF_ID,
-        staffName: "Munimji Ramesh",
-      });
-    });
-
-    it("blocks staff from creating, updating, or deleting customers", async () => {
-      // 1. createPerson
-      const fdCreate = new FormData();
-      fdCreate.append("name", "New Customer");
-      fdCreate.append("phone", "+91 98765 43210");
-      const resCreate = await createPerson({}, fdCreate);
-      expect(resCreate.error).toBe(
-        "Staff cannot add customers. Only shop owners can create contacts."
-      );
-      expect(mockPeopleInsertOne).not.toHaveBeenCalled();
-
-      // 2. updatePerson
-      const fdUpdate = new FormData();
-      fdUpdate.append("id", "550e8400-e29b-41d4-a716-446655440000");
-      fdUpdate.append("name", "Renamed Customer");
-      const resUpdate = await updatePerson({}, fdUpdate);
-      expect(resUpdate.error).toBe(
-        "Staff accounts cannot edit customer details."
-      );
-      expect(mockPeopleUpdateOne).not.toHaveBeenCalled();
-
-      // 3. deletePerson
-      const fdDelete = new FormData();
-      fdDelete.append("id", "550e8400-e29b-41d4-a716-446655440000");
-      await deletePerson(fdDelete);
-      expect(mockStartSession).not.toHaveBeenCalled();
-      expect(mockPeopleUpdateOne).not.toHaveBeenCalled();
-    });
-
-    it("blocks staff from modifying or deleting existing entries", async () => {
-      // 1. editEntry
-      const fdEdit = new FormData();
-      fdEdit.append("id", "550e8400-e29b-41d4-a716-446655440000");
-      fdEdit.append("type", "GAVE");
-      fdEdit.append("amount", "200");
-      const resEdit = await editEntry({}, fdEdit);
-      expect(resEdit.error).toBe(
-        "Staff cannot edit entries. Only shop owners can modify transactions."
-      );
-      expect(mockEntriesUpdateOne).not.toHaveBeenCalled();
-
-      // 2. deleteEntry
-      const fdDelete = new FormData();
-      fdDelete.append("entryId", "550e8400-e29b-41d4-a716-446655440000");
-      fdDelete.append("personId", "660e8400-e29b-41d4-a716-446655440000");
-      await deleteEntry(fdDelete);
-      expect(mockEntriesUpdateOne).not.toHaveBeenCalled();
-    });
-
-    it("blocks staff from trash management (restore, purge, emptyTrash)", async () => {
-      const fdPerson = new FormData();
-      fdPerson.append("id", "550e8400-e29b-41d4-a716-446655440000");
-
-      const resRestorePerson = await restorePerson({}, fdPerson);
-      expect(resRestorePerson.error).toBe(
-        "Staff accounts cannot access trash operations."
-      );
-
-      const fdEntry = new FormData();
-      fdEntry.append("entryId", "550e8400-e29b-41d4-a716-446655440000");
-      fdEntry.append("personId", "660e8400-e29b-41d4-a716-446655440000");
-      const resRestoreEntry = await restoreEntry({}, fdEntry);
-      expect(resRestoreEntry.error).toBe(
-        "Staff accounts cannot access trash operations."
-      );
-
-      const resEmpty = await emptyTrash();
-      expect(resEmpty.error).toBe(
-        "Staff accounts cannot access trash operations."
-      );
-
-      const resPurge = await purgeTrashItem({}, fdPerson);
-      expect(resPurge.error).toBe(
-        "Staff accounts cannot access trash operations."
-      );
-    });
-
-    it("blocks staff from staff management and store profile actions", async () => {
-      // 1. createStaff
-      const fdStaff = new FormData();
-      fdStaff.append("name", "New Munim");
-      fdStaff.append("pin", "5555");
-      const resCreateStaff = await createStaff({}, fdStaff);
-      expect(resCreateStaff.error).toBe("Only shop owners can add staff accounts.");
-      expect(mockStaffInsertOne).not.toHaveBeenCalled();
-
-      // 2. toggleStaffStatus
-      const fdToggle = new FormData();
-      fdToggle.append("id", "staff-other");
-      await toggleStaffStatus(fdToggle);
-      expect(mockStaffUpdateOne).not.toHaveBeenCalled();
-
-      // 3. deleteStaff
-      const fdDelStaff = new FormData();
-      fdDelStaff.append("id", "staff-other");
-      await deleteStaff(fdDelStaff);
-      expect(mockStaffDeleteOne).not.toHaveBeenCalled();
-
-      // 4. updateShopCode
-      const fdCode = new FormData();
-      fdCode.append("shopCode", "HACKSHOP");
-      const resCode = await updateShopCode({}, fdCode);
-      expect(resCode.error).toBe("Only shop owners can update shop code.");
-
-      // 5. updateOwnerUpi
-      const fdUpi = new FormData();
-      fdUpi.append("upiId", "hacker@upi");
-      fdUpi.append("upiName", "Hacker");
-      const resUpi = await updateOwnerUpi({}, fdUpi);
-      expect(resUpi.error).toBe("Staff cannot update shop profile settings.");
-    });
-
-    it("blocks staff from data backup export and CSV import operations", async () => {
-      // 1. exportBackupJson
-      const resExport = await exportBackupJson();
-      expect(resExport.ok).toBe(false);
-      expect(resExport.error).toBe("Staff cannot export backups.");
-
-      // 2. commitCsvImport
-      const resImport = await commitCsvImport(
-        "Name,Phone,Type,Amount\nTest,9876543210,Gave,100"
-      );
-      expect(resImport.error).toBe("Staff cannot import CSV.");
-    });
-
-    it("allows staff to record entries with proper staff attribution stamps", async () => {
-      mockPeopleFindOne.mockResolvedValue({
-        _id: "550e8400-e29b-41d4-a716-446655440000",
-      });
-
-      const fd = new FormData();
-      fd.append("personId", "550e8400-e29b-41d4-a716-446655440000");
-      fd.append("type", "GAVE");
-      fd.append("amount", "150");
-
-      const res = await addEntry({}, fd);
-      expect(res.ok).toBe(true);
-
-      // Verify createdBy stamps staff identity
-      expect(mockEntriesInsertOne).toHaveBeenCalledWith(
-        expect.objectContaining({
-          ownerId: STAFF_OWNER_ID,
-          createdBy: {
-            role: "STAFF",
-            staffId: STAFF_ID,
-            staffName: "Munimji Ramesh",
-          },
-        })
-      );
-    });
-  });
-
-  // =========================================================================
-  // 4. INJECTION DEFENSE & INPUT VALIDATION
+  // 3. INJECTION DEFENSE & INPUT VALIDATION
   // =========================================================================
   describe("Injection Defense & Input Validation", () => {
     describe("NoSQL Operator Injection Defense", () => {
@@ -680,10 +434,6 @@ describe("Chai Ledger Automated Security Penetration Suite", () => {
           ).toBe(false);
           expect(
             loginSchema.safeParse({ email: badObj, password: "password" })
-              .success
-          ).toBe(false);
-          expect(
-            staffLoginSchema.safeParse({ shopIdentifier: badObj, pin: "1234" })
               .success
           ).toBe(false);
           expect(
