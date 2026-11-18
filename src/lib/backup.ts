@@ -1,4 +1,5 @@
 import { sanitizeTextForCsv } from "@/lib/csv";
+import { formatDateToIst } from "@/lib/format";
 import { decimalStringToPaise, paiseToDecimalString } from "@/lib/money";
 import { normalizePhone } from "@/lib/phone";
 import type {
@@ -239,9 +240,7 @@ export function parseCsvKhata(
     let dueDateFormatted: string | null = null;
     if (rawDueDate) {
       const parsedDate = new Date(rawDueDate);
-      if (!isNaN(parsedDate.getTime())) {
-        dueDateFormatted = parsedDate.toISOString().split("T")[0];
-      }
+      dueDateFormatted = formatDateToIst(parsedDate);
     }
 
     // Sanitize note for formula injection
