@@ -7,25 +7,19 @@ import { SideNav } from "@/components/shell/nav";
 import { UndoToast } from "@/components/trash/undo-toast";
 import { LanguageProvider } from "@/lib/i18n/client";
 import { getLocale, getServerTranslations } from "@/lib/i18n/server";
-import { getSession } from "@/server/session";
 
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const [locale, session] = await Promise.all([
-    getLocale(),
-    getSession(),
-  ]);
+  const locale = await getLocale();
   const { t } = await getServerTranslations(locale);
-  const isStaff = session?.role === "STAFF";
-  const staffName = session?.staffName;
 
   return (
     <LanguageProvider initialLocale={locale}>
       <div className="min-h-svh bg-paper flex flex-col">
         {/* Desktop: fixed sidebar */}
         <aside className="fixed inset-y-0 left-0 z-20 hidden w-56 border-r border-rule bg-surface lg:block print:hidden">
-          <SideNav isStaff={isStaff} staffName={staffName} />
+          <SideNav />
         </aside>
 
         {/* Mobile + tablet: sticky top bar */}
@@ -58,8 +52,8 @@ export default async function AppLayout({
         </main>
 
         {/* Mobile bottom nav bar */}
-        <MobileNav isStaff={isStaff} />
-        {!isStaff && <UndoToast />}
+        <MobileNav />
+        <UndoToast />
       </div>
     </LanguageProvider>
   );
