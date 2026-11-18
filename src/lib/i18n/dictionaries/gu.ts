@@ -204,13 +204,14 @@ export const gu: Dictionary = {
   "backup.csvPreview": "CSV પૂર્વાવલોકન",
   "backup.csvCommit": "વ્યવહારો આયાત કરો",
 
-  // Staff & Munim Mode
-  "staff.title": "સ્ટાફ અને મુનીમ એક્સેસ",
-  "staff.subtitle": "કર્મચારી લોગિન, કાઉન્ટર પિન અને શિફ્ટ એક્સેસ મેનેજ કરો",
-  "staff.shopCode": "દુકાન કોડ",
-  "staff.addStaff": "નવો સ્ટાફ ઉમેરો",
-  "staff.shiftCollected": "આજે જમા આવ્યું",
-  "staff.shiftGiven": "આજે ઉધાર આપ્યું",
-  "staff.shiftEntries": "કાઉન્ટર એન્ટ્રીઓ",
-  "staff.addedBy": "નોંધનાર",
+  // Calculator
+  "calculator.title": "કેલ્ક્યુલેટર",
+  "calculator.subtitle": "ખાતાની રકમ અને કુલ સરવાળો ગણો",
+  "calculator.useAsAmount": "રકમ તરીકે વાપરો",
+  "calculator.history": "ઇતિહાસ",
+  "calculator.clearHistory": "ઇતિહાસ સાફ કરો",
+  "calculator.noHistory": "કોઈ ગણતરી નથી",
+  "calculator.copied": "કૉપિ કર્યું",
+  "calculator.openButton": "કેલ્ક્યુલેટર",
+  "calculator.copy": "કૉપિ",
 };
