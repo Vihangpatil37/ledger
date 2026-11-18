@@ -14,6 +14,7 @@ type DialogProps = {
   descriptionId?: string;
   children: ReactNode;
   className?: string;
+  glass?: boolean;
 };
 
 export function Dialog({
@@ -23,6 +24,7 @@ export function Dialog({
   descriptionId,
   children,
   className = "",
+  glass = false,
 }: DialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
@@ -96,7 +98,11 @@ export function Dialog({
   return (
     <div
       role="presentation"
-      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/60 p-0 sm:items-center sm:p-4 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
+      className={`fixed inset-0 z-50 flex justify-center backdrop-blur-xs transition-opacity animate-in fade-in duration-150 ${
+        glass
+          ? "items-center p-3 sm:p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
+          : "items-end sm:items-center p-0 sm:p-4 bg-ink/60"
+      }`}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -108,7 +114,11 @@ export function Dialog({
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
         tabIndex={-1}
-        className={`w-full max-w-md rounded-t-2xl border-t border-rule bg-surface p-5 shadow-2xl sm:rounded-2xl sm:border max-h-[92vh] flex flex-col overflow-hidden outline-none animate-in fade-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-150 ${className}`}
+        className={
+          glass
+            ? `w-full max-w-sm sm:max-w-md rounded-3xl border border-white/30 dark:border-white/10 bg-white/85 dark:bg-[#181614]/90 backdrop-blur-2xl p-3.5 sm:p-5 shadow-[0_20px_50px_rgba(0,0,0,0.25)] dark:shadow-[0_25px_60px_rgba(0,0,0,0.7)] max-h-[88dvh] sm:max-h-[90vh] flex flex-col overflow-hidden outline-none animate-in fade-in zoom-in-95 duration-150 ${className}`
+            : `w-full max-w-md rounded-t-2xl border-t border-rule bg-surface p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5 shadow-2xl sm:rounded-2xl sm:border max-h-[92dvh] sm:max-h-[92vh] flex flex-col overflow-hidden outline-none animate-in fade-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-150 ${className}`
+        }
       >
         {children}
       </div>
@@ -133,11 +143,12 @@ export function DialogTitle({
   className = "",
   ...props
 }: ComponentProps<"h2">) {
+  const hasCustomFont = className.includes("font-");
   return (
     <h2
       id={id}
       {...props}
-      className={`font-display text-lg font-bold tracking-tight text-ink ${className}`}
+      className={`${hasCustomFont ? "" : "font-display"} text-lg font-bold tracking-tight text-ink ${className}`}
     />
   );
 }
