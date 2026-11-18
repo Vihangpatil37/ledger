@@ -12,9 +12,7 @@ export type PersonListRow = {
 };
 
 export type EntryAttribution = {
-  role: "OWNER" | "STAFF";
-  staffId?: string;
-  staffName?: string;
+  role: "OWNER";
 };
 
 export type RecentEntryItem = {
@@ -188,35 +186,8 @@ export type CsvImportPreview = {
 
 export type OwnerProfile = {
   email: string;
-  shopCode?: string | null;
   upiId: string | null;
   upiName: string | null;
-};
-
-export type StaffDoc = {
-  _id: string;
-  ownerId: string;
-  name: string;
-  pinHash: string;
-  phone?: string | null;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-export type StaffItem = {
-  id: string;
-  name: string;
-  phone?: string | null;
-  isActive: boolean;
-  createdAt: string;
-};
-
-export type StaffShiftSummary = {
-  collectedToday: string;
-  givenToday: string;
-  entriesCount: number;
-  staffName: string;
 };
 
 export type ActionState = {
