@@ -12,9 +12,6 @@ export async function updateOwnerUpi(
 ): Promise<ActionState> {
   const session = await getSession();
   if (!session) return { error: "Please sign in again." };
-  if (session.role === "STAFF") {
-    return { error: "Staff cannot update shop profile settings." };
-  }
   const owner = session.userId;
 
   const parsed = ownerUpiSchema.safeParse({
