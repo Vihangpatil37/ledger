@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { addEntry } from "@/actions/entries";
+import { CalculatorModal } from "@/components/people/calculator-modal";
 import { Button, FieldError, Label, inputClass } from "@/components/ui";
 import { useLanguage } from "@/lib/i18n/client";
 import type { ActionState, EntryType } from "@/lib/types";
@@ -13,7 +14,20 @@ export function AddEntryCard({ personId }: { personId: string }) {
   );
   const [type, setType] = useState<EntryType>("GAVE");
   const formRef = useRef<HTMLFormElement>(null);
+  const amountInputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
+
+  useEffect(() => {
+    function handleCustomAmount(e: Event) {
+      const customEvent = e as CustomEvent<{ amount: string }>;
+      if (customEvent.detail?.amount && amountInputRef.current) {
+        amountInputRef.current.value = customEvent.detail.amount;
+        amountInputRef.current.focus();
+      }
+    }
+    window.addEventListener("ledger:set-amount", handleCustomAmount);
+    return () => window.removeEventListener("ledger:set-amount", handleCustomAmount);
+  }, []);
 
   const options: Array<{
     value: EntryType;
@@ -83,12 +97,48 @@ export function AddEntryCard({ personId }: { personId: string }) {
 
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="amount">{t("entry.amount")} (₹)</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="amount">{t("entry.amount")} (₹)</Label>
+            <CalculatorModal
+              customTrigger={(open) => (
+                <button
+                  type="button"
+                  onClick={open}
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-focus hover:underline focus-visible:outline-2 focus-visible:outline-focus cursor-pointer"
+                  title={t("calculator.title")}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="size-3.5"
+                    aria-hidden="true"
+                  >
+                    <rect width="16" height="20" x="4" y="2" rx="2" />
+                    <line x1="8" x2="16" y1="6" y2="6" />
+                    <line x1="16" x2="16" y1="14" y2="18" />
+                    <path d="M16 10h.01" />
+                    <path d="M12 10h.01" />
+                    <path d="M8 10h.01" />
+                    <path d="M12 14h.01" />
+                    <path d="M8 14h.01" />
+                    <path d="M12 18h.01" />
+                    <path d="M8 18h.01" />
+                  </svg>
+                  <span>{t("calculator.openButton")}</span>
+                </button>
+              )}
+            />
+          </div>
           <div className="relative">
             <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm font-semibold text-muted">
               ₹
             </span>
             <input
+              ref={amountInputRef}
               id="amount"
               name="amount"
               inputMode="decimal"
