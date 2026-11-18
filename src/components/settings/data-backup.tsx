@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { formatDateToIst } from "@/lib/format";
 import { useLanguage } from "@/lib/i18n/client";
 import type { CsvImportPreview } from "@/lib/types";
 
@@ -43,7 +44,7 @@ export function DataBackupSection() {
       const blob = new Blob([jsonStr], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      const dateStr = new Date().toISOString().split("T")[0];
+      const dateStr = formatDateToIst(new Date()) ?? "backup";
       a.href = url;
       a.download = `chai-ledger-backup-${dateStr}.json`;
       document.body.appendChild(a);
