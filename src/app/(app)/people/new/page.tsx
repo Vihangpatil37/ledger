@@ -8,7 +8,7 @@ export const metadata = { title: "Add person" };
 
 export default async function NewPersonPage() {
   const session = await getSession();
-  if (!session || session.role === "STAFF") {
+  if (!session) {
     redirect("/");
   }
 
