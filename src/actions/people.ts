@@ -27,9 +27,6 @@ export async function createPerson(
 ): Promise<ActionState> {
   const session = await getSession();
   if (!session) return { error: "Please sign in again." };
-  if (session.role === "STAFF") {
-    return { error: "Staff cannot add customers. Only shop owners can create contacts." };
-  }
   const owner = session.userId;
 
   const parsed = personSchema.safeParse({
@@ -61,9 +58,6 @@ export async function updatePerson(
 ): Promise<ActionState> {
   const session = await getSession();
   if (!session) return { error: "Please sign in again." };
-  if (session.role === "STAFF") {
-    return { error: "Staff accounts cannot edit customer details." };
-  }
   const owner = session.userId;
 
   const id = idSchema.safeParse(formData.get("id"));
@@ -104,9 +98,6 @@ export async function deletePerson(formData: FormData): Promise<void> {
   const auth = await getSession();
   if (!auth) {
     redirect("/login");
-  }
-  if (auth.role === "STAFF") {
-    return; // Staff cannot delete customers
   }
   const owner = auth.userId;
 
