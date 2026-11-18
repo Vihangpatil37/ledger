@@ -51,14 +51,7 @@ export async function addEntry(
         ? new Date(`${parsed.data.dueDate}T00:00:00+05:30`)
         : null;
 
-    const createdBy =
-      session.role === "STAFF"
-        ? {
-            role: "STAFF" as const,
-            staffId: session.staffId,
-            staffName: session.staffName,
-          }
-        : { role: "OWNER" as const };
+    const createdBy = { role: "OWNER" as const };
 
     // Money crosses the wire as a decimal string; it is stored as an
     // exact integer of paise. ≤ 9,999,999.99 stays within double range.
@@ -100,9 +93,6 @@ export async function editEntry(
 ): Promise<ActionState> {
   const session = await getSession();
   if (!session) return { error: "Please sign in again." };
-  if (session.role === "STAFF") {
-    return { error: "Staff cannot edit entries. Only shop owners can modify transactions." };
-  }
   const owner = session.userId;
 
   const parsed = editEntrySchema.safeParse({
@@ -118,12 +108,11 @@ export async function editEntry(
     _id: string;
     personId: string;
     createdAt: Date;
-    createdBy?: { role: string; staffId?: string; staffName?: string } | null;
   } | null = null;
   try {
     existing = await entriesCol().findOne(
       { _id: parsed.data.id, ownerId: owner },
-      { projection: { _id: 1, personId: 1, createdAt: 1, createdBy: 1 } }
+      { projection: { _id: 1, personId: 1, createdAt: 1 } }
     );
   } catch {
     return { error: "Could not find entry. Try again." };
@@ -162,9 +151,6 @@ export async function deleteEntry(formData: FormData): Promise<void> {
   const session = await getSession();
   if (!session) {
     redirect("/login");
-  }
-  if (session.role === "STAFF") {
-    return; // Munim cannot delete entries
   }
   const owner = session.userId;
 
