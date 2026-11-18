@@ -1,7 +1,8 @@
 import "server-only";
 
+import { formatDateToIst } from "@/lib/format";
 import { paiseToDecimalString } from "@/lib/money";
-import { entriesCol, peopleCol, promisesCol, staffCol, usersCol } from "@/lib/mongo";
+import { entriesCol, peopleCol, promisesCol, usersCol } from "@/lib/mongo";
 import { resolveIstRange } from "@/lib/range";
 import { computeReliabilityScore } from "@/lib/reliability";
 import { activeFilter, getDaysRemaining } from "@/lib/trash";
@@ -10,7 +11,7 @@ import {
   normalizeWaPhone,
   universalWaLink,
 } from "@/lib/whatsapp";
-import { getOwner, getSession } from "@/server/session";
+import { getOwner } from "@/server/session";
 import type {
   DateRange,
   EntryType,
@@ -19,8 +20,6 @@ import type {
   OwnerProfile,
   PersonDetail,
   PersonListRow,
-  StaffItem,
-  StaffShiftSummary,
   TrashItem,
 } from "@/lib/types";
 
@@ -165,9 +164,7 @@ export async function getHomeSummary(): Promise<HomeSummary> {
       lastRemindedAt: person.lastRemindedAt
         ? person.lastRemindedAt.toISOString()
         : null,
-      promiseDate: person.promiseDate
-        ? person.promiseDate.toISOString().split("T")[0]
-        : null,
+      promiseDate: formatDateToIst(person.promiseDate),
     };
   });
 
@@ -181,7 +178,7 @@ export async function getHomeSummary(): Promise<HomeSummary> {
     type: e.type as EntryType,
     amount: paiseToDecimalString(e.amountCents),
     note: e.note,
-    dueDate: e.dueDate ? e.dueDate.toISOString().split("T")[0] : null,
+    dueDate: formatDateToIst(e.dueDate),
     editedAt: e.editedAt ? e.editedAt.toISOString() : null,
     createdAt: e.createdAt.toISOString(),
     createdBy: e.createdBy ?? null,
@@ -320,23 +317,20 @@ export async function getPersonDetail(
   const opening = openingRes[0] ?? { gave: 0, received: 0 };
   const openingBalanceCents = fromDate ? opening.gave - opening.received : 0;
 
-  const session = await getSession();
-  const isStaff = session?.role === "STAFF";
-
   // Running balance builds up chronologically from opening balance...
   let runningCents = openingBalanceCents;
   const chronological = entries.map((entry) => {
     runningCents +=
       entry.type === "GAVE" ? entry.amountCents : -entry.amountCents;
 
-    const canEdit = isStaff ? false : true;
+    const canEdit = true;
 
     return {
       id: entry._id,
       type: entry.type as EntryType,
       amount: paiseToDecimalString(entry.amountCents),
       note: entry.note,
-      dueDate: entry.dueDate ? entry.dueDate.toISOString().split("T")[0] : null,
+      dueDate: formatDateToIst(entry.dueDate),
       editedAt: entry.editedAt ? entry.editedAt.toISOString() : null,
       createdAt: entry.createdAt.toISOString(),
       running: paiseToDecimalString(runningCents),
@@ -373,9 +367,7 @@ export async function getPersonDetail(
     lastRemindedAt: person.lastRemindedAt
       ? person.lastRemindedAt.toISOString()
       : null,
-    promiseDate: person.promiseDate
-      ? person.promiseDate.toISOString().split("T")[0]
-      : null,
+    promiseDate: formatDateToIst(person.promiseDate),
     promiseNote: person.promiseNote ?? null,
     entries: chronological,
   };
@@ -490,9 +482,7 @@ export async function getFollowUpQueue(): Promise<FollowUpItem[]> {
       brokenPromisesCount: brokenCount,
     });
 
-    const promiseDateStr = person.promiseDate
-      ? person.promiseDate.toISOString().split("T")[0]
-      : null;
+    const promiseDateStr = formatDateToIst(person.promiseDate);
 
     let urgency: FollowUpItem["urgency"] | null = null;
     let urgencyLabel = "";
@@ -553,7 +543,7 @@ export async function getFollowUpQueue(): Promise<FollowUpItem[]> {
               ...dueSoonLoans.map((l) => new Date(l.dueDate!).getTime())
             )
           );
-          const earliestDueStr = earliestDue.toISOString().split("T")[0];
+          const earliestDueStr = formatDateToIst(earliestDue);
 
           if (earliestDueStr === istTodayStr) {
             urgency = "DUE_TODAY";
@@ -697,75 +687,13 @@ export async function getOwnerProfile(): Promise<OwnerProfile | null> {
 
   const user = await usersCol().findOne(
     { _id: owner },
-    { projection: { email: 1, shopCode: 1, upiId: 1, upiName: 1 } }
+    { projection: { email: 1, upiId: 1, upiName: 1 } }
   );
   if (!user) return null;
 
-  const shopCode =
-    user.shopCode || `CHAI-${user._id.slice(0, 4).toUpperCase()}`;
-
   return {
     email: user.email,
-    shopCode,
     upiId: user.upiId ?? null,
     upiName: user.upiName ?? null,
   };
-}
-
-export async function getStaffShiftSummary(
-  ownerId: string,
-  staffId: string
-): Promise<StaffShiftSummary> {
-  const istTodayStr = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Kolkata",
-  }).format(new Date());
-  const startOfDay = new Date(`${istTodayStr}T00:00:00+05:30`);
-  const endOfDay = new Date(`${istTodayStr}T23:59:59.999+05:30`);
-
-  const [agg, staffMember] = await Promise.all([
-    entriesCol()
-      .aggregate<{ collected: number; given: number; count: number }>([
-        {
-          $match: {
-            ownerId,
-            "createdBy.staffId": staffId,
-            createdAt: { $gte: startOfDay, $lte: endOfDay },
-            deletedAt: null,
-          },
-        },
-        {
-          $group: {
-            _id: null,
-            collected: {
-              $sum: { $cond: [{ $eq: ["$type", "RECEIVED"] }, "$amountCents", 0] },
-            },
-            given: {
-              $sum: { $cond: [{ $eq: ["$type", "GAVE"] }, "$amountCents", 0] },
-            },
-            count: { $sum: 1 },
-          },
-        },
-      ])
-      .toArray(),
-    staffCol().findOne({ _id: staffId, ownerId }),
-  ]);
-
-  const stats = agg[0] ?? { collected: 0, given: 0, count: 0 };
-  return {
-    collectedToday: paiseToDecimalString(stats.collected),
-    givenToday: paiseToDecimalString(stats.given),
-    entriesCount: stats.count,
-    staffName: staffMember?.name ?? "Munim",
-  };
-}
-
-export async function getStaffMembers(ownerId: string): Promise<StaffItem[]> {
-  const staff = await staffCol().find({ ownerId }).sort({ createdAt: -1 }).toArray();
-  return staff.map((s) => ({
-    id: s._id,
-    name: s.name,
-    phone: s.phone ?? null,
-    isActive: s.isActive,
-    createdAt: s.createdAt.toISOString(),
-  }));
 }
