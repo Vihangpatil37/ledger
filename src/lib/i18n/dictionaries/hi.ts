@@ -204,13 +204,14 @@ export const hi: Dictionary = {
   "backup.csvPreview": "CSV प्रीव्यू",
   "backup.csvCommit": "लेनदेन इम्पोर्ट करें",
 
-  // Staff & Munim Mode
-  "staff.title": "स्टाफ और मुनीम एक्सेस",
-  "staff.subtitle": "कर्मचारी लॉगिन, काउंटर पिन और शिफ्ट एक्सेस प्रबंधित करें",
-  "staff.shopCode": "दुकान कोड",
-  "staff.addStaff": "नया स्टाफ जोड़ें",
-  "staff.shiftCollected": "आज जमा आया",
-  "staff.shiftGiven": "आज उधार दिया",
-  "staff.shiftEntries": "काउंटर एंट्रीज",
-  "staff.addedBy": "दर्जकर्ता",
+  // Calculator
+  "calculator.title": "कैलकुलेटर",
+  "calculator.subtitle": "खाता राशि और कुल योग की गणना करें",
+  "calculator.useAsAmount": "रकम के रूप में जोड़ें",
+  "calculator.history": "इतिहास",
+  "calculator.clearHistory": "इतिहास साफ़ करें",
+  "calculator.noHistory": "कोई गणना नहीं",
+  "calculator.copied": "कॉपी किया गया",
+  "calculator.openButton": "कैलकुलेटर",
+  "calculator.copy": "कॉपी",
 };
