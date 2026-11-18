@@ -2,16 +2,13 @@ import "server-only";
 
 import { MongoClient, type Collection } from "mongodb";
 import { MONGODB_DB, getMongoUri } from "@/server/env";
-import type { EntryAttribution, EntryType, StaffDoc } from "@/lib/types";
-
-export type { StaffDoc };
+import type { EntryAttribution, EntryType } from "@/lib/types";
 
 export type UserDoc = {
   _id: string;
   /** Stored lowercase; unique index enforced by setup script. */
   email: string;
   passwordHash: string;
-  shopCode?: string | null;
   shopName?: string | null;
   phone?: string | null;
   upiId?: string | null;
@@ -110,8 +107,4 @@ export function entriesCol(): Collection<EntryDoc> {
 
 export function promisesCol(): Collection<PromiseDoc> {
   return db().collection<PromiseDoc>("promises");
-}
-
-export function staffCol(): Collection<StaffDoc> {
-  return db().collection<StaffDoc>("staff");
 }
