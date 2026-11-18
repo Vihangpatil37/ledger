@@ -2,10 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DataBackupSection } from "@/components/settings/data-backup";
 import { OwnerUpiForm } from "@/components/settings/owner-upi-form";
-import { StaffManagementSection } from "@/components/settings/staff-management";
 import { LanguageSwitcher } from "@/components/shell/language-switcher";
 import { ThemeSwitcher } from "@/components/shell/theme-switcher";
-import { getOwnerProfile, getStaffMembers } from "@/server/readers";
+import { getOwnerProfile } from "@/server/readers";
 import { getSession } from "@/server/session";
 import { getServerTranslations } from "@/lib/i18n/server";
 
@@ -14,13 +13,12 @@ export const metadata = { title: "Settings · Chai Ledger" };
 
 export default async function SettingsPage() {
   const session = await getSession();
-  if (!session || session.role === "STAFF") {
+  if (!session) {
     redirect("/");
   }
 
-  const [profile, staff, { t }] = await Promise.all([
+  const [profile, { t }] = await Promise.all([
     getOwnerProfile(),
-    getStaffMembers(session.userId),
     getServerTranslations(),
   ]);
   if (!profile) {
@@ -56,9 +54,6 @@ export default async function SettingsPage() {
         </div>
       </div>
 
-      {/* Staff & Munim Management Card */}
-      <StaffManagementSection shopCode={profile.shopCode ?? ""} staff={staff} />
-
       {/* Appearance & Theme Card */}
       <section className="rounded-2xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_12px_0_rgba(30,27,24,0.04)] flex flex-col gap-3">
         <div>
@@ -69,10 +64,12 @@ export default async function SettingsPage() {
             {t("settings.themeSubtitle")}
           </p>
         </div>
-        <ThemeSwitcher variant="card" />
+        <div className="pt-1">
+          <ThemeSwitcher />
+        </div>
       </section>
 
-      {/* Language Preferences Card */}
+      {/* Language Preference Card */}
       <section className="rounded-2xl border border-rule bg-surface p-5 sm:p-6 shadow-[0_2px_12px_0_rgba(30,27,24,0.04)] flex flex-col gap-3">
         <div>
           <h2 className="text-sm font-bold text-ink tracking-tight">
@@ -82,12 +79,15 @@ export default async function SettingsPage() {
             {t("settings.languageSubtitle")}
           </p>
         </div>
-        <LanguageSwitcher variant="card" />
+        <div className="pt-1">
+          <LanguageSwitcher />
+        </div>
       </section>
 
+      {/* Payment Information Card (UPI) */}
       <OwnerUpiForm profile={profile} />
 
-      {/* Data Backup & CSV Import */}
+      {/* Data Backup & Restore Card */}
       <DataBackupSection />
     </div>
   );
