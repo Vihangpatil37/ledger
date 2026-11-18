@@ -10,9 +10,6 @@ import { idSchema, isValidCalendarDate } from "@/lib/validation";
 export async function recordReminder(personId: string): Promise<ActionState> {
   const session = await getSession();
   if (!session) return { error: "Please sign in again." };
-  if (session.role === "STAFF") {
-    return { error: "Staff cannot record reminders." };
-  }
   const owner = session.userId;
 
   const parsedId = idSchema.safeParse(personId);
@@ -39,9 +36,6 @@ export async function setPromiseToPay(
 ): Promise<ActionState> {
   const session = await getSession();
   if (!session) return { error: "Please sign in again." };
-  if (session.role === "STAFF") {
-    return { error: "Staff cannot set promises." };
-  }
   const owner = session.userId;
 
   const personId = idSchema.safeParse(formData.get("personId"));
@@ -99,9 +93,6 @@ export async function clearPromiseToPay(
 ): Promise<ActionState> {
   const session = await getSession();
   if (!session) return { error: "Please sign in again." };
-  if (session.role === "STAFF") {
-    return { error: "Staff cannot clear promises." };
-  }
   const owner = session.userId;
 
   const personId = idSchema.safeParse(formData.get("personId"));
