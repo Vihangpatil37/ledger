@@ -121,8 +121,8 @@ export function statementCsvFilename(name: string, date?: Date): string {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "") || "contact";
-  const dateStr = date
-    ? date.toISOString().split("T")[0]
-    : new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
+  const dateStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+  }).format(date ?? new Date());
   return `ledger-${safeName}-${dateStr}.csv`;
 }
