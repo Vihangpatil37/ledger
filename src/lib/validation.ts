@@ -6,25 +6,6 @@ export const loginSchema = z.object({
   password: z.string().min(6, "At least 6 characters"),
 });
 
-export const staffLoginSchema = z.object({
-  shopIdentifier: z.string().trim().min(1, "Enter shop code, email, or phone"),
-  pin: z.string().trim().regex(/^\d{4}$/, "PIN must be exactly 4 digits"),
-});
-
-export const staffCreateSchema = z.object({
-  name: z.string().trim().min(2, "Name must be at least 2 characters").max(50, "Name too long"),
-  pin: z.string().trim().regex(/^\d{4}$/, "PIN must be exactly 4 digits"),
-  phone: z.string().trim().optional(),
-});
-
-export const shopCodeSchema = z.object({
-  shopCode: z
-    .string()
-    .trim()
-    .toUpperCase()
-    .regex(/^[A-Z0-9_-]{3,20}$/, "Shop code must be 3-20 letters, digits or dashes"),
-});
-
 export const upiIdField = z.preprocess(
   (v) => (typeof v === "string" && v.trim() === "" ? null : v),
   z
