@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { getDueStatus, isOverdueDate } from "@/lib/due";
+import { formatDateToIst } from "@/lib/format";
 
 function getIstDateString(offsetDays = 0): string {
   const istTodayStr = new Intl.DateTimeFormat("en-CA", {
@@ -81,5 +82,28 @@ describe("getDueStatus", () => {
 
     expect(getDueStatus("2026-06-30", refDate)?.status).toBe("DUE_LATER");
     expect(getDueStatus("2026-06-30", refDate)?.label).toBe("Due 30 Jun");
+  });
+});
+
+describe("formatDateToIst", () => {
+  it("formats IST midnight date without day-shift bug", () => {
+    // 2026-11-20 at midnight IST (+05:30) is 2026-11-19T18:30:00.000Z in UTC
+    const istMidnight = new Date("2026-11-20T00:00:00+05:30");
+    expect(formatDateToIst(istMidnight)).toBe("2026-11-20");
+    // Verify that toISOString().split("T")[0] would have produced the buggy previous day
+    expect(istMidnight.toISOString().split("T")[0]).toBe("2026-11-19");
+  });
+
+  it("handles string date inputs and late-night IST times", () => {
+    const lateNightIst = new Date("2026-11-20T23:59:59+05:30");
+    expect(formatDateToIst(lateNightIst)).toBe("2026-11-20");
+
+    expect(formatDateToIst("2026-11-20T00:00:00+05:30")).toBe("2026-11-20");
+  });
+
+  it("returns null for null, undefined, or invalid dates", () => {
+    expect(formatDateToIst(null)).toBeNull();
+    expect(formatDateToIst(undefined)).toBeNull();
+    expect(formatDateToIst("not-a-date")).toBeNull();
   });
 });
