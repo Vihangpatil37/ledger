@@ -4,12 +4,29 @@ import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
 import type { ClientSession } from "mongodb";
 import { parseCsvKhata, validateBackupPayload } from "@/lib/backup";
+import { formatDateToIst } from "@/lib/format";
 import { decimalStringToPaise } from "@/lib/money";
-import { entriesCol, mongoClient, peopleCol, promisesCol, usersCol } from "@/lib/mongo";
+import {
+  entriesCol,
+  mongoClient,
+  peopleCol,
+  promisesCol,
+  usersCol,
+  type EntryDoc,
+  type PersonDoc,
+  type PromiseDoc,
+} from "@/lib/mongo";
 import { normalizePhone } from "@/lib/phone";
 import { activeFilter } from "@/lib/trash";
 import { getSession } from "@/server/session";
 import type { ActionState, BackupPayload, CsvImportPreview } from "@/lib/types";
+
+function parseIstDate(val: string | null | undefined): Date | null {
+  if (!val) return null;
+  const clean = val.split("T")[0];
+  const d = new Date(`${clean}T00:00:00+05:30`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
 
 export async function exportBackupJson(): Promise<{
   ok: boolean;
@@ -18,7 +35,6 @@ export async function exportBackupJson(): Promise<{
 }> {
   const auth = await getSession();
   if (!auth) return { ok: false, error: "Please sign in again." };
-  if (auth.role === "STAFF") return { ok: false, error: "Staff cannot export backups." };
   const owner = auth.userId;
 
   try {
@@ -43,7 +59,7 @@ export async function exportBackupJson(): Promise<{
         id: p._id,
         name: p.name,
         phone: p.phone,
-        promiseDate: p.promiseDate ? p.promiseDate.toISOString().split("T")[0] : null,
+        promiseDate: formatDateToIst(p.promiseDate),
         promiseNote: p.promiseNote ?? null,
         lastRemindedAt: p.lastRemindedAt ? p.lastRemindedAt.toISOString() : null,
         createdAt: p.createdAt.toISOString(),
@@ -55,13 +71,13 @@ export async function exportBackupJson(): Promise<{
         type: e.type,
         amountCents: e.amountCents,
         note: e.note,
-        dueDate: e.dueDate ? e.dueDate.toISOString().split("T")[0] : null,
+        dueDate: formatDateToIst(e.dueDate),
         createdAt: e.createdAt.toISOString(),
       })),
       promises: promises.map((pr) => ({
         id: pr._id,
         personId: pr.personId,
-        promiseDate: pr.promiseDate.toISOString().split("T")[0],
+        promiseDate: formatDateToIst(pr.promiseDate) ?? "",
         note: pr.note ?? null,
         status: pr.status,
         createdAt: pr.createdAt.toISOString(),
@@ -77,10 +93,9 @@ export async function exportBackupJson(): Promise<{
 
 export async function restoreBackupJson(
   jsonText: string
-): Promise<ActionState & { count?: { people: number; entries: number } }> {
+): Promise<ActionState & { count?: { people: number; entries: number; promises: number } }> {
   const auth = await getSession();
   if (!auth) return { error: "Please sign in again." };
-  if (auth.role === "STAFF") return { error: "Staff cannot restore backups." };
   const owner = auth.userId;
 
   let parsedJson: unknown;
@@ -97,6 +112,8 @@ export async function restoreBackupJson(
 
   const payload = validated.data;
   let session: ClientSession | undefined;
+  const CHUNK_SIZE = 500;
+  let restoredPromisesCount = 0;
 
   try {
     session = mongoClient().startSession();
@@ -119,6 +136,8 @@ export async function restoreBackupJson(
         byName.set(p.name.trim().toLowerCase(), p._id);
       }
 
+      const newPeopleToInsert: PersonDoc[] = [];
+
       for (const p of payload.people) {
         const normPhone = p.phone ? normalizePhone(p.phone) : null;
         const existingId =
@@ -127,44 +146,88 @@ export async function restoreBackupJson(
 
         if (existingId) {
           idMap.set(p.id, existingId);
+          if (p.promiseDate) {
+            await peopleCol().updateOne(
+              { _id: existingId, ownerId: owner },
+              {
+                $set: {
+                  promiseDate: parseIstDate(p.promiseDate),
+                  promiseNote: p.promiseNote ?? null,
+                  updatedAt: new Date(),
+                },
+              },
+              { session }
+            );
+          }
         } else {
           const newId = randomUUID();
           idMap.set(p.id, newId);
-          await peopleCol().insertOne(
-            {
-              _id: newId,
-              ownerId: owner,
-              name: p.name,
-              phone: p.phone,
-              promiseDate: p.promiseDate ? new Date(p.promiseDate) : null,
-              promiseNote: p.promiseNote ?? null,
-              lastRemindedAt: p.lastRemindedAt ? new Date(p.lastRemindedAt) : null,
-              createdAt: new Date(p.createdAt),
-              updatedAt: new Date(p.updatedAt),
-            },
-            { session }
-          );
+          newPeopleToInsert.push({
+            _id: newId,
+            ownerId: owner,
+            name: p.name,
+            phone: p.phone,
+            promiseDate: parseIstDate(p.promiseDate),
+            promiseNote: p.promiseNote ?? null,
+            lastRemindedAt: p.lastRemindedAt ? new Date(p.lastRemindedAt) : null,
+            createdAt: new Date(p.createdAt),
+            updatedAt: new Date(p.updatedAt),
+          });
         }
       }
+
+      const newEntriesToInsert: EntryDoc[] = [];
 
       for (const e of payload.entries) {
         const mappedPersonId = idMap.get(e.personId);
         if (!mappedPersonId) continue;
 
-        await entriesCol().insertOne(
-          {
+        newEntriesToInsert.push({
+          _id: randomUUID(),
+          ownerId: owner,
+          personId: mappedPersonId,
+          type: e.type,
+          amountCents: e.amountCents,
+          note: e.note ?? null,
+          dueDate: parseIstDate(e.dueDate),
+          createdAt: new Date(e.createdAt),
+        });
+      }
+
+      const newPromisesToInsert: PromiseDoc[] = [];
+      if (Array.isArray(payload.promises)) {
+        for (const pr of payload.promises) {
+          const mappedPersonId = idMap.get(pr.personId);
+          if (!mappedPersonId) continue;
+
+          newPromisesToInsert.push({
             _id: randomUUID(),
             ownerId: owner,
             personId: mappedPersonId,
-            type: e.type,
-            amountCents: e.amountCents,
-            note: e.note ?? null,
-            dueDate: e.dueDate ? new Date(e.dueDate) : null,
-            createdAt: new Date(e.createdAt),
-          },
-          { session }
-        );
+            promiseDate: parseIstDate(pr.promiseDate) ?? new Date(pr.promiseDate),
+            note: pr.note ?? null,
+            status: (["PENDING", "KEPT", "BROKEN", "RESCHEDULED"].includes(pr.status)
+              ? pr.status
+              : "PENDING") as PromiseDoc["status"],
+            createdAt: pr.createdAt ? new Date(pr.createdAt) : new Date(),
+          });
+        }
       }
+
+      // Chunked bulk inserts
+      for (let i = 0; i < newPeopleToInsert.length; i += CHUNK_SIZE) {
+        await peopleCol().insertMany(newPeopleToInsert.slice(i, i + CHUNK_SIZE), { session });
+      }
+
+      for (let i = 0; i < newEntriesToInsert.length; i += CHUNK_SIZE) {
+        await entriesCol().insertMany(newEntriesToInsert.slice(i, i + CHUNK_SIZE), { session });
+      }
+
+      for (let i = 0; i < newPromisesToInsert.length; i += CHUNK_SIZE) {
+        await promisesCol().insertMany(newPromisesToInsert.slice(i, i + CHUNK_SIZE), { session });
+      }
+
+      restoredPromisesCount = newPromisesToInsert.length;
     });
   } catch (err) {
     console.error("Failed to restore backup:", err);
@@ -180,6 +243,7 @@ export async function restoreBackupJson(
     count: {
       people: payload.people.length,
       entries: payload.entries.length,
+      promises: restoredPromisesCount,
     },
   };
 }
@@ -189,7 +253,6 @@ export async function previewCsvImport(
 ): Promise<{ ok: boolean; preview?: CsvImportPreview; error?: string }> {
   const auth = await getSession();
   if (!auth) return { ok: false, error: "Please sign in again." };
-  if (auth.role === "STAFF") return { ok: false, error: "Staff cannot import CSV." };
   const owner = auth.userId;
 
   try {
@@ -214,7 +277,6 @@ export async function commitCsvImport(
 ): Promise<ActionState & { importedCount?: number }> {
   const auth = await getSession();
   if (!auth) return { error: "Please sign in again." };
-  if (auth.role === "STAFF") return { error: "Staff cannot import CSV." };
   const owner = auth.userId;
 
   try {
