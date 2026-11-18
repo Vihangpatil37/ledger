@@ -82,11 +82,6 @@ export function RecentActivity({ entries }: { entries: RecentEntryItem[] }) {
 
                   <p className="mt-1 font-mono text-[10px] text-muted flex items-center gap-1.5 flex-wrap">
                     <span>{formatWhen(entry.createdAt)}</span>
-                    {entry.createdBy?.role === "STAFF" && entry.createdBy.staffName ? (
-                      <span className="rounded bg-paper px-1 py-0.2 text-[9px] font-sans font-medium text-muted border border-rule/50">
-                        by {entry.createdBy.staffName}
-                      </span>
-                    ) : null}
                   </p>
                 </div>
 
