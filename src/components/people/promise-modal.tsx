@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button, FieldError, Label, inputClass } from "@/components/ui";
+import { formatDateToIst } from "@/lib/format";
 import { useLanguage } from "@/lib/i18n/client";
 import type { ActionState } from "@/lib/types";
 
@@ -57,7 +58,7 @@ export function PromiseModal({
   function setRelativeDate(offsetDays: number) {
     const d = new Date();
     d.setDate(d.getDate() + offsetDays);
-    const dateStr = d.toISOString().split("T")[0];
+    const dateStr = formatDateToIst(d) ?? "";
     setDateVal(dateStr);
   }
 
@@ -66,7 +67,7 @@ export function PromiseModal({
     const day = d.getDay(); // 0 is Sun, 5 is Fri
     const diff = (5 - day + 7) % 7 || 7;
     d.setDate(d.getDate() + diff);
-    setDateVal(d.toISOString().split("T")[0]);
+    setDateVal(formatDateToIst(d) ?? "");
   }
 
   return (
