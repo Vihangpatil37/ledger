@@ -7,13 +7,18 @@ import { getSession } from "@/server/session";
 import type { ActionState } from "@/lib/types";
 import { idSchema } from "@/lib/validation";
 
+export async function restorePerson(formData: FormData): Promise<void>;
+export async function restorePerson(previous: ActionState, formData: FormData): Promise<ActionState>;
 export async function restorePerson(
-  _previous: ActionState,
-  formData: FormData
-): Promise<ActionState> {
+  previousOrFormData: ActionState | FormData,
+  maybeFormData?: FormData
+): Promise<ActionState | void> {
+  const formData =
+    previousOrFormData instanceof FormData
+      ? previousOrFormData
+      : maybeFormData!;
   const auth = await getSession();
   if (!auth) return { error: "Please sign in again." };
-  if (auth.role === "STAFF") return { error: "Staff accounts cannot access trash operations." };
   const owner = auth.userId;
 
   const id = idSchema.safeParse(formData.get("id"));
@@ -47,17 +52,18 @@ export async function restorePerson(
   return { ok: true };
 }
 
-export async function restorePersonAction(formData: FormData): Promise<void> {
-  await restorePerson({}, formData);
-}
-
+export async function restoreEntry(formData: FormData): Promise<void>;
+export async function restoreEntry(previous: ActionState, formData: FormData): Promise<ActionState>;
 export async function restoreEntry(
-  _previous: ActionState,
-  formData: FormData
-): Promise<ActionState> {
+  previousOrFormData: ActionState | FormData,
+  maybeFormData?: FormData
+): Promise<ActionState | void> {
+  const formData =
+    previousOrFormData instanceof FormData
+      ? previousOrFormData
+      : maybeFormData!;
   const auth = await getSession();
   if (!auth) return { error: "Please sign in again." };
-  if (auth.role === "STAFF") return { error: "Staff accounts cannot access trash operations." };
   const owner = auth.userId;
 
   const entryId = idSchema.safeParse(formData.get("entryId"));
@@ -95,17 +101,18 @@ export async function restoreEntry(
   return { ok: true };
 }
 
-export async function restoreEntryAction(formData: FormData): Promise<void> {
-  await restoreEntry({}, formData);
-}
-
+export async function purgeTrashItem(formData: FormData): Promise<void>;
+export async function purgeTrashItem(previous: ActionState, formData: FormData): Promise<ActionState>;
 export async function purgeTrashItem(
-  _previous: ActionState,
-  formData: FormData
-): Promise<ActionState> {
+  previousOrFormData: ActionState | FormData,
+  maybeFormData?: FormData
+): Promise<ActionState | void> {
+  const formData =
+    previousOrFormData instanceof FormData
+      ? previousOrFormData
+      : maybeFormData!;
   const auth = await getSession();
   if (!auth) return { error: "Please sign in again." };
-  if (auth.role === "STAFF") return { error: "Staff accounts cannot access trash operations." };
   const owner = auth.userId;
 
   const id = idSchema.safeParse(formData.get("id"));
@@ -134,14 +141,11 @@ export async function purgeTrashItem(
   return { ok: true };
 }
 
-export async function purgeTrashItemAction(formData: FormData): Promise<void> {
-  await purgeTrashItem({}, formData);
-}
-
-export async function emptyTrash(): Promise<ActionState> {
+export async function emptyTrash(formData?: FormData): Promise<void>;
+export async function emptyTrash(): Promise<ActionState>;
+export async function emptyTrash(): Promise<ActionState | void> {
   const auth = await getSession();
   if (!auth) return { error: "Please sign in again." };
-  if (auth.role === "STAFF") return { error: "Staff accounts cannot access trash operations." };
   const owner = auth.userId;
 
   let session: ClientSession | undefined;
@@ -166,8 +170,4 @@ export async function emptyTrash(): Promise<ActionState> {
 
   revalidatePath("/trash");
   return { ok: true };
-}
-
-export async function emptyTrashAction(): Promise<void> {
-  await emptyTrash();
 }
