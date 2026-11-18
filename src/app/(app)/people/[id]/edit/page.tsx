@@ -21,10 +21,6 @@ export default async function EditPersonPage({
   const { id } = await params;
   if (!idSchema.safeParse(id).success) notFound();
 
-  if (session.role === "STAFF") {
-    redirect(`/people/${id}`);
-  }
-
   const detail = await getPersonDetail(id);
   if (!detail) notFound();
 
