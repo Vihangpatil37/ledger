@@ -166,6 +166,21 @@ export function hasMetMinimumSpeechDuration(
   return totalSpeechMs >= minimumMs;
 }
 
+/**
+ * Drive modal visualizer ring scaling directly from smoothed audio energy
+ */
+export function calculateVisualizerRingScale(
+  smoothedVolume: number,
+  baseScale: number = 1.0,
+  maxAdditionalScale: number = 0.35
+): number {
+  const clamped = Math.min(1, Math.max(0, smoothedVolume));
+  // Apply ease-out curve for natural visual response
+  const curved = Math.sin((clamped * Math.PI) / 2);
+  return Number((baseScale + curved * maxAdditionalScale).toFixed(3));
+}
+
+
 
 
 
