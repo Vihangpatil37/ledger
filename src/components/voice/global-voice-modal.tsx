@@ -904,11 +904,18 @@ export function GlobalVoiceModal({
                 ) : (
                   <form
                     onSubmit={handleManualSubmit}
-                    className="flex flex-col gap-2 pt-1 text-left"
+                    className="flex flex-col gap-2 pt-1 text-left animate-in fade-in slide-in-from-top-2 duration-200"
                   >
-                    <Label htmlFor="voice-manual-input">
-                      {t("voice.manualFallback")}
-                    </Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="voice-manual-input">
+                        {t("voice.manualFallback")}
+                      </Label>
+                      {errorMessage?.includes("GROQ_API_KEY") && (
+                        <span className="text-[10px] text-amber-700 dark:text-amber-300 font-semibold uppercase tracking-wider">
+                          Offline / Key not set
+                        </span>
+                      )}
+                    </div>
                     <div className="flex gap-2">
                       <input
                         id="voice-manual-input"
@@ -928,6 +935,7 @@ export function GlobalVoiceModal({
                       </Button>
                     </div>
                   </form>
+
                 )}
               </div>
             )}
