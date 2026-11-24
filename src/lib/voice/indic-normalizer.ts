@@ -60,4 +60,29 @@ export function convertDevanagariNumeralsToArabic(text: string): string {
   );
 }
 
+const GUJARATI_DIGIT_MAP: Record<string, string> = {
+  "૦": "0",
+  "૧": "1",
+  "૨": "2",
+  "૩": "3",
+  "૪": "4",
+  "૫": "5",
+  "૬": "6",
+  "૭": "7",
+  "૮": "8",
+  "૯": "9",
+};
+
+/**
+ * Convert spoken Gujarati numerals into plain Arabic integer digits
+ */
+export function convertGujaratiNumeralsToArabic(text: string): string {
+  if (!text) return "";
+  return text.replace(
+    /[૦-૯]/g,
+    (digit) => GUJARATI_DIGIT_MAP[digit] || digit
+  );
+}
+
+
 
