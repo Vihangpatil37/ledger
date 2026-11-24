@@ -83,6 +83,9 @@ try {
     database
       .collection("promises")
       .createIndex({ ownerId: 1, personId: 1, createdAt: -1 }),
+    database
+      .collection("promises")
+      .createIndex({ ownerId: 1, status: 1, promiseDate: 1 }),
   ]);
   console.log(`Indexes ensured on db "${database.databaseName}".`);
 

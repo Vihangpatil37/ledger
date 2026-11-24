@@ -7,6 +7,11 @@ import { SideNav } from "@/components/shell/nav";
 import { UndoToast } from "@/components/trash/undo-toast";
 import { LanguageProvider } from "@/lib/i18n/client";
 import { getLocale, getServerTranslations } from "@/lib/i18n/server";
+import {
+  GlobalVoiceModal,
+  VoiceFloatingButton,
+  VoiceHeaderButton,
+} from "@/components/voice/global-voice-modal";
 
 export default async function AppLayout({
   children,
@@ -31,6 +36,7 @@ export default async function AppLayout({
             <span className="font-display text-lg font-bold tracking-tight text-ink">Ledger</span>
           </Link>
           <div className="flex items-center gap-2">
+            <VoiceHeaderButton />
             <ThemeSwitcher variant="compact" />
             <LanguageSwitcher variant="compact" />
             <form action={logout}>
@@ -54,6 +60,10 @@ export default async function AppLayout({
         {/* Mobile bottom nav bar */}
         <MobileNav />
         <UndoToast />
+
+        {/* Global Voice Khata Modal & Floating Action Button */}
+        <VoiceFloatingButton />
+        <GlobalVoiceModal />
       </div>
     </LanguageProvider>
   );

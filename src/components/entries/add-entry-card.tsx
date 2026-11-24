@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { addEntry } from "@/actions/entries";
 import { CalculatorModal } from "@/components/people/calculator-modal";
 import { Button, FieldError, Label, inputClass } from "@/components/ui";
+import { QuickVoiceButton } from "@/components/voice/quick-voice-button";
 import { useLanguage } from "@/lib/i18n/client";
 import type { ActionState, EntryType } from "@/lib/types";
 
@@ -15,6 +16,7 @@ export function AddEntryCard({ personId }: { personId: string }) {
   const [type, setType] = useState<EntryType>("GAVE");
   const formRef = useRef<HTMLFormElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
+  const noteInputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -145,15 +147,31 @@ export function AddEntryCard({ personId }: { personId: string }) {
               autoComplete="off"
               required
               placeholder="0.00"
-              className={`${inputClass} pl-8 font-mono font-medium tracking-tight`}
+              className={`${inputClass} pl-8 pr-9 font-mono font-medium tracking-tight`}
             />
+            <div className="absolute inset-y-0 right-0 flex items-center pr-1.5">
+              <QuickVoiceButton
+                targetInputRef={amountInputRef}
+                numericOnly
+                mode="replace"
+                size="sm"
+              />
+            </div>
           </div>
           <FieldError message={state.fieldErrors?.amount} />
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="note">{t("entry.note")}</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="note">{t("entry.note")}</Label>
+            <QuickVoiceButton
+              targetInputRef={noteInputRef}
+              mode="append"
+              size="sm"
+            />
+          </div>
           <input
+            ref={noteInputRef}
             id="note"
             name="note"
             maxLength={200}

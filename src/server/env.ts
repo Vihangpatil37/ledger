@@ -23,4 +23,8 @@ export function getSessionSecret(): string {
   return required("SESSION_SECRET");
 }
 
+export function getGroqApiKey(): string | undefined {
+  return process.env.GROQ_API_KEY?.trim() || undefined;
+}
+
 export const MONGODB_DB = process.env.MONGODB_DB?.trim() || "ledger";

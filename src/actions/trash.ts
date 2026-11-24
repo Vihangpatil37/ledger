@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { ClientSession } from "mongodb";
-import { entriesCol, mongoClient, peopleCol } from "@/lib/mongo";
+import { entriesCol, mongoClient, peopleCol, promisesCol } from "@/lib/mongo";
 import { getSession } from "@/server/session";
 import type { ActionState } from "@/lib/types";
 import { idSchema } from "@/lib/validation";
@@ -126,6 +126,7 @@ export async function purgeTrashItem(
       await session.withTransaction(async () => {
         await peopleCol().deleteOne({ _id: id.data, ownerId: owner }, { session });
         await entriesCol().deleteMany({ personId: id.data, ownerId: owner }, { session });
+        await promisesCol().deleteMany({ personId: id.data, ownerId: owner }, { session });
       });
     } else {
       await entriesCol().deleteOne({ _id: id.data, ownerId: owner });
@@ -152,6 +153,19 @@ export async function emptyTrash(): Promise<ActionState | void> {
   try {
     session = mongoClient().startSession();
     await session.withTransaction(async () => {
+      const trashedPeople = await peopleCol()
+        .find(
+          { ownerId: owner, deletedAt: { $ne: null } },
+          { projection: { _id: 1 }, session }
+        )
+        .toArray();
+      const trashedPersonIds = trashedPeople.map((p) => p._id);
+      if (trashedPersonIds.length > 0) {
+        await promisesCol().deleteMany(
+          { ownerId: owner, personId: { $in: trashedPersonIds } },
+          { session }
+        );
+      }
       await peopleCol().deleteMany(
         { ownerId: owner, deletedAt: { $ne: null } },
         { session }

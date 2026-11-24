@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { editEntry } from "@/actions/entries";
 import {
   Dialog,
@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button, FieldError, IconButton, Label, inputClass } from "@/components/ui";
+import { QuickVoiceButton } from "@/components/voice/quick-voice-button";
 import { useLanguage } from "@/lib/i18n/client";
 import type { ActionState, EntryRow, EntryType } from "@/lib/types";
 
@@ -19,6 +20,8 @@ export function EditEntryModal({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [type, setType] = useState<EntryType>(entry.type);
+  const amountInputRef = useRef<HTMLInputElement>(null);
+  const noteInputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
 
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
@@ -144,22 +147,39 @@ export function EditEntryModal({
                 ₹
               </span>
               <input
+                ref={amountInputRef}
                 id="edit-amount"
                 name="amount"
                 type="text"
                 inputMode="decimal"
                 defaultValue={entry.amount}
                 required
-                className={`${inputClass} pl-8 font-mono font-medium tracking-tight`}
+                className={`${inputClass} pl-8 pr-9 font-mono font-medium tracking-tight`}
               />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-1.5">
+                <QuickVoiceButton
+                  targetInputRef={amountInputRef}
+                  numericOnly
+                  mode="replace"
+                  size="sm"
+                />
+              </div>
             </div>
             <FieldError message={state.fieldErrors?.amount} />
           </div>
 
           {/* Note */}
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-note">{t("entry.note")}</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="edit-note">{t("entry.note")}</Label>
+              <QuickVoiceButton
+                targetInputRef={noteInputRef}
+                mode="append"
+                size="sm"
+              />
+            </div>
             <input
+              ref={noteInputRef}
               id="edit-note"
               name="note"
               maxLength={200}

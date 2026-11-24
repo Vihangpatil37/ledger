@@ -162,6 +162,8 @@ export async function restoreBackupJson(
         } else {
           const newId = randomUUID();
           idMap.set(p.id, newId);
+          if (normPhone) byPhone.set(normPhone, newId);
+          byName.set(p.name.trim().toLowerCase(), newId);
           newPeopleToInsert.push({
             _id: newId,
             ownerId: owner,

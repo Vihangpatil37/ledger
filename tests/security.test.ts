@@ -32,6 +32,7 @@ const mockPeopleDeleteMany = vi.fn().mockResolvedValue({ deletedCount: 1 });
 
 const mockPromisesFindToArray = vi.fn().mockResolvedValue([]);
 const mockPromisesUpdateMany = vi.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
+const mockPromisesDeleteMany = vi.fn().mockResolvedValue({ acknowledged: true, deletedCount: 1 });
 
 const mockUsersFindOne = vi.fn().mockResolvedValue(null);
 const mockUsersUpdateOne = vi.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
@@ -106,6 +107,7 @@ vi.mock("@/lib/mongo", () => ({
       toArray: mockPromisesFindToArray,
     }),
     updateMany: mockPromisesUpdateMany,
+    deleteMany: mockPromisesDeleteMany,
   }),
   usersCol: () => ({
     findOne: mockUsersFindOne,
