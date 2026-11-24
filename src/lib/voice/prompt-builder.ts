@@ -173,6 +173,42 @@ export function compileConditionedWhisperPrompt(
   return fullPrompt.slice(0, maxChars).replace(/,\s*[^,]*$/, ".");
 }
 
+interface PromptCacheEntry {
+  prompt: string;
+  expiresAt: number;
+}
+
+const promptCache = new Map<string, PromptCacheEntry>();
+export const PROMPT_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Cache the customer prompt string in memory with a five-minute expiration window
+ */
+export async function getCachedConditionedPrompt(
+  ownerId: string,
+  extraKeywords: string[] = []
+): Promise<string> {
+  const cacheKey = `${ownerId}:${extraKeywords.sort().join(",")}`;
+  const now = Date.now();
+  const cached = promptCache.get(cacheKey);
+
+  if (cached && cached.expiresAt > now) {
+    return cached.prompt;
+  }
+
+  const rawCustomers = await getActiveCustomerNamesForPrompt(ownerId);
+  const rankedNames = rankCustomerNames(rawCustomers);
+  const prompt = compileConditionedWhisperPrompt(rankedNames, extraKeywords);
+
+  promptCache.set(cacheKey, {
+    prompt,
+    expiresAt: now + PROMPT_CACHE_TTL_MS,
+  });
+
+  return prompt;
+}
+
+
 
 
 
