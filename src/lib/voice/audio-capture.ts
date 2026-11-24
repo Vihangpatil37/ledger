@@ -53,6 +53,7 @@ export function getOptimalAudioConstraints(
     channelCount = 1,
     echoCancellation = true,
     autoGainControl = true,
+    noiseSuppression = true,
   } = options;
 
   return {
@@ -60,5 +61,6 @@ export function getOptimalAudioConstraints(
     sampleRate: { ideal: sampleRate },
     echoCancellation: { ideal: echoCancellation },
     autoGainControl: { ideal: autoGainControl },
+    noiseSuppression: { ideal: noiseSuppression },
   };
 }
