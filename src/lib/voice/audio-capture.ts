@@ -5,6 +5,9 @@
 export interface AudioCaptureConstraintsOptions {
   sampleRate?: number;
   channelCount?: number;
+  echoCancellation?: boolean;
+  autoGainControl?: boolean;
+  noiseSuppression?: boolean;
 }
 
 export type SupportedContainer = "webm" | "mp4" | "ogg";
@@ -45,10 +48,17 @@ export function getSupportedAudioMimeType(): {
 export function getOptimalAudioConstraints(
   options: AudioCaptureConstraintsOptions = {}
 ): MediaTrackConstraints {
-  const { sampleRate = 16000, channelCount = 1 } = options;
+  const {
+    sampleRate = 16000,
+    channelCount = 1,
+    echoCancellation = true,
+    autoGainControl = true,
+  } = options;
 
   return {
     channelCount: { ideal: channelCount, max: channelCount },
     sampleRate: { ideal: sampleRate },
+    echoCancellation: { ideal: echoCancellation },
+    autoGainControl: { ideal: autoGainControl },
   };
 }
