@@ -56,4 +56,26 @@ export function calculateRmsVolume(analyser: AnalyserNode): number {
   return Math.min(1, Math.max(0, rms));
 }
 
+/**
+ * Sample ambient room sound during initial startup to establish dynamic noise floor baseline
+ */
+export async function sampleRoomNoiseBaseline(
+  analyser: AnalyserNode,
+  sampleDurationMs: number = 300,
+  stepIntervalMs: number = 50
+): Promise<number> {
+  const samples: number[] = [];
+  const iterations = Math.max(1, Math.floor(sampleDurationMs / stepIntervalMs));
+
+  for (let i = 0; i < iterations; i++) {
+    samples.push(calculateRmsVolume(analyser));
+    await new Promise((resolve) => setTimeout(resolve, stepIntervalMs));
+  }
+
+  const average = samples.reduce((acc, val) => acc + val, 0) / samples.length;
+  // Floor baseline at a reasonable ambient floor (0.01)
+  return Math.max(0.01, average);
+}
+
+
 
