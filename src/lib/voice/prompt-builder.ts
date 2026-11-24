@@ -90,5 +90,20 @@ export const STANDARD_KHATA_TERMINOLOGY = [
   "entry",
 ];
 
+/**
+ * Regional currency and money terms for prompt context
+ */
+export const REGIONAL_CURRENCY_TERMS = [
+  "rupaye",
+  "rupay",
+  "rupya",
+  "roqda",
+  "paise",
+  "taka",
+  "cash",
+  "amount",
+];
+
+
 
 
