@@ -237,6 +237,112 @@ export interface MediaRecorderOptionsConfig {
   mimeType?: string;
 }
 
+export interface VoiceRecorderSessionCallbacks {
+  onDataAvailable?: (chunk: Blob) => void;
+  onError?: (error: Error) => void;
+  onEnded?: (reason: string) => void;
+}
+
+/**
+ * Reusable audio recorder session managing tracks, buffer slices, and teardown
+ */
+export class VoiceRecorderSession {
+  private mediaRecorder: MediaRecorder | null = null;
+  private stream: MediaStream | null = null;
+  private buffer: AudioChunkRingBuffer;
+  private unbindTrackMonitor: (() => void) | null = null;
+  private isRecording = false;
+
+  constructor(private readonly callbacks: VoiceRecorderSessionCallbacks = {}) {
+    this.buffer = new AudioChunkRingBuffer();
+  }
+
+  public async start(options: {
+    deviceId?: string;
+    constraints?: AudioCaptureConstraintsOptions;
+    timesliceMs?: number;
+  } = {}): Promise<void> {
+    const { deviceId, constraints, timesliceMs = DEFAULT_AUDIO_TIMESLICE_MS } = options;
+    const mediaConstraints = getOptimalAudioConstraints(constraints);
+    if (deviceId) {
+      mediaConstraints.deviceId = { exact: deviceId };
+    }
+
+    this.stream = await navigator.mediaDevices.getUserMedia({
+      audio: mediaConstraints,
+    });
+
+    this.unbindTrackMonitor = monitorTrackDisconnection(this.stream, (reason) => {
+      this.callbacks.onEnded?.(reason);
+      this.teardown();
+    });
+
+    const { mimeType } = getSupportedAudioMimeType();
+    this.mediaRecorder = mimeType
+      ? new MediaRecorder(this.stream, { mimeType })
+      : new MediaRecorder(this.stream);
+
+    this.buffer.clear();
+    this.mediaRecorder.ondataavailable = (event) => {
+      if (event.data && event.data.size > 0) {
+        this.buffer.push(event.data);
+        this.callbacks.onDataAvailable?.(event.data);
+      }
+    };
+
+    this.mediaRecorder.onerror = (event: Event) => {
+      const errorEvent = event as unknown as { error?: Error };
+      const err = errorEvent.error || new Error("MediaRecorder error occurred");
+      this.callbacks.onError?.(err);
+    };
+
+    this.mediaRecorder.start(timesliceMs);
+    this.isRecording = true;
+  }
+
+  public async stop(): Promise<Blob> {
+    return new Promise((resolve) => {
+      if (!this.mediaRecorder || this.mediaRecorder.state === "inactive") {
+        resolve(this.buffer.toCombinedBlob(getSupportedAudioMimeType().mimeType || "audio/webm"));
+        this.teardown();
+        return;
+      }
+
+      this.mediaRecorder.onstop = () => {
+        const finalBlob = this.buffer.toCombinedBlob(
+          this.mediaRecorder?.mimeType || getSupportedAudioMimeType().mimeType || "audio/webm"
+        );
+        this.teardown();
+        resolve(finalBlob);
+      };
+
+      this.mediaRecorder.stop();
+    });
+  }
+
+  public teardown(): void {
+    if (this.unbindTrackMonitor) {
+      this.unbindTrackMonitor();
+      this.unbindTrackMonitor = null;
+    }
+    if (this.stream) {
+      this.stream.getTracks().forEach((track) => track.stop());
+      this.stream = null;
+    }
+    this.mediaRecorder = null;
+    this.isRecording = false;
+  }
+
+  public get recording(): boolean {
+    return this.isRecording;
+  }
+
+  public get currentBuffer(): AudioChunkRingBuffer {
+    return this.buffer;
+  }
+}
+
+
 
 
 
