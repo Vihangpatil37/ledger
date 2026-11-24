@@ -636,9 +636,16 @@ export function GlobalVoiceModal({
         {step === "RECORD" && (
           <div className="flex flex-col items-center justify-center py-5 gap-5 text-center">
             {/* Dual-Engine Mode Selector Pills */}
-            <div className="flex items-center justify-center p-1 rounded-xl bg-rule/30 border border-rule/50 gap-1 text-[11px] font-medium text-muted">
+            <div
+              role="radiogroup"
+              aria-label="Speech recognition engine selection"
+              className="flex items-center justify-center p-1 rounded-xl bg-rule/30 border border-rule/50 gap-1 text-[11px] font-medium text-muted"
+            >
               <button
                 type="button"
+                role="radio"
+                aria-checked={engineMode === "BROWSER"}
+                aria-label="Fast Browser Speech engine"
                 disabled={isRecording}
                 onClick={() => {
                   switchEngineMode("BROWSER");
@@ -652,10 +659,13 @@ export function GlobalVoiceModal({
                 } ${isRecording ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <span>⚡</span>
-                <span>Fast Browser Speech</span>
+                <span>Fast Speech</span>
               </button>
               <button
                 type="button"
+                role="radio"
+                aria-checked={engineMode === "AUDIO_RECORDING"}
+                aria-label="Groq Whisper cloud transcription engine"
                 disabled={isRecording}
                 onClick={() => {
                   switchEngineMode("AUDIO_RECORDING");
@@ -669,9 +679,10 @@ export function GlobalVoiceModal({
                 } ${isRecording ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <span>🎙️</span>
-                <span>Audio Recording (Whisper)</span>
+                <span>Groq Whisper</span>
               </button>
             </div>
+
 
             {/* Language Selector Pills */}
             <div className="flex items-center justify-center gap-1.5 -mb-1">
