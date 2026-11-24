@@ -154,6 +154,19 @@ export function evaluateAutoStop(
   };
 }
 
+export const MINIMUM_SPEECH_DURATION_MS = 400;
+
+/**
+ * Filter accidental mic clicks and taps by requiring at least 400ms of cumulative speech
+ */
+export function hasMetMinimumSpeechDuration(
+  totalSpeechMs: number,
+  minimumMs: number = MINIMUM_SPEECH_DURATION_MS
+): boolean {
+  return totalSpeechMs >= minimumMs;
+}
+
+
 
 
 
