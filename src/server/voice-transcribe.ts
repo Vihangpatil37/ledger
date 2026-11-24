@@ -1,8 +1,24 @@
 /**
  * Voice Transcription Server Engine and Guardrails
  */
+import Groq from "groq-sdk";
+
+let cachedGroqClient: Groq | null = null;
+let cachedApiKey: string | null = null;
+
+/**
+ * Initialize the Groq client as a lazy server singleton using local credentials
+ */
+export function getLazyGroqClient(apiKey: string): Groq {
+  if (!cachedGroqClient || cachedApiKey !== apiKey) {
+    cachedGroqClient = new Groq({ apiKey });
+    cachedApiKey = apiKey;
+  }
+  return cachedGroqClient;
+}
 
 export const MAX_AUDIO_PAYLOAD_BYTES = 15 * 1024 * 1024; // 15 Megabytes
+
 
 export interface PayloadValidationResult {
   valid: boolean;

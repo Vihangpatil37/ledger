@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import Groq, { toFile } from "groq-sdk";
+import { toFile } from "groq-sdk";
+
 import { getGroqApiKey } from "@/server/env";
 import { getSession } from "@/server/session";
 import { peopleCol } from "@/lib/mongo";
@@ -9,7 +10,9 @@ import {
   verifyAudioMagicBytes,
   assertValidTranscriptionSession,
   checkSessionRateLimit,
+  getLazyGroqClient,
 } from "@/server/voice-transcribe";
+
 
 export const runtime = "nodejs";
 
@@ -70,7 +73,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const groq = new Groq({ apiKey });
+    const groq = getLazyGroqClient(apiKey);
+
 
     const buffer = Buffer.from(await audioBlob.arrayBuffer());
 
