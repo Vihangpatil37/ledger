@@ -433,6 +433,7 @@ export async function getFollowUpQueue(): Promise<FollowUpItem[]> {
     .filter((b) => b.gave > b.received)
     .map((b) => b._id);
 
+  const lookbackCutoff = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
   const debtorEntries =
     debtorPersonIds.length > 0
       ? await entriesCol()
@@ -440,6 +441,7 @@ export async function getFollowUpQueue(): Promise<FollowUpItem[]> {
             {
               ownerId: owner,
               personId: { $in: debtorPersonIds },
+              createdAt: { $gte: lookbackCutoff },
               ...activeFilter(),
             },
             {

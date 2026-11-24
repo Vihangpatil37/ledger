@@ -4,6 +4,10 @@ const mockGetOwner = vi.fn();
 const mockPeopleFindToArray = vi.fn();
 const mockEntriesAggregateToArray = vi.fn();
 const mockEntriesFindToArray = vi.fn();
+const mockEntriesFind = vi.fn().mockImplementation(() => ({
+  toArray: mockEntriesFindToArray,
+  sort: () => ({ toArray: mockEntriesFindToArray }),
+}));
 const mockUsersFindOne = vi.fn().mockResolvedValue({ upiId: "shop@upi", upiName: "Chai Shop" });
 const mockPromisesFindToArray = vi.fn().mockResolvedValue([]);
 
@@ -22,10 +26,7 @@ vi.mock("@/lib/mongo", () => ({
     aggregate: () => ({
       toArray: mockEntriesAggregateToArray,
     }),
-    find: () => ({
-      toArray: mockEntriesFindToArray,
-      sort: () => ({ toArray: mockEntriesFindToArray }),
-    }),
+    find: (...args: unknown[]) => mockEntriesFind(...args),
   }),
   usersCol: () => ({
     findOne: mockUsersFindOne,
@@ -109,6 +110,13 @@ describe("getFollowUpQueue", () => {
 
     const queue = await getFollowUpQueue();
     expect(queue).toHaveLength(2); // Settled customer excluded
+    expect(mockEntriesFind).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ownerId: "owner-1",
+        createdAt: { $gte: expect.any(Date) },
+      }),
+      expect.anything()
+    );
 
     // 1st item must be broken promise
     expect(queue[0].name).toBe("Broken Promise Customer");
