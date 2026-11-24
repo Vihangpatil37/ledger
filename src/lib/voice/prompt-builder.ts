@@ -53,3 +53,27 @@ export function cleanCustomerNameForPrompt(rawName: string): string {
     .trim();
 }
 
+/**
+ * Rank customer prompt names by recent transaction frequency and update time
+ */
+export function rankCustomerNames(
+  customers: ActiveCustomerNameRecord[]
+): string[] {
+  const sorted = [...customers].sort((a, b) => {
+    const timeA = a.updatedAt ? a.updatedAt.getTime() : 0;
+    const timeB = b.updatedAt ? b.updatedAt.getTime() : 0;
+    return timeB - timeA;
+  });
+
+  const uniqueCleanNames = new Set<string>();
+  for (const item of sorted) {
+    const cleaned = cleanCustomerNameForPrompt(item.name);
+    if (cleaned.length >= 2) {
+      uniqueCleanNames.add(cleaned);
+    }
+  }
+
+  return Array.from(uniqueCleanNames);
+}
+
+
