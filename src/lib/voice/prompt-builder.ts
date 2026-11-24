@@ -208,6 +208,23 @@ export async function getCachedConditionedPrompt(
   return prompt;
 }
 
+/**
+ * Invalidate the customer prompt cache whenever a new customer gets added or modified
+ */
+export function invalidatePromptCache(ownerId?: string): void {
+  if (!ownerId) {
+    promptCache.clear();
+    return;
+  }
+
+  for (const key of promptCache.keys()) {
+    if (key.startsWith(`${ownerId}:`)) {
+      promptCache.delete(key);
+    }
+  }
+}
+
+
 
 
 
