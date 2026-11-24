@@ -799,10 +799,11 @@ export function GlobalVoiceModal({
                     <span className="size-2 rounded-full bg-debit animate-ping" />
                     <span>
                       {engineMode === "AUDIO_RECORDING"
-                        ? "Recording… auto-stops on pause"
+                        ? "Live Mic Active • Auto-stops on 1.5s silence"
                         : t("voice.listening")}
                     </span>
                   </div>
+
                   <p className="font-sans text-sm font-medium text-ink min-h-[24px] break-words">
                     {engineMode === "BROWSER" ? (
                       transcript ? (
