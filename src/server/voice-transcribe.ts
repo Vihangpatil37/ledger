@@ -28,7 +28,58 @@ export function createTranscriptionAbortSignal(
   return AbortSignal.timeout(timeoutMs);
 }
 
+export interface FormattedTranscriptionError {
+  status: number;
+  message: string;
+  isRateLimit: boolean;
+  retryAfterSeconds?: number;
+}
+
+/**
+ * Catch upstream rate limit errors and present friendly cooldown guidance
+ */
+export function formatUpstreamTranscriptionError(
+  err: unknown
+): FormattedTranscriptionError {
+  if (err instanceof Error) {
+    const msg = err.message.toLowerCase();
+    if (
+      msg.includes("429") ||
+      msg.includes("rate limit") ||
+      msg.includes("quota exceeded")
+    ) {
+      return {
+        status: 429,
+        message:
+          "Speech recognition service is experiencing high demand. Please pause 5 seconds and speak again.",
+        isRateLimit: true,
+        retryAfterSeconds: 5,
+      };
+    }
+
+    if (
+      err.name === "AbortError" ||
+      msg.includes("timeout") ||
+      msg.includes("aborted")
+    ) {
+      return {
+        status: 504,
+        message:
+          "Transcription timed out. Please try speaking with a shorter phrase.",
+        isRateLimit: false,
+      };
+    }
+  }
+
+  return {
+    status: 500,
+    message: err instanceof Error ? err.message : "Failed to transcribe audio.",
+    isRateLimit: false,
+  };
+}
+
 export const MAX_AUDIO_PAYLOAD_BYTES = 15 * 1024 * 1024; // 15 Megabytes
+
 
 
 

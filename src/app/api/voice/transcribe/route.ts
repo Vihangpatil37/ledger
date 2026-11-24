@@ -12,7 +12,9 @@ import {
   checkSessionRateLimit,
   getLazyGroqClient,
   createTranscriptionAbortSignal,
+  formatUpstreamTranscriptionError,
 } from "@/server/voice-transcribe";
+
 
 
 
@@ -141,8 +143,16 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ text: transcription.text || "" });
   } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Failed to transcribe audio.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const formatted = formatUpstreamTranscriptionError(err);
+    return NextResponse.json(
+      { error: formatted.message },
+      {
+        status: formatted.status,
+        headers: formatted.retryAfterSeconds
+          ? { "Retry-After": String(formatted.retryAfterSeconds) }
+          : undefined,
+      }
+    );
   }
+
 }
