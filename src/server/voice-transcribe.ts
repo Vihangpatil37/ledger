@@ -63,6 +63,50 @@ export function buildJsonErrorResponse(
   return NextResponse.json(body, { status, headers });
 }
 
+/**
+ * Execute an asynchronous operation with exponential backoff and randomized jitter
+ */
+export async function executeWithBackoffAndJitter<T>(
+  operation: () => Promise<T>,
+  options: {
+    maxRetries?: number;
+    initialDelayMs?: number;
+    maxDelayMs?: number;
+    shouldRetry?: (error: unknown) => boolean;
+  } = {}
+): Promise<T> {
+  const {
+    maxRetries = 2,
+    initialDelayMs = 400,
+    maxDelayMs = 2000,
+    shouldRetry = (err) => {
+      if (err instanceof Error) {
+        const msg = err.message.toLowerCase();
+        return msg.includes("429") || msg.includes("rate limit");
+      }
+      return false;
+    },
+  } = options;
+
+  let attempt = 0;
+  while (true) {
+    try {
+      return await operation();
+    } catch (err) {
+      attempt++;
+      if (attempt > maxRetries || !shouldRetry(err)) {
+        throw err;
+      }
+      // Exponential delay with jitter (between 0.8x and 1.2x)
+      const baseDelay = Math.min(maxDelayMs, initialDelayMs * Math.pow(2, attempt - 1));
+      const jitter = 0.8 + Math.random() * 0.4;
+      const delayMs = Math.round(baseDelay * jitter);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+}
+
+
 
 /**
  * Catch upstream rate limit errors and present friendly cooldown guidance
