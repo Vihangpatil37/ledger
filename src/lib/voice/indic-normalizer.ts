@@ -21,3 +21,18 @@ export function mapToBcp47SpeechTag(
   }
   return "en-IN";
 }
+
+/**
+ * Forward chosen language code to Groq Whisper to prevent language guesswork
+ */
+export function mapToWhisperLanguageCode(
+  locale: string | undefined
+): string | undefined {
+  if (!locale) return undefined;
+  const normalized = locale.toLowerCase().trim();
+  if (normalized.startsWith("hi")) return "hi";
+  if (normalized.startsWith("gu")) return "gu";
+  if (normalized.startsWith("en")) return "en";
+  return undefined;
+}
+
