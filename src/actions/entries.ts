@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
+import type { ClientSession } from "mongodb";
 import { decimalStringToPaise } from "@/lib/money";
-import { entriesCol, peopleCol, promisesCol } from "@/lib/mongo";
+import { entriesCol, mongoClient, peopleCol, promisesCol } from "@/lib/mongo";
 import { getSession } from "@/server/session";
 import type { ActionState } from "@/lib/types";
 import {
@@ -53,9 +54,7 @@ export async function addEntry(
 
     const createdBy = { role: "OWNER" as const };
 
-    // Money crosses the wire as a decimal string; it is stored as an
-    // exact integer of paise. ≤ 9,999,999.99 stays within double range.
-    await entriesCol().insertOne({
+    const entryDoc = {
       _id: randomUUID(),
       ownerId: owner,
       personId: parsed.data.personId,
@@ -65,18 +64,32 @@ export async function addEntry(
       dueDate,
       createdBy,
       createdAt: new Date(),
-    });
+    };
 
-    // When payment is received, mark pending promise to pay as KEPT and clear customer card
-    if (parsed.data.type === "RECEIVED") {
-      await promisesCol().updateMany(
-        { personId: parsed.data.personId, ownerId: owner, status: "PENDING" },
-        { $set: { status: "KEPT", resolvedAt: new Date() } }
-      );
-      await peopleCol().updateOne(
-        { _id: parsed.data.personId, ownerId: owner },
-        { $set: { promiseDate: null, promiseNote: null } }
-      );
+    let session: ClientSession | undefined;
+    try {
+      session = mongoClient().startSession();
+      await session.withTransaction(async () => {
+        await entriesCol().insertOne(entryDoc, { session });
+
+        // When payment is received, mark pending promise to pay as KEPT and clear customer card
+        if (parsed.data.type === "RECEIVED") {
+          await promisesCol().updateMany(
+            { personId: parsed.data.personId, ownerId: owner, status: "PENDING" },
+            { $set: { status: "KEPT", resolvedAt: new Date() } },
+            { session }
+          );
+          await peopleCol().updateOne(
+            { _id: parsed.data.personId, ownerId: owner },
+            { $set: { promiseDate: null, promiseNote: null } },
+            { session }
+          );
+        }
+      });
+    } finally {
+      if (session) {
+        await session.endSession();
+      }
     }
   } catch {
     return { error: "Could not save entry. Try again." };

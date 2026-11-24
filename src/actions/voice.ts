@@ -2,8 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
+import type { ClientSession } from "mongodb";
 import { decimalStringToPaise } from "@/lib/money";
-import { entriesCol, peopleCol, promisesCol } from "@/lib/mongo";
+import { entriesCol, mongoClient, peopleCol, promisesCol } from "@/lib/mongo";
 import { getSession } from "@/server/session";
 import { activeFilter } from "@/lib/trash";
 import type { ActionState, EntryType } from "@/lib/types";
@@ -139,9 +140,15 @@ export async function confirmVoiceEntry(data: {
     }
 
     const dueDateObj =
-      data.type === "GAVE" && data.dueDate ? new Date(data.dueDate) : null;
+      data.type === "GAVE" && data.dueDate
+        ? new Date(
+            data.dueDate.includes("T")
+              ? data.dueDate
+              : `${data.dueDate}T00:00:00+05:30`
+          )
+        : null;
 
-    await entriesCol().insertOne({
+    const entryDoc = {
       _id: randomUUID(),
       ownerId: owner,
       personId: targetPersonId,
@@ -149,19 +156,33 @@ export async function confirmVoiceEntry(data: {
       amountCents,
       note: data.note?.trim() || null,
       dueDate: dueDateObj && !isNaN(dueDateObj.getTime()) ? dueDateObj : null,
-      createdBy: { role: "OWNER" },
+      createdBy: { role: "OWNER" as const },
       createdAt: new Date(),
-    });
+    };
 
-    if (data.type === "RECEIVED") {
-      await promisesCol().updateMany(
-        { personId: targetPersonId, ownerId: owner, status: "PENDING" },
-        { $set: { status: "KEPT", resolvedAt: new Date() } }
-      );
-      await peopleCol().updateOne(
-        { _id: targetPersonId, ownerId: owner },
-        { $set: { promiseDate: null, promiseNote: null } }
-      );
+    let session: ClientSession | undefined;
+    try {
+      session = mongoClient().startSession();
+      await session.withTransaction(async () => {
+        await entriesCol().insertOne(entryDoc, { session });
+
+        if (data.type === "RECEIVED") {
+          await promisesCol().updateMany(
+            { personId: targetPersonId, ownerId: owner, status: "PENDING" },
+            { $set: { status: "KEPT", resolvedAt: new Date() } },
+            { session }
+          );
+          await peopleCol().updateOne(
+            { _id: targetPersonId, ownerId: owner },
+            { $set: { promiseDate: null, promiseNote: null } },
+            { session }
+          );
+        }
+      });
+    } finally {
+      if (session) {
+        await session.endSession();
+      }
     }
 
     revalidatePath(HOME);

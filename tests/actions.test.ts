@@ -22,9 +22,14 @@ const mockUpdateManyEntries = vi.fn();
 const mockUpdateOneUser = vi.fn();
 const mockUpdateManyPromises = vi.fn();
 
-const mockWithTransaction = vi.fn();
-const mockEndSession = vi.fn();
-const mockStartSession = vi.fn();
+const mockWithTransaction = vi.fn(async (cb: () => Promise<void>) => {
+  await cb();
+});
+const mockEndSession = vi.fn().mockResolvedValue(undefined);
+const mockStartSession = vi.fn(() => ({
+  withTransaction: mockWithTransaction,
+  endSession: mockEndSession,
+}));
 
 vi.mock("@/server/session", () => ({
   getOwner: () => mockGetOwner(),
@@ -395,7 +400,8 @@ describe("addEntry", () => {
         amountCents: 25050,
         note: "Tea and snacks",
         dueDate: expect.any(Date),
-      })
+      }),
+      { session: expect.anything() }
     );
     expect(mockRevalidatePath).toHaveBeenCalledWith("/");
     expect(mockRevalidatePath).toHaveBeenCalledWith(`/people/${personId}`);
@@ -423,11 +429,13 @@ describe("addEntry", () => {
         type: "RECEIVED",
         amountCents: 10000,
         dueDate: null,
-      })
+      }),
+      { session: expect.anything() }
     );
     expect(mockUpdateManyPromises).toHaveBeenCalledWith(
       { personId, ownerId: "owner-1", status: "PENDING" },
-      expect.objectContaining({ $set: expect.objectContaining({ status: "KEPT" }) })
+      expect.objectContaining({ $set: expect.objectContaining({ status: "KEPT" }) }),
+      { session: expect.anything() }
     );
   });
 

@@ -9,6 +9,15 @@ const mockPeopleUpdateOne = vi.fn();
 const mockEntriesInsertOne = vi.fn();
 const mockPromisesUpdateMany = vi.fn();
 
+const mockWithTransaction = vi.fn(async (cb: () => Promise<void>) => {
+  await cb();
+});
+const mockEndSession = vi.fn().mockResolvedValue(undefined);
+const mockStartSession = vi.fn(() => ({
+  withTransaction: mockWithTransaction,
+  endSession: mockEndSession,
+}));
+
 vi.mock("@/server/session", () => ({
   getSession: () => mockGetSession(),
 }));
@@ -29,6 +38,9 @@ vi.mock("@/lib/mongo", () => ({
   }),
   promisesCol: () => ({
     updateMany: mockPromisesUpdateMany,
+  }),
+  mongoClient: () => ({
+    startSession: mockStartSession,
   }),
 }));
 
@@ -152,17 +164,38 @@ describe("Voice Server Actions", () => {
       expect(mockPromisesUpdateMany).toHaveBeenCalledTimes(1);
       expect(mockPromisesUpdateMany).toHaveBeenCalledWith(
         { personId: "p-1", ownerId: "owner-1", status: "PENDING" },
-        { $set: { status: "KEPT", resolvedAt: expect.any(Date) } }
+        { $set: { status: "KEPT", resolvedAt: expect.any(Date) } },
+        { session: expect.anything() }
       );
 
       expect(mockPeopleUpdateOne).toHaveBeenCalledTimes(1);
       expect(mockPeopleUpdateOne).toHaveBeenCalledWith(
         { _id: "p-1", ownerId: "owner-1" },
-        { $set: { promiseDate: null, promiseNote: null } }
+        { $set: { promiseDate: null, promiseNote: null } },
+        { session: expect.anything() }
       );
 
       expect(mockRevalidatePath).toHaveBeenCalledWith("/");
       expect(mockRevalidatePath).toHaveBeenCalledWith("/people/p-1");
+    });
+
+    it("pins voice entry due date to Indian Standard Time (+05:30)", async () => {
+      mockGetSession.mockResolvedValue({ userId: "owner-1" });
+      mockPeopleFindOne.mockResolvedValue({ _id: "p-1" });
+      mockEntriesInsertOne.mockResolvedValue({ acknowledged: true });
+
+      const res = await confirmVoiceEntry({
+        personId: "p-1",
+        type: "GAVE",
+        amount: "100",
+        dueDate: "2026-12-05",
+      });
+
+      expect(res.ok).toBe(true);
+      expect(mockEntriesInsertOne).toHaveBeenCalledTimes(1);
+      const insertedDoc = mockEntriesInsertOne.mock.calls[0][0];
+      const expectedDate = new Date("2026-12-05T00:00:00+05:30");
+      expect(insertedDoc.dueDate?.getTime()).toBe(expectedDate.getTime());
     });
 
     it("strictly rejects creating a new customer via voice", async () => {
