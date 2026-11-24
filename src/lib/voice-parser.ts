@@ -1,5 +1,6 @@
 import type { EntryType } from "@/lib/types";
 import { calculatePhoneticMatchScore } from "@/lib/indic-transliteration";
+import { calculateLevenshteinDistance } from "@/lib/voice/indic-normalizer";
 
 export type VoiceParsedIntent = {
   type: EntryType;
@@ -405,31 +406,8 @@ export function calculateStringSimilarity(candidate: string, target: string): nu
   }
 
   // Levenshtein distance
-  const an = c.length;
-  const bn = t.length;
-  const matrix: number[][] = Array.from({ length: bn + 1 }, () =>
-    new Array(an + 1).fill(0)
-  );
-
-  for (let i = 0; i <= an; i++) matrix[0][i] = i;
-  for (let j = 0; j <= bn; j++) matrix[j][0] = j;
-
-  for (let j = 1; j <= bn; j++) {
-    for (let i = 1; i <= an; i++) {
-      if (t.charAt(j - 1) === c.charAt(i - 1)) {
-        matrix[j][i] = matrix[j - 1][i - 1];
-      } else {
-        matrix[j][i] = Math.min(
-          matrix[j - 1][i - 1] + 1,
-          matrix[j][i - 1] + 1,
-          matrix[j - 1][i] + 1
-        );
-      }
-    }
-  }
-
-  const dist = matrix[bn][an];
-  const maxLen = Math.max(an, bn);
+  const dist = calculateLevenshteinDistance(c, t);
+  const maxLen = Math.max(c.length, t.length);
   return Math.max(0, 1 - dist / maxLen);
 }
 
