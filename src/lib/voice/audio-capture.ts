@@ -195,4 +195,40 @@ export async function resampleAudioBuffer(
   return await offlineCtx.startRendering();
 }
 
+/**
+ * Ring buffer for incoming audio chunks to prevent memory bloat or frame dropping
+ */
+export class AudioChunkRingBuffer {
+  private chunks: Blob[] = [];
+  private readonly maxCapacity: number;
+
+  constructor(maxCapacity: number = 200) {
+    this.maxCapacity = maxCapacity;
+  }
+
+  public push(chunk: Blob): void {
+    if (this.chunks.length >= this.maxCapacity) {
+      this.chunks.shift();
+    }
+    this.chunks.push(chunk);
+  }
+
+  public getAll(): Blob[] {
+    return [...this.chunks];
+  }
+
+  public clear(): void {
+    this.chunks = [];
+  }
+
+  public get size(): number {
+    return this.chunks.length;
+  }
+
+  public toCombinedBlob(mimeType: string): Blob {
+    return new Blob(this.chunks, { type: mimeType });
+  }
+}
+
+
 
