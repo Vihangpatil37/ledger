@@ -2,8 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockGetOwner = vi.fn();
 const mockPeopleFindOne = vi.fn();
+const mockPeopleFind = vi.fn();
 const mockPeopleFindToArray = vi.fn();
 const mockEntriesAggregateToArray = vi.fn();
+const mockEntriesFind = vi.fn();
 const mockEntriesFindToArray = vi.fn();
 const mockUsersFindOne = vi.fn().mockResolvedValue({ upiId: null, upiName: null });
 
@@ -33,11 +35,17 @@ vi.mock("@/server/session", () => ({
 vi.mock("@/lib/mongo", () => ({
   peopleCol: () => ({
     findOne: mockPeopleFindOne,
-    find: () => mockPeopleCursor,
+    find: (q?: unknown, opt?: unknown) => {
+      mockPeopleFind(q, opt);
+      return mockPeopleCursor;
+    },
   }),
   entriesCol: () => ({
     aggregate: () => mockAggregateCursor,
-    find: () => mockFindCursor,
+    find: (q?: unknown, opt?: unknown) => {
+      mockEntriesFind(q, opt);
+      return mockFindCursor;
+    },
   }),
   usersCol: () => ({
     findOne: mockUsersFindOne,
@@ -49,7 +57,7 @@ vi.mock("@/lib/mongo", () => ({
   }),
 }));
 
-import { getHomeSummary, getPersonDetail } from "@/server/readers";
+import { getHomeSummary, getPersonDetail, getTrashItems } from "@/server/readers";
 
 describe("getPersonDetail", () => {
   beforeEach(() => {
@@ -267,5 +275,77 @@ describe("getHomeSummary", () => {
 
     const p3Row = summary.rows.find((r) => r.id === "p3");
     expect(p3Row?.isOverdue).toBe(false);
+  });
+});
+
+describe("getTrashItems", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("queries only contacts referenced in deleted entries rather than all contacts", async () => {
+    mockGetOwner.mockResolvedValue("owner-1");
+
+    // Two deleted entries referencing person-a and person-b
+    mockEntriesFindToArray.mockResolvedValueOnce([
+      {
+        _id: "entry-1",
+        personId: "person-a",
+        type: "GAVE",
+        amountCents: 5000,
+        note: "Tea cups",
+        deletedAt: new Date(),
+      },
+      {
+        _id: "entry-2",
+        personId: "person-b",
+        type: "RECEIVED",
+        amountCents: 2000,
+        note: "Partial cash",
+        deletedAt: new Date(),
+      },
+    ]);
+
+    // First call to peopleFindToArray: deleted people (empty)
+    mockPeopleFindToArray.mockResolvedValueOnce([]);
+    // Second call to peopleFindToArray: referent contacts lookup
+    mockPeopleFindToArray.mockResolvedValueOnce([
+      { _id: "person-a", name: "Anil Bhai" },
+      { _id: "person-b", name: "Bharat Seth" },
+    ]);
+
+    const items = await getTrashItems();
+    expect(items).toHaveLength(2);
+
+    // Verify peopleCol query was bounded by _id: { $in: [...] }
+    expect(mockPeopleFind).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ownerId: "owner-1",
+        _id: { $in: expect.arrayContaining(["person-a", "person-b"]) },
+      }),
+      expect.anything()
+    );
+  });
+
+  it("skips contact query completely when no deleted entries exist", async () => {
+    mockGetOwner.mockResolvedValue("owner-1");
+    // Deleted people: 1 deleted person
+    mockPeopleFindToArray.mockResolvedValueOnce([
+      {
+        _id: "p-deleted",
+        name: "Deleted Contact",
+        phone: "99999",
+        deletedAt: new Date(),
+      },
+    ]);
+    // Deleted entries: none
+    mockEntriesFindToArray.mockResolvedValueOnce([]);
+
+    const items = await getTrashItems();
+    expect(items).toHaveLength(1);
+    expect(items[0].kind).toBe("PERSON");
+
+    // Only 1 peopleCol.find call was made (for deletedPeople)
+    expect(mockPeopleFind).toHaveBeenCalledTimes(1);
   });
 });

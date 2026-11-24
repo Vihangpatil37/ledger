@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
-import { peopleCol, promisesCol } from "@/lib/mongo";
+import type { ClientSession } from "mongodb";
+import { mongoClient, peopleCol, promisesCol } from "@/lib/mongo";
 import { getSession } from "@/server/session";
 import type { ActionState } from "@/lib/types";
 import { idSchema, isValidCalendarDate } from "@/lib/validation";
@@ -56,33 +57,46 @@ export async function setPromiseToPay(
     });
     if (!person) return { error: "Person not found." };
 
-    // Update active promise on person
-    await peopleCol().updateOne(
-      { _id: personId.data, ownerId: owner },
-      {
-        $set: {
-          promiseDate,
-          promiseNote: rawNote,
-        },
-      }
-    );
+    let session: ClientSession | undefined;
+    try {
+      session = mongoClient().startSession();
+      await session.withTransaction(async () => {
+        // Update active promise on person
+        await peopleCol().updateOne(
+          { _id: personId.data, ownerId: owner },
+          {
+            $set: {
+              promiseDate,
+              promiseNote: rawNote,
+            },
+          },
+          { session }
+        );
 
-    // Mark any earlier pending promises as rescheduled
-    await promisesCol().updateMany(
-      { personId: personId.data, ownerId: owner, status: "PENDING" },
-      { $set: { status: "RESCHEDULED", resolvedAt: new Date() } }
-    );
+        // Mark any earlier pending promises as rescheduled
+        await promisesCol().updateMany(
+          { personId: personId.data, ownerId: owner, status: "PENDING" },
+          { $set: { status: "RESCHEDULED", resolvedAt: new Date() } },
+          { session }
+        );
 
-    // Audit log in promises collection
-    await promisesCol().insertOne({
-      _id: randomUUID(),
-      ownerId: owner,
-      personId: personId.data,
-      promiseDate,
-      note: rawNote,
-      status: "PENDING",
-      createdAt: new Date(),
-    });
+        // Audit log in promises collection
+        await promisesCol().insertOne(
+          {
+            _id: randomUUID(),
+            ownerId: owner,
+            personId: personId.data,
+            promiseDate,
+            note: rawNote,
+            status: "PENDING",
+            createdAt: new Date(),
+          },
+          { session }
+        );
+      });
+    } finally {
+      if (session) await session.endSession();
+    }
   } catch (err) {
     console.error("Failed to set promise to pay:", err);
     return { error: "Could not save promise. Try again." };
@@ -105,21 +119,31 @@ export async function clearPromiseToPay(
   if (!personId.success) return { error: "Invalid person ID." };
 
   try {
-    await peopleCol().updateOne(
-      { _id: personId.data, ownerId: owner },
-      {
-        $set: {
-          promiseDate: null,
-          promiseNote: null,
-        },
-      }
-    );
+    let session: ClientSession | undefined;
+    try {
+      session = mongoClient().startSession();
+      await session.withTransaction(async () => {
+        await peopleCol().updateOne(
+          { _id: personId.data, ownerId: owner },
+          {
+            $set: {
+              promiseDate: null,
+              promiseNote: null,
+            },
+          },
+          { session }
+        );
 
-    // Resolve any pending promise audit log as rescheduled
-    await promisesCol().updateMany(
-      { personId: personId.data, ownerId: owner, status: "PENDING" },
-      { $set: { status: "RESCHEDULED", resolvedAt: new Date() } }
-    );
+        // Resolve any pending promise audit log as rescheduled
+        await promisesCol().updateMany(
+          { personId: personId.data, ownerId: owner, status: "PENDING" },
+          { $set: { status: "RESCHEDULED", resolvedAt: new Date() } },
+          { session }
+        );
+      });
+    } finally {
+      if (session) await session.endSession();
+    }
   } catch (err) {
     console.error("Failed to clear promise:", err);
     return { error: "Could not clear promise." };

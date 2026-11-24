@@ -77,8 +77,8 @@ export async function safeCleanupTemporaryAudioFile(
   try {
     const resolved = path.resolve(filePath);
     // Security check: ensure path is within system temp directory
-    const tempDir = os.tmpdir();
-    if (resolved.startsWith(tempDir)) {
+    const tempDir = path.resolve(os.tmpdir());
+    if (resolved.toLowerCase().startsWith(tempDir.toLowerCase())) {
       await fs.unlink(resolved);
     }
   } catch {

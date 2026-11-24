@@ -7,6 +7,13 @@ const mockUpdateManyPromises = vi.fn();
 const mockInsertOnePromise = vi.fn();
 const mockRevalidatePath = vi.fn();
 
+const mockWithTransaction = vi.fn(async (cb: () => Promise<unknown>) => cb());
+const mockEndSession = vi.fn().mockResolvedValue(undefined);
+const mockStartSession = vi.fn(() => ({
+  withTransaction: mockWithTransaction,
+  endSession: mockEndSession,
+}));
+
 vi.mock("@/server/session", () => ({
   getOwner: () => mockGetOwner(),
   getSession: async () => {
@@ -27,6 +34,9 @@ vi.mock("@/lib/mongo", () => ({
   promisesCol: () => ({
     updateMany: mockUpdateManyPromises,
     insertOne: mockInsertOnePromise,
+  }),
+  mongoClient: () => ({
+    startSession: mockStartSession,
   }),
 }));
 
@@ -61,7 +71,8 @@ describe("setPromiseToPay and clearPromiseToPay", () => {
         $set: expect.objectContaining({
           status: "RESCHEDULED",
         }),
-      })
+      }),
+      expect.objectContaining({ session: expect.anything() })
     );
 
     // Assert insertOne inserted new pending promise record
@@ -71,8 +82,14 @@ describe("setPromiseToPay and clearPromiseToPay", () => {
         personId,
         status: "PENDING",
         note: "Will pay next week",
-      })
+      }),
+      expect.objectContaining({ session: expect.anything() })
     );
+
+    // Assert operations were performed inside a transaction session
+    expect(mockStartSession).toHaveBeenCalled();
+    expect(mockWithTransaction).toHaveBeenCalled();
+    expect(mockEndSession).toHaveBeenCalled();
   });
 
   it("marks pending promises as RESCHEDULED when clearing promise", async () => {
@@ -91,7 +108,11 @@ describe("setPromiseToPay and clearPromiseToPay", () => {
         $set: expect.objectContaining({
           status: "RESCHEDULED",
         }),
-      })
+      }),
+      expect.objectContaining({ session: expect.anything() })
     );
+    expect(mockStartSession).toHaveBeenCalled();
+    expect(mockWithTransaction).toHaveBeenCalled();
+    expect(mockEndSession).toHaveBeenCalled();
   });
 });

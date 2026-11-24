@@ -9,6 +9,7 @@ const mockPeopleUpdateOne = vi.fn().mockResolvedValue({ matchedCount: 1 });
 
 const mockEntriesInsertMany = vi.fn().mockResolvedValue({ insertedCount: 1 });
 const mockPromisesInsertMany = vi.fn().mockResolvedValue({ insertedCount: 1 });
+const mockInvalidatePromptCache = vi.fn();
 
 const mockWithTransaction = vi.fn(async (cb: () => Promise<unknown>) => cb());
 const mockEndSession = vi.fn().mockResolvedValue(undefined);
@@ -23,6 +24,10 @@ vi.mock("@/server/session", () => ({
     const s = await mockGetSession();
     return s?.userId ?? null;
   },
+}));
+
+vi.mock("@/lib/voice/prompt-builder", () => ({
+  invalidatePromptCache: (...args: unknown[]) => mockInvalidatePromptCache(...args),
 }));
 
 vi.mock("next/cache", () => ({
@@ -51,7 +56,7 @@ vi.mock("@/lib/mongo", () => ({
   }),
 }));
 
-import { restoreBackupJson } from "@/actions/backup";
+import { commitCsvImport, restoreBackupJson } from "@/actions/backup";
 
 describe("restoreBackupJson", () => {
   beforeEach(() => {
@@ -131,6 +136,9 @@ describe("restoreBackupJson", () => {
     expect(insertedPromises[0].note).toBe("Promise on Friday");
     expect(insertedPromises[0].status).toBe("PENDING");
     expect(insertedPromises[0].promiseDate.toISOString()).toContain("2026-11-19T18:30:00");
+
+    // Verify prompt cache was invalidated
+    expect(mockInvalidatePromptCache).toHaveBeenCalledWith("owner-test-1");
   });
 
   it("updates promiseDate and promiseNote on existing matched contacts", async () => {
@@ -218,5 +226,40 @@ describe("restoreBackupJson", () => {
     expect(mockEntriesInsertMany.mock.calls[0][0]).toHaveLength(500);
     expect(mockEntriesInsertMany.mock.calls[1][0]).toHaveLength(500);
     expect(mockEntriesInsertMany.mock.calls[2][0]).toHaveLength(200);
+  });
+});
+
+describe("commitCsvImport", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ userId: "owner-test-1" });
+    mockPeopleFindToArray.mockResolvedValue([]);
+  });
+
+  it("pins CSV imported due dates to Indian midnight and clears vocabulary prompt cache", async () => {
+    const csvContent = [
+      "Name,Phone,Type,Amount,Note,DueDate",
+      "Vikas Patel,+91 91234 56789,Udhar,150.00,Chai bill,2026-11-20",
+    ].join("\n");
+
+    const res = await commitCsvImport(csvContent);
+    expect(res.ok).toBe(true);
+    expect(res.importedCount).toBe(1);
+
+    // Verify contact was inserted
+    expect(mockPeopleInsertMany).toHaveBeenCalledTimes(1);
+    const newPersonId = mockPeopleInsertMany.mock.calls[0][0][0]._id;
+
+    // Verify entry was inserted with parsed IST due date (not bare UTC date)
+    expect(mockEntriesInsertMany).toHaveBeenCalledTimes(1);
+    const insertedEntry = mockEntriesInsertMany.mock.calls[0][0][0];
+    expect(insertedEntry.personId).toBe(newPersonId);
+    expect(insertedEntry.amountCents).toBe(15000);
+    expect(insertedEntry.dueDate).toBeInstanceOf(Date);
+    // 2026-11-20 IST midnight is 2026-11-19T18:30:00Z in UTC
+    expect(insertedEntry.dueDate.toISOString()).toContain("2026-11-19T18:30:00");
+
+    // Verify vocabulary prompt cache was invalidated for immediate speech recognition
+    expect(mockInvalidatePromptCache).toHaveBeenCalledWith("owner-test-1");
   });
 });

@@ -1,4 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+import path from "path";
+import os from "os";
+import fs from "fs/promises";
 import {
   validateAudioPayloadSize,
   verifyAudioMagicBytes,
@@ -8,6 +11,7 @@ import {
   resetSessionRateLimitsForTest,
   getSessionRateLimitsSize,
   formatUpstreamTranscriptionError,
+  safeCleanupTemporaryAudioFile,
   MAX_AUDIO_PAYLOAD_BYTES,
 } from "@/server/voice-transcribe";
 import {
@@ -146,6 +150,26 @@ describe("Voice Transcribe Server Validation", () => {
       const formatted = formatUpstreamTranscriptionError(error);
       expect(formatted.status).toBe(504);
       expect(formatted.message).toContain("timed out");
+    });
+  });
+
+  describe("safeCleanupTemporaryAudioFile", () => {
+    it("handles undefined and empty file paths gracefully", async () => {
+      await expect(safeCleanupTemporaryAudioFile(undefined)).resolves.not.toThrow();
+      await expect(safeCleanupTemporaryAudioFile("")).resolves.not.toThrow();
+    });
+
+    it("unlinks files in system temp directory despite case differences", async () => {
+      const unlinkSpy = vi.spyOn(fs, "unlink").mockResolvedValue(undefined);
+
+      // Create a test path in the temp directory with alternating case
+      const tempPath = path.join(os.tmpdir(), "voice-test-audio.webm");
+      const testPathLower = tempPath.toLowerCase();
+
+      await safeCleanupTemporaryAudioFile(testPathLower);
+
+      expect(unlinkSpy).toHaveBeenCalledWith(path.resolve(testPathLower));
+      unlinkSpy.mockRestore();
     });
   });
 });

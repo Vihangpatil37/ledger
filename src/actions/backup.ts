@@ -18,6 +18,7 @@ import {
 } from "@/lib/mongo";
 import { normalizePhone } from "@/lib/phone";
 import { activeFilter } from "@/lib/trash";
+import { invalidatePromptCache } from "@/lib/voice/prompt-builder";
 import { getSession } from "@/server/session";
 import type { ActionState, BackupPayload, CsvImportPreview } from "@/lib/types";
 
@@ -238,6 +239,7 @@ export async function restoreBackupJson(
     if (session) await session.endSession();
   }
 
+  invalidatePromptCache(owner);
   revalidatePath("/");
   revalidatePath("/settings");
   return {
@@ -368,7 +370,7 @@ export async function commitCsvImport(
             type: row.type,
             amountCents: decimalStringToPaise(row.amount),
             note: row.note ?? null,
-            dueDate: row.dueDate ? new Date(row.dueDate) : null,
+            dueDate: parseIstDate(row.dueDate),
             createdAt: new Date(),
           });
         }
@@ -381,6 +383,7 @@ export async function commitCsvImport(
       if (session) await session.endSession();
     }
 
+    invalidatePromptCache(owner);
     revalidatePath("/");
     revalidatePath("/settings");
     return { ok: true, importedCount: validRows.length };

@@ -640,10 +640,20 @@ export async function getTrashItems(): Promise<TrashItem[]> {
       .toArray(),
   ]);
 
-  const allPeople = await peopleCol()
-    .find({ ownerId: owner }, { projection: { name: 1 } })
-    .toArray();
-  const personNameMap = new Map(allPeople.map((p) => [p._id, p.name]));
+  const personIds = [...new Set(deletedEntries.map((e) => e.personId))];
+  const personNameMap = new Map<string, string>();
+
+  if (personIds.length > 0) {
+    const referentPeople = await peopleCol()
+      .find(
+        { ownerId: owner, _id: { $in: personIds } },
+        { projection: { name: 1 } }
+      )
+      .toArray();
+    for (const p of referentPeople) {
+      personNameMap.set(p._id, p.name);
+    }
+  }
 
   const items: TrashItem[] = [];
 
