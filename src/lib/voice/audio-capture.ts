@@ -164,3 +164,35 @@ export function monitorTrackDisconnection(
   };
 }
 
+/**
+ * Resample an AudioBuffer to target 16kHz sample rate using OfflineAudioContext
+ */
+export async function resampleAudioBuffer(
+  audioBuffer: AudioBuffer,
+  targetSampleRate: number = 16000
+): Promise<AudioBuffer> {
+  if (audioBuffer.sampleRate === targetSampleRate) {
+    return audioBuffer;
+  }
+
+  if (typeof OfflineAudioContext === "undefined") {
+    return audioBuffer;
+  }
+
+  const duration = audioBuffer.duration;
+  const numFrames = Math.ceil(duration * targetSampleRate);
+  const offlineCtx = new OfflineAudioContext(
+    1,
+    numFrames,
+    targetSampleRate
+  );
+
+  const bufferSource = offlineCtx.createBufferSource();
+  bufferSource.buffer = audioBuffer;
+  bufferSource.connect(offlineCtx.destination);
+  bufferSource.start(0);
+
+  return await offlineCtx.startRendering();
+}
+
+
