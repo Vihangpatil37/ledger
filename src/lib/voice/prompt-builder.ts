@@ -104,6 +104,25 @@ export const REGIONAL_CURRENCY_TERMS = [
   "amount",
 ];
 
+/**
+ * Regional bookkeeping action verbs for prompt conditioning
+ */
+export const REGIONAL_BOOKKEEPING_VERBS = [
+  "udhar",
+  "jama",
+  "diya",
+  "mila",
+  "aaya",
+  "gaya",
+  "chuka",
+  "baaki",
+  "lidha",
+  "aapya",
+  "credit",
+  "debit",
+];
+
+
 
 
 
