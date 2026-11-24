@@ -195,7 +195,7 @@ export async function releaseAudioContextResources(
     // Ignore disconnection errors during unmount
   }
 
-  if (setup.audioContext.state !== "closed") {
+    if (setup.audioContext.state !== "closed") {
     try {
       await setup.audioContext.close();
     } catch {
@@ -203,6 +203,35 @@ export async function releaseAudioContextResources(
     }
   }
 }
+
+/**
+ * Compute multi-band frequency levels (e.g. 7 equalizer bands) from analyser byte frequency data
+ */
+export function calculateEqualizerBands(
+  analyser: AnalyserNode,
+  bandCount: number = 7
+): number[] {
+  const bufferLength = analyser.frequencyBinCount;
+  const frequencyData = new Uint8Array(bufferLength);
+  analyser.getByteFrequencyData(frequencyData);
+
+  const bands: number[] = [];
+  const binStep = Math.max(1, Math.floor(bufferLength / bandCount));
+
+  for (let b = 0; b < bandCount; b++) {
+    let sum = 0;
+    const start = b * binStep;
+    const end = Math.min(bufferLength, start + binStep);
+    for (let i = start; i < end; i++) {
+      sum += frequencyData[i];
+    }
+    const avg = sum / (end - start || 1);
+    bands.push(Number((avg / 255).toFixed(3)));
+  }
+
+  return bands;
+}
+
 
 
 
