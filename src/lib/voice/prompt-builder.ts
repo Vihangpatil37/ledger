@@ -122,6 +122,25 @@ export const REGIONAL_BOOKKEEPING_VERBS = [
   "debit",
 ];
 
+/**
+ * Common tea stall and store inventory items for prompt conditioning
+ */
+export const SHOP_INVENTORY_ITEMS = [
+  "chai",
+  "tea",
+  "coffee",
+  "biskut",
+  "biscuit",
+  "samosa",
+  "kachori",
+  "bun",
+  "maska",
+  "toast",
+  "cigarette",
+  "water",
+];
+
+
 
 
 
