@@ -235,6 +235,49 @@ export function calculateLevenshteinDistance(a: string, b: string): number {
   return row[s2.length];
 }
 
+export interface CandidateMatchResult {
+  customerName: string;
+  score: number;
+  phoneticMatch: boolean;
+}
+
+/**
+ * Combine string similarity and phonetic scores to rank customer candidate matches
+ */
+export function rankCandidateCustomerMatches(
+  spokenWord: string,
+  storedNames: string[]
+): CandidateMatchResult[] {
+  if (!spokenWord || storedNames.length === 0) return [];
+
+  const spokenClean = spokenWord.toLowerCase().trim();
+  const spokenPhonetic = doubleMetaphoneKey(spokenWord);
+
+  const results: CandidateMatchResult[] = storedNames.map((name) => {
+    const nameClean = name.toLowerCase().trim();
+    const distance = calculateLevenshteinDistance(spokenClean, nameClean);
+    const maxLen = Math.max(spokenClean.length, nameClean.length);
+    const levScore = maxLen > 0 ? (maxLen - distance) / maxLen : 1;
+
+    const namePhonetic = doubleMetaphoneKey(name);
+    const phoneticMatch =
+      spokenPhonetic === namePhonetic && spokenPhonetic.length > 0;
+
+    const score = Number(
+      (levScore * 0.6 + (phoneticMatch ? 0.4 : 0)).toFixed(3)
+    );
+
+    return {
+      customerName: name,
+      score,
+      phoneticMatch,
+    };
+  });
+
+  return results.sort((a, b) => b.score - a.score);
+}
+
+
 
 
 
