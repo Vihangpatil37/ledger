@@ -789,17 +789,29 @@ export function GlobalVoiceModal({
 
             {/* Status & Live Speech Stream */}
             <div className="space-y-2 w-full max-w-sm">
-              <p className="font-display text-base font-bold text-ink">
-                {isRecording
-                  ? engineMode === "AUDIO_RECORDING"
-                    ? `Recording audio… (${Math.floor(recordingDuration / 60)}:${(recordingDuration % 60).toString().padStart(2, "0")})`
-                    : t("voice.listening")
-                  : engineMode === "AUDIO_RECORDING"
-                  ? "Tap to Record Audio (Whisper)"
-                  : isSupported
-                  ? t("voice.startRecording")
-                  : "Speech recognition unavailable"}
-              </p>
+              <div className="flex items-center justify-center gap-2">
+                <p className="font-display text-base font-bold text-ink">
+                  {isRecording
+                    ? engineMode === "AUDIO_RECORDING"
+                      ? "Recording audio…"
+                      : t("voice.listening")
+                    : engineMode === "AUDIO_RECORDING"
+                    ? "Tap to Record Audio (Whisper)"
+                    : isSupported
+                    ? t("voice.startRecording")
+                    : "Speech recognition unavailable"}
+                </p>
+                {isRecording && (
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-debit/10 text-debit font-mono text-xs font-semibold animate-pulse"
+                    aria-label={`Recording time: ${Math.floor(recordingDuration / 60)} minutes and ${recordingDuration % 60} seconds`}
+                  >
+                    <span className="size-2 rounded-full bg-debit" />
+                    {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, "0")}
+                  </span>
+                )}
+              </div>
+
 
               {isRecording ? (
                 <div className="rounded-xl border border-debit/20 bg-debit/5 p-3 text-center animate-in fade-in duration-150">
