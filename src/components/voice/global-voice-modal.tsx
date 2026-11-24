@@ -758,8 +758,15 @@ export function GlobalVoiceModal({
                 disabled={engineMode === "BROWSER" && !isSupported}
                 aria-label={
                   isRecording
-                    ? t("voice.stopRecording")
+                    ? engineMode === "AUDIO_RECORDING"
+                      ? "Stop recording audio and transcribe immediately"
+                      : t("voice.stopRecording")
                     : t("voice.startRecording")
+                }
+                title={
+                  isRecording
+                    ? "Click or press Space/Enter to stop recording and submit"
+                    : "Click to start recording"
                 }
                 className={`group relative z-10 flex size-24 items-center justify-center rounded-full shadow-xl transition-all duration-300 cursor-pointer focus-visible:outline-2 focus-visible:outline-focus ${
                   isRecording
@@ -769,6 +776,7 @@ export function GlobalVoiceModal({
                     : "bg-muted/40 text-muted cursor-not-allowed shadow-none"
                 }`}
               >
+
                 {isRecording ? (
                   <div className="flex flex-col items-center justify-center size-8 rounded-lg bg-white shadow-inner animate-pulse">
                     <span className="size-3.5 rounded-sm bg-debit" />
