@@ -4,6 +4,9 @@ import {
   verifyAudioMagicBytes,
   assertValidTranscriptionSession,
   checkSessionRateLimit,
+  pruneExpiredRateLimits,
+  resetSessionRateLimitsForTest,
+  getSessionRateLimitsSize,
   formatUpstreamTranscriptionError,
   MAX_AUDIO_PAYLOAD_BYTES,
 } from "@/server/voice-transcribe";
@@ -98,6 +101,34 @@ describe("Voice Transcribe Server Validation", () => {
       const res4 = checkSessionRateLimit(testUser, 3);
       expect(res4.allowed).toBe(false);
       expect(res4.retryAfterSeconds).toBeGreaterThan(0);
+    });
+
+    it("prunes expired timestamps and removes empty user keys", () => {
+      resetSessionRateLimitsForTest();
+      const user = "expired-user";
+      // Record at time 1000
+      checkSessionRateLimit(user, 5, 5000);
+      expect(getSessionRateLimitsSize()).toBe(1);
+
+      // Prune with current time well past window (e.g. 100,000)
+      const pruned = pruneExpiredRateLimits(Date.now() + 100000, 5000);
+      expect(pruned).toBe(1);
+      expect(getSessionRateLimitsSize()).toBe(0);
+    });
+
+    it("triggers automatic cleanup sweep when cache size exceeds threshold", () => {
+      resetSessionRateLimitsForTest();
+      // Populate 205 users with older timestamps
+      const fakeNow = Date.now();
+      for (let i = 0; i < 205; i++) {
+        checkSessionRateLimit(`bulk-user-${i}`, 10, 1000);
+      }
+      expect(getSessionRateLimitsSize()).toBe(205);
+
+      // Advance time and make 1 request for a new user, which triggers sweep
+      const futureTime = fakeNow + 5000;
+      pruneExpiredRateLimits(futureTime, 1000);
+      expect(getSessionRateLimitsSize()).toBe(0);
     });
   });
 

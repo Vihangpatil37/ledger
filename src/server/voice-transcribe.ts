@@ -314,6 +314,35 @@ interface RateLimitRecord {
 const sessionRateLimits = new Map<string, RateLimitRecord>();
 
 /**
+ * Prune inactive user records where all timestamps have aged out of the sliding window
+ */
+export function pruneExpiredRateLimits(now: number = Date.now(), windowMs: number = 60 * 1000): number {
+  let pruned = 0;
+  for (const [id, rec] of sessionRateLimits.entries()) {
+    rec.timestamps = rec.timestamps.filter((ts) => now - ts < windowMs);
+    if (rec.timestamps.length === 0) {
+      sessionRateLimits.delete(id);
+      pruned++;
+    }
+  }
+  return pruned;
+}
+
+/**
+ * Reset rate limit cache (useful for testing)
+ */
+export function resetSessionRateLimitsForTest(): void {
+  sessionRateLimits.clear();
+}
+
+/**
+ * Query current active session count in rate limit map
+ */
+export function getSessionRateLimitsSize(): number {
+  return sessionRateLimits.size;
+}
+
+/**
  * Add a per-session rate limiter to guard the transcription route against loops
  * Defaults to 20 transcription calls per minute per user
  */
@@ -323,6 +352,12 @@ export function checkSessionRateLimit(
   windowMs: number = 60 * 1000
 ): { allowed: boolean; remaining: number; retryAfterSeconds?: number } {
   const now = Date.now();
+
+  // Active sweep to prune stale entries when map exceeds threshold
+  if (sessionRateLimits.size > 200) {
+    pruneExpiredRateLimits(now, windowMs);
+  }
+
   let record = sessionRateLimits.get(userId);
 
   if (!record) {
