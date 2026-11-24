@@ -64,6 +64,29 @@ export function buildJsonErrorResponse(
 }
 
 /**
+ * Log end-to-end transcription latency alongside payload byte size in development
+ */
+export function logTranscriptionMetric(metrics: {
+  payloadBytes: number;
+  durationMs: number;
+  textLength: number;
+  language?: string;
+  source: string;
+}): void {
+  if (process.env.NODE_ENV !== "production") {
+    console.log(
+      `[Voice:Metrics] source=${metrics.source} payload=${(
+        metrics.payloadBytes / 1024
+      ).toFixed(1)}KB ` +
+        `duration=${metrics.durationMs}ms chars=${metrics.textLength} lang=${
+          metrics.language || "auto"
+        }`
+    );
+  }
+}
+
+
+/**
  * Execute an asynchronous operation with exponential backoff and randomized jitter
  */
 export async function executeWithBackoffAndJitter<T>(

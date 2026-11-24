@@ -13,7 +13,9 @@ import {
   getLazyGroqClient,
   createTranscriptionAbortSignal,
   formatUpstreamTranscriptionError,
+  logTranscriptionMetric,
 } from "@/server/voice-transcribe";
+
 
 
 
@@ -21,7 +23,9 @@ import {
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
   try {
+
     const session = await getSession();
     let userId: string;
     try {
@@ -141,7 +145,16 @@ export async function POST(req: NextRequest) {
     );
 
 
+    logTranscriptionMetric({
+      payloadBytes: buffer.length,
+      durationMs: Date.now() - startTime,
+      textLength: (transcription.text || "").length,
+      language,
+      source: "groq-whisper",
+    });
+
     return NextResponse.json({ text: transcription.text || "" });
+
   } catch (err: unknown) {
     const formatted = formatUpstreamTranscriptionError(err);
     return NextResponse.json(
