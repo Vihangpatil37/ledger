@@ -180,6 +180,31 @@ export function calculateVisualizerRingScale(
   return Number((baseScale + curved * maxAdditionalScale).toFixed(3));
 }
 
+/**
+ * Safely disconnect audio nodes and close the AudioContext to release hardware channels
+ */
+export async function releaseAudioContextResources(
+  setup: AnalyserNodeSetup | null | undefined
+): Promise<void> {
+  if (!setup) return;
+
+  try {
+    setup.source.disconnect();
+    setup.analyser.disconnect();
+  } catch {
+    // Ignore disconnection errors during unmount
+  }
+
+  if (setup.audioContext.state !== "closed") {
+    try {
+      await setup.audioContext.close();
+    } catch {
+      // Ignore closure errors
+    }
+  }
+}
+
+
 
 
 
