@@ -15,3 +15,22 @@ export function saveVoiceEnginePreference(mode: VoiceEngineMode): void {
     // Ignore quota errors in private browsing
   }
 }
+
+/**
+ * Retrieve saved engine preference during initial modal mount
+ */
+export function getSavedVoiceEnginePreference(
+  defaultMode: VoiceEngineMode = "BROWSER"
+): VoiceEngineMode {
+  if (typeof window === "undefined" || !window.localStorage) return defaultMode;
+  try {
+    const saved = localStorage.getItem(VOICE_ENGINE_STORAGE_KEY);
+    if (saved === "BROWSER" || saved === "AUDIO_RECORDING") {
+      return saved;
+    }
+  } catch {
+    // Ignore access errors
+  }
+  return defaultMode;
+}
+

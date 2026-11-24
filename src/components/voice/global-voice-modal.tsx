@@ -28,6 +28,12 @@ import {
 } from "@/actions/voice";
 import { useLanguage } from "@/lib/i18n/client";
 import type { EntryType } from "@/lib/types";
+import {
+  saveVoiceEnginePreference,
+  getSavedVoiceEnginePreference,
+  type VoiceEngineMode,
+} from "@/lib/voice/voice-preferences";
+
 
 export { VOICE_MODAL_EVENT, openGlobalVoiceModal };
 
@@ -97,28 +103,18 @@ export function GlobalVoiceModal({
   const [switchNotice, setSwitchNotice] = useState<string | null>(null);
 
   // Engine mode: "BROWSER" (fast Web Speech) or "AUDIO_RECORDING" (MediaRecorder -> Whisper fallback)
-  const [engineMode, setEngineMode] = useState<"BROWSER" | "AUDIO_RECORDING">("BROWSER");
+  const [engineMode, setEngineMode] = useState<VoiceEngineMode>("BROWSER");
 
   // Load persisted engine preference from localStorage on client mount
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("chai-ledger:voice-engine");
-      if (saved === "BROWSER" || saved === "AUDIO_RECORDING") {
-        setEngineMode(saved);
-      }
-    } catch {
-      // ignore
-    }
+    setEngineMode(getSavedVoiceEnginePreference());
   }, []);
 
-  const switchEngineMode = useCallback((mode: "BROWSER" | "AUDIO_RECORDING") => {
+  const switchEngineMode = useCallback((mode: VoiceEngineMode) => {
     setEngineMode(mode);
-    try {
-      localStorage.setItem("chai-ledger:voice-engine", mode);
-    } catch {
-      // ignore
-    }
+    saveVoiceEnginePreference(mode);
   }, []);
+
 
   // Audio recording states and refs for server fallback
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
