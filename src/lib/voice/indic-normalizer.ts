@@ -137,6 +137,21 @@ export function translateSpokenNumberPhrases(text: string): string {
   );
 }
 
+/**
+ * Standardize informal Hindi currency terms into clear decimal representations
+ */
+export function standardizeInformalCurrencyTerms(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/\bdedh\s+sau\b/gi, "150")
+    .replace(/\bdhai\s+sau\b/gi, "250")
+    .replace(/\bdedh\s+(?:hazaar|hazar)\b/gi, "1500")
+    .replace(/\bdhai\s+(?:hazaar|hazar)\b/gi, "2500")
+    .replace(/\bsaadhe\s+teen\s+sau\b/gi, "350")
+    .replace(/\bsaadhe\s+char\s+sau\b/gi, "450");
+}
+
+
 
 
 
