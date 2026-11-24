@@ -3,6 +3,10 @@
  */
 import { NextResponse } from "next/server";
 import Groq from "groq-sdk";
+import fs from "fs/promises";
+import path from "path";
+import os from "os";
+
 
 
 let cachedGroqClient: Groq | null = null;
@@ -62,6 +66,26 @@ export function buildJsonErrorResponse(
 
   return NextResponse.json(body, { status, headers });
 }
+
+/**
+ * Clean up temporary disk artifacts whenever transcription finishes or aborts
+ */
+export async function safeCleanupTemporaryAudioFile(
+  filePath: string | undefined
+): Promise<void> {
+  if (!filePath) return;
+  try {
+    const resolved = path.resolve(filePath);
+    // Security check: ensure path is within system temp directory
+    const tempDir = os.tmpdir();
+    if (resolved.startsWith(tempDir)) {
+      await fs.unlink(resolved);
+    }
+  } catch {
+    // Non-fatal: temporary file may have already been cleaned up
+  }
+}
+
 
 /**
  * Log end-to-end transcription latency alongside payload byte size in development
