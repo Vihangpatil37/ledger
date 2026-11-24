@@ -151,8 +151,10 @@ export function GlobalVoiceModal({
   // Manual fallback input state
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualText, setManualText] = useState("");
+  const [draftTranscript, setDraftTranscript] = useState("");
 
   const [isPending, startTransition] = useTransition();
+
   const hasTriggeredProcessingRef = useRef(false);
 
   // Clean up media streams, Web Audio context, and timers on unmount
@@ -251,7 +253,15 @@ export function GlobalVoiceModal({
     onError: handleSpeechError,
   });
 
+  // Preserve draft transcript across recognition attempts and network reconnects
+  useEffect(() => {
+    if (transcript) {
+      setDraftTranscript(transcript);
+    }
+  }, [transcript]);
+
   const stopAudioRecording = useCallback(() => {
+
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -904,9 +914,15 @@ export function GlobalVoiceModal({
                 {!showManualInput && (isSupported || engineMode === "AUDIO_RECORDING") ? (
                   <button
                     type="button"
-                    onClick={() => setShowManualInput(true)}
+                    onClick={() => {
+                      setShowManualInput(true);
+                      if (draftTranscript && !manualText) {
+                        setManualText(draftTranscript);
+                      }
+                    }}
                     className="text-xs font-semibold text-muted hover:text-ink transition-colors underline underline-offset-4 cursor-pointer"
                   >
+
                     {t("voice.manualFallback")}
                   </button>
                 ) : (
