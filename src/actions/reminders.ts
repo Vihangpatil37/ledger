@@ -67,6 +67,12 @@ export async function setPromiseToPay(
       }
     );
 
+    // Mark any earlier pending promises as rescheduled
+    await promisesCol().updateMany(
+      { personId: personId.data, ownerId: owner, status: "PENDING" },
+      { $set: { status: "RESCHEDULED", resolvedAt: new Date() } }
+    );
+
     // Audit log in promises collection
     await promisesCol().insertOne({
       _id: randomUUID(),
