@@ -905,8 +905,28 @@ export function GlobalVoiceModal({
             )}
 
             {speechError && engineMode === "BROWSER" && !switchNotice && (
-              <FieldError message={speechError} />
+              <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-200 flex flex-col items-center gap-2 w-full max-w-sm text-center">
+                <p className="font-semibold text-rose-700 dark:text-rose-300">
+                  {speechError}
+                </p>
+                <p className="text-[11px] opacity-90">
+                  Google speech service is unreachable. Switch to Groq Whisper for server-side recognition.
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    switchEngineMode("AUDIO_RECORDING");
+                    setSwitchNotice("Switched to Groq Whisper mode");
+                    setErrorMessage(null);
+                  }}
+                  className="mt-0.5 px-2.5 py-1 text-xs font-semibold border-amber-600/40 hover:bg-amber-500/20"
+                >
+                  Switch to Groq Whisper
+                </Button>
+
+              </div>
             )}
+
           </div>
         )}
 
