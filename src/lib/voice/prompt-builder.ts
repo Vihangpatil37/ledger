@@ -140,6 +140,40 @@ export const SHOP_INVENTORY_ITEMS = [
   "water",
 ];
 
+export const MAX_WHISPER_PROMPT_CHARS = 800;
+
+/**
+ * Truncate customer prompt context string at 800 characters to protect token budget
+ */
+export function compileConditionedWhisperPrompt(
+  customerNames: string[],
+  extraKeywords: string[] = [],
+  maxChars: number = MAX_WHISPER_PROMPT_CHARS
+): string {
+  const baseVocabulary = [
+    ...STANDARD_KHATA_TERMINOLOGY,
+    ...REGIONAL_CURRENCY_TERMS,
+    ...REGIONAL_BOOKKEEPING_VERBS,
+    ...SHOP_INVENTORY_ITEMS,
+    ...extraKeywords,
+  ];
+
+  const vocabPart = `Chai ledger khata terms: ${Array.from(new Set(baseVocabulary)).join(", ")}.`;
+  const namesPart =
+    customerNames.length > 0
+      ? ` Customer names: ${customerNames.join(", ")}.`
+      : "";
+  const fullPrompt = `${vocabPart}${namesPart}`;
+
+  if (fullPrompt.length <= maxChars) {
+    return fullPrompt;
+  }
+
+  // Ensure prompt fits within token budget while preserving base vocabulary
+  return fullPrompt.slice(0, maxChars).replace(/,\s*[^,]*$/, ".");
+}
+
+
 
 
 
