@@ -15,6 +15,7 @@ type DialogProps = {
   children: ReactNode;
   className?: string;
   glass?: boolean;
+  backdropClassName?: string;
 };
 
 export function Dialog({
@@ -25,6 +26,7 @@ export function Dialog({
   children,
   className = "",
   glass = false,
+  backdropClassName = "",
 }: DialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
@@ -98,11 +100,11 @@ export function Dialog({
   return (
     <div
       role="presentation"
-      className={`fixed inset-0 z-50 flex justify-center backdrop-blur-xs transition-opacity animate-in fade-in duration-150 ${
+      className={`fixed inset-0 z-50 flex justify-center bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity animate-in fade-in duration-150 ${
         glass
-          ? "items-center p-3 sm:p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
-          : "items-end sm:items-center p-0 sm:p-4 bg-ink/60"
-      }`}
+          ? "items-center p-3 sm:p-4"
+          : "items-end sm:items-center p-0 sm:p-4"
+      } ${backdropClassName}`.trim()}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
