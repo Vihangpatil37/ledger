@@ -17,7 +17,19 @@ export function getLazyGroqClient(apiKey: string): Groq {
   return cachedGroqClient;
 }
 
+export const DEFAULT_TRANSCRIPTION_TIMEOUT_MS = 8000; // 8 seconds
+
+/**
+ * Attach an AbortSignal with an eight-second timeout to prevent hanging API requests
+ */
+export function createTranscriptionAbortSignal(
+  timeoutMs: number = DEFAULT_TRANSCRIPTION_TIMEOUT_MS
+): AbortSignal {
+  return AbortSignal.timeout(timeoutMs);
+}
+
 export const MAX_AUDIO_PAYLOAD_BYTES = 15 * 1024 * 1024; // 15 Megabytes
+
 
 
 export interface PayloadValidationResult {

@@ -11,7 +11,9 @@ import {
   assertValidTranscriptionSession,
   checkSessionRateLimit,
   getLazyGroqClient,
+  createTranscriptionAbortSignal,
 } from "@/server/voice-transcribe";
+
 
 
 export const runtime = "nodejs";
@@ -124,14 +126,18 @@ export async function POST(req: NextRequest) {
       "Chai ledger khata: udhar, jama, rupaye, paise, chai, biskut, samosa, baaki, diya, mila, aaya, payment, account entry.";
     const conditionedPrompt = (basePrompt + customerNamesHint).slice(0, 800);
 
-    const transcription = await groq.audio.transcriptions.create({
-      file: uploadable,
-      model: "whisper-large-v3-turbo",
-      prompt: conditionedPrompt,
-      temperature: 0.2,
-      response_format: "json",
-      ...(language ? { language } : {}),
-    });
+    const transcription = await groq.audio.transcriptions.create(
+      {
+        file: uploadable,
+        model: "whisper-large-v3-turbo",
+        prompt: conditionedPrompt,
+        temperature: 0.2,
+        response_format: "json",
+        ...(language ? { language } : {}),
+      },
+      { signal: createTranscriptionAbortSignal() }
+    );
+
 
     return NextResponse.json({ text: transcription.text || "" });
   } catch (err: unknown) {
