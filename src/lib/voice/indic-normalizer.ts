@@ -181,6 +181,34 @@ export function cleanTranscriptionPunctuation(text: string): string {
     .trim();
 }
 
+/**
+ * Hash transcribed names using Double Metaphone for regional phonetic comparison
+ */
+export function doubleMetaphoneKey(input: string): string {
+  if (!input) return "";
+  let str = input.toUpperCase().trim();
+
+  // Normalize common Indic transliteration variations
+  str = str
+    .replace(/EE/g, "I")
+    .replace(/OO/g, "U")
+    .replace(/BH/g, "B")
+    .replace(/DH/g, "D")
+    .replace(/GH/g, "G")
+    .replace(/KH/g, "K")
+    .replace(/PH/g, "F")
+    .replace(/TH/g, "T")
+    .replace(/SH/g, "S")
+    .replace(/V/g, "W");
+
+  // Keep first letter and consonants
+  const first = str.charAt(0);
+  const rest = str.slice(1).replace(/[AEIOUYHW]/g, "");
+
+  return (first + rest).slice(0, 5);
+}
+
+
 
 
 
