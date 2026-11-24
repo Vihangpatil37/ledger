@@ -90,3 +90,51 @@ export async function getPreferredMicrophoneDeviceId(): Promise<
     return undefined;
   }
 }
+
+export type MicrophonePermissionState =
+  | "prompt"
+  | "granted"
+  | "denied"
+  | "unsupported";
+
+/**
+ * Inspect microphone permission state and produce clear guidance
+ */
+export async function checkMicrophonePermissionState(): Promise<MicrophonePermissionState> {
+  if (
+    typeof navigator === "undefined" ||
+    !navigator.permissions?.query
+  ) {
+    return "unsupported";
+  }
+
+  try {
+    const status = await navigator.permissions.query({
+      name: "microphone" as PermissionName,
+    });
+    return status.state;
+  } catch {
+    return "unsupported";
+  }
+}
+
+export function formatMicrophoneError(error: unknown): string {
+  if (error instanceof DOMException) {
+    switch (error.name) {
+      case "NotAllowedError":
+      case "PermissionDeniedError":
+        return "Microphone permission is blocked. Please allow microphone access in your browser settings to record speech.";
+      case "NotFoundError":
+      case "DevicesNotFoundError":
+        return "No microphone found on your device. Please plug in a microphone or headset.";
+      case "NotReadableError":
+      case "TrackStartError":
+        return "Microphone is in use by another application. Please close other audio tabs.";
+      default:
+        return `Microphone error: ${error.message}`;
+    }
+  }
+  return error instanceof Error
+    ? error.message
+    : "Unable to access microphone.";
+}
