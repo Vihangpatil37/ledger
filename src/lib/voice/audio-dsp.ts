@@ -95,6 +95,35 @@ export function isSpeechActive(
   return currentVolume >= triggerLevel;
 }
 
+/**
+ * Stopwatch tracking consecutive duration of silence after speech has commenced
+ */
+export class SilenceStopwatch {
+  private silenceStartTimestamp: number | null = null;
+
+  public markSilence(now: number = Date.now()): void {
+    if (this.silenceStartTimestamp === null) {
+      this.silenceStartTimestamp = now;
+    }
+  }
+
+  public reset(): void {
+    this.silenceStartTimestamp = null;
+  }
+
+  public getElapsedSilenceMs(now: number = Date.now()): number {
+    if (this.silenceStartTimestamp === null) {
+      return 0;
+    }
+    return Math.max(0, now - this.silenceStartTimestamp);
+  }
+
+  public get isTracking(): boolean {
+    return this.silenceStartTimestamp !== null;
+  }
+}
+
+
 
 
 
