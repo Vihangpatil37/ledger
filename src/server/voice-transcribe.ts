@@ -96,3 +96,16 @@ export function verifyAudioMagicBytes(buffer: Buffer): {
   };
 }
 
+/**
+ * Verify active user session before opening any transcription requests
+ */
+export function assertValidTranscriptionSession(
+  session: { userId?: string } | null | undefined
+): string {
+  if (!session || !session.userId || typeof session.userId !== "string") {
+    throw new Error("Unauthorized: Valid user session required.");
+  }
+  return session.userId;
+}
+
+

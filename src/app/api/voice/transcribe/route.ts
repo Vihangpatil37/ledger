@@ -7,17 +7,21 @@ import { activeFilter } from "@/lib/trash";
 import {
   validateAudioPayloadSize,
   verifyAudioMagicBytes,
+  assertValidTranscriptionSession,
 } from "@/server/voice-transcribe";
 
 export const runtime = "nodejs";
 
-
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
-    if (!session) {
+    let userId: string;
+    try {
+      userId = assertValidTranscriptionSession(session);
+    } catch {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
 
     const formData = await req.formData();
     const audioBlob = formData.get("file") ?? formData.get("audio");
@@ -77,7 +81,7 @@ export async function POST(req: NextRequest) {
     try {
       const activePeople = await peopleCol()
         .find(
-          { ownerId: session.userId, ...activeFilter() },
+          { ownerId: userId, ...activeFilter() },
           { projection: { name: 1 } }
         )
         .sort({ updatedAt: -1, name: 1 })
