@@ -1,7 +1,9 @@
 /**
  * Voice Transcription Server Engine and Guardrails
  */
+import { NextResponse } from "next/server";
 import Groq from "groq-sdk";
+
 
 let cachedGroqClient: Groq | null = null;
 let cachedApiKey: string | null = null;
@@ -34,6 +36,33 @@ export interface FormattedTranscriptionError {
   isRateLimit: boolean;
   retryAfterSeconds?: number;
 }
+
+export interface JsonApiErrorResponse {
+  error: string;
+  code?: string;
+  timestamp: string;
+  status: number;
+}
+
+/**
+ * Structure server errors into clean JSON payloads with human-readable messages
+ */
+export function buildJsonErrorResponse(
+  message: string,
+  status: number,
+  code?: string,
+  headers?: Record<string, string>
+): NextResponse {
+  const body: JsonApiErrorResponse = {
+    error: message,
+    code: code || `HTTP_${status}`,
+    timestamp: new Date().toISOString(),
+    status,
+  };
+
+  return NextResponse.json(body, { status, headers });
+}
+
 
 /**
  * Catch upstream rate limit errors and present friendly cooldown guidance
