@@ -138,3 +138,29 @@ export function formatMicrophoneError(error: unknown): string {
     ? error.message
     : "Unable to access microphone.";
 }
+
+/**
+ * Attach listeners to media stream tracks to notify on sudden disconnection (bluetooth/headset)
+ */
+export function monitorTrackDisconnection(
+  stream: MediaStream,
+  onDisconnect: (reason: string) => void
+): () => void {
+  const tracks = stream.getAudioTracks();
+  const handlers: Array<{ track: MediaStreamTrack; handler: () => void }> = [];
+
+  for (const track of tracks) {
+    const handleEnded = () => {
+      onDisconnect(`Audio track ended unexpectedly (${track.label || "microphone"})`);
+    };
+    track.addEventListener("ended", handleEnded);
+    handlers.push({ track, handler: handleEnded });
+  }
+
+  return () => {
+    for (const { track, handler } of handlers) {
+      track.removeEventListener("ended", handler);
+    }
+  };
+}
+
