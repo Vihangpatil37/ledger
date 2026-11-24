@@ -230,5 +230,13 @@ export class AudioChunkRingBuffer {
   }
 }
 
+export const DEFAULT_AUDIO_TIMESLICE_MS = 250;
+
+export interface MediaRecorderOptionsConfig {
+  timesliceMs?: number;
+  mimeType?: string;
+}
+
+
 
 
