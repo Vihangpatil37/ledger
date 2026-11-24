@@ -224,6 +224,44 @@ export function invalidatePromptCache(ownerId?: string): void {
   }
 }
 
+export const HINDI_PROMPT_KEYWORDS = [
+  "रुपये",
+  "उधार",
+  "जमा",
+  "खाता",
+  "चाय",
+  "बाकी",
+  "दिए",
+  "लिए",
+];
+
+export const GUJARATI_PROMPT_KEYWORDS = [
+  "રૂપિયા",
+  "ઉધાર",
+  "જમા",
+  "ખાતું",
+  "ચા",
+  "બાકી",
+  "આપ્યા",
+  "લીધા",
+];
+
+/**
+ * Select prompt language keywords dynamically according to the current shop locale
+ */
+export function getLocalePromptKeywords(locale?: string): string[] {
+  if (!locale) return [];
+  const normalized = locale.toLowerCase();
+  if (normalized.startsWith("hi")) {
+    return HINDI_PROMPT_KEYWORDS;
+  }
+  if (normalized.startsWith("gu")) {
+    return GUJARATI_PROMPT_KEYWORDS;
+  }
+  return [];
+}
+
+
 
 
 

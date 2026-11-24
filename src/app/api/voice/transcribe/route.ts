@@ -3,8 +3,11 @@ import { toFile } from "groq-sdk";
 
 import { getGroqApiKey } from "@/server/env";
 import { getSession } from "@/server/session";
-import { peopleCol } from "@/lib/mongo";
-import { activeFilter } from "@/lib/trash";
+import {
+  getCachedConditionedPrompt,
+  getLocalePromptKeywords,
+} from "@/lib/voice/prompt-builder";
+
 import {
   validateAudioPayloadSize,
   verifyAudioMagicBytes,
@@ -15,6 +18,7 @@ import {
   formatUpstreamTranscriptionError,
   logTranscriptionMetric,
 } from "@/server/voice-transcribe";
+
 
 
 
@@ -105,32 +109,12 @@ export async function POST(req: NextRequest) {
         ? languageParam.trim()
         : undefined;
 
-    // Fetch active customer names to bias Whisper's phonetic decoder towards exact database spellings
-    let customerNamesHint = "";
-    try {
-      const activePeople = await peopleCol()
-        .find(
-          { ownerId: userId, ...activeFilter() },
-          { projection: { name: 1 } }
-        )
-        .sort({ updatedAt: -1, name: 1 })
-        .limit(50)
-        .toArray();
+    const localeKeywords = getLocalePromptKeywords(language);
+    const conditionedPrompt = await getCachedConditionedPrompt(
+      userId,
+      localeKeywords
+    );
 
-      const names = activePeople
-        .map((p) => p.name?.trim())
-        .filter((n): n is string => Boolean(n && n.length > 0));
-
-      if (names.length > 0) {
-        customerNamesHint = ` Customer names: ${names.join(", ")}.`;
-      }
-    } catch {
-      // Non-fatal: if DB query fails, proceed with base prompt
-    }
-
-    const basePrompt =
-      "Chai ledger khata: udhar, jama, rupaye, paise, chai, biskut, samosa, baaki, diya, mila, aaya, payment, account entry.";
-    const conditionedPrompt = (basePrompt + customerNamesHint).slice(0, 800);
 
     const transcription = await groq.audio.transcriptions.create(
       {
