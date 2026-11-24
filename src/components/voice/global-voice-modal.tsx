@@ -833,24 +833,31 @@ export function GlobalVoiceModal({
               )}
             </div>
 
-            {/* Live Audio Waveform Bars */}
+            {/* Live Audio Waveform Bars - 7 Responsive Animated Equalizer Bars */}
             {isRecording && (
-              <div className="flex items-center justify-center gap-1.5 h-9">
+              <div
+                className="flex items-center justify-center gap-1.5 h-10 px-4 py-1 rounded-full bg-rule/20"
+                aria-label="Live sound level equalizer"
+              >
                 {[0.4, 0.7, 1.0, 0.8, 0.5, 0.9, 0.6].map((scale, i) => {
                   const barHeight = Math.max(
                     6,
-                    Math.round(32 * (effectiveAudioLevel * scale + 0.15))
+                    Math.min(36, Math.round(36 * (effectiveAudioLevel * scale + 0.12)))
                   );
                   return (
                     <span
                       key={i}
-                      className="w-1.5 rounded-full bg-debit transition-all duration-75 shadow-xs"
-                      style={{ height: `${barHeight}px` }}
+                      className="w-1.5 rounded-full bg-debit transition-all duration-100 ease-out shadow-xs"
+                      style={{
+                        height: `${barHeight}px`,
+                        opacity: 0.6 + effectiveAudioLevel * 0.4,
+                      }}
                     />
                   );
                 })}
               </div>
             )}
+
 
             {/* Instruction chips */}
             {!isRecording && (
