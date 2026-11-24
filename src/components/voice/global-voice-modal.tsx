@@ -74,13 +74,20 @@ export function GlobalVoiceModal({
   // Global keyboard shortcut: Alt+V or Ctrl+Shift+V
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (
-        (e.altKey && e.code === "KeyV") ||
-        (e.ctrlKey && e.shiftKey && e.code === "KeyV")
-      ) {
+      const isVoiceShortcut =
+        (e.altKey && (e.code === "KeyV" || e.key.toLowerCase() === "v")) ||
+        (e.ctrlKey &&
+          e.shiftKey &&
+          (e.code === "KeyV" || e.key.toLowerCase() === "v"));
+
+      if (isVoiceShortcut) {
         e.preventDefault();
         if (isControlled && controlledOnClose) {
-          // controlled
+          if (isOpen) {
+            controlledOnClose();
+          } else {
+            openGlobalVoiceModal();
+          }
         } else {
           setInternalIsOpen((prev) => !prev);
         }
@@ -88,7 +95,8 @@ export function GlobalVoiceModal({
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isControlled, controlledOnClose]);
+  }, [isControlled, controlledOnClose, isOpen]);
+
 
   const { locale, t } = useLanguage();
   const [speechLang, setSpeechLang] = useState<string>(() => mapLocaleToSpeechLang(locale));
