@@ -4,6 +4,7 @@ import { getGroqApiKey } from "@/server/env";
 import { getSession } from "@/server/session";
 import { peopleCol } from "@/lib/mongo";
 import { activeFilter } from "@/lib/trash";
+import { validateAudioPayloadSize } from "@/server/voice-transcribe";
 
 export const runtime = "nodejs";
 
@@ -23,6 +24,15 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    const payloadValidation = validateAudioPayloadSize(audioBlob);
+    if (!payloadValidation.valid) {
+      return NextResponse.json(
+        { error: payloadValidation.error },
+        { status: 400 }
+      );
+    }
+
 
     const apiKey = getGroqApiKey();
     if (!apiKey) {
