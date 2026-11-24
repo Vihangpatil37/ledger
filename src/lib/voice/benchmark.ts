@@ -44,3 +44,29 @@ export class VoiceLatencyTracker {
     };
   }
 }
+
+export interface VoiceAuditLogEntry {
+  transcriptLength: number;
+  customerMatchConfidence: number;
+  matchedCustomerName?: string;
+  matchedAction?: string;
+  amountPaise?: number;
+  durationMs: number;
+  engine: "BROWSER" | "AUDIO_RECORDING";
+}
+
+/**
+ * Log transcription length and customer match confidence for audit quality
+ */
+export function logVoiceAuditEntry(entry: VoiceAuditLogEntry): void {
+  if (process.env.NODE_ENV !== "production") {
+    console.log(
+      `[Voice:Audit] engine=${entry.engine} chars=${entry.transcriptLength} ` +
+        `confidence=${(entry.customerMatchConfidence * 100).toFixed(1)}% ` +
+        `customer=${entry.matchedCustomerName || "none"} ` +
+        `action=${entry.matchedAction || "unknown"} ` +
+        `duration=${entry.durationMs}ms`
+    );
+  }
+}
+
