@@ -123,6 +123,38 @@ export class SilenceStopwatch {
   }
 }
 
+export const DEFAULT_SILENCE_AUTO_STOP_MS = 1500;
+
+export interface AutoStopEvaluation {
+  shouldStop: boolean;
+  reason?: "silence_timeout" | "max_duration";
+  elapsedSilenceMs: number;
+}
+
+/**
+ * Stop recording automatically once one and a half seconds of quiet is observed
+ */
+export function evaluateAutoStop(
+  stopwatch: SilenceStopwatch,
+  silenceThresholdMs: number = DEFAULT_SILENCE_AUTO_STOP_MS,
+  now: number = Date.now()
+): AutoStopEvaluation {
+  const elapsedSilenceMs = stopwatch.getElapsedSilenceMs(now);
+  if (stopwatch.isTracking && elapsedSilenceMs >= silenceThresholdMs) {
+    return {
+      shouldStop: true,
+      reason: "silence_timeout",
+      elapsedSilenceMs,
+    };
+  }
+
+  return {
+    shouldStop: false,
+    elapsedSilenceMs,
+  };
+}
+
+
 
 
 
