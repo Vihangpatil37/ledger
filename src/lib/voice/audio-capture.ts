@@ -64,3 +64,29 @@ export function getOptimalAudioConstraints(
     noiseSuppression: { ideal: noiseSuppression },
   };
 }
+
+/**
+ * Query available audio input devices and return default or preferred microphone
+ */
+export async function getPreferredMicrophoneDeviceId(): Promise<
+  string | undefined
+> {
+  if (
+    typeof navigator === "undefined" ||
+    !navigator.mediaDevices?.enumerateDevices
+  ) {
+    return undefined;
+  }
+
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const audioInputs = devices.filter((d) => d.kind === "audioinput");
+    const defaultDevice = audioInputs.find(
+      (d) =>
+        d.deviceId === "default" || d.label.toLowerCase().includes("default")
+    );
+    return defaultDevice?.deviceId || audioInputs[0]?.deviceId;
+  } catch {
+    return undefined;
+  }
+}
