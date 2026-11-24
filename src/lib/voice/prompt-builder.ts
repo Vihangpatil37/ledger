@@ -76,4 +76,19 @@ export function rankCustomerNames(
   return Array.from(uniqueCleanNames);
 }
 
+/**
+ * Standard khata terminology seeded into initial Whisper prompt context
+ */
+export const STANDARD_KHATA_TERMINOLOGY = [
+  "khata",
+  "hisab",
+  "bahi",
+  "baaki",
+  "chumma",
+  "panna",
+  "balance",
+  "entry",
+];
+
+
 
