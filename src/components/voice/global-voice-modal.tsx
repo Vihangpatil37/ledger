@@ -13,7 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button, FieldError, Label, inputClass } from "@/components/ui";
+import { Button, Label, inputClass } from "@/components/ui";
+
 import {
   useSpeechRecognition,
   mapLocaleToSpeechLang,
