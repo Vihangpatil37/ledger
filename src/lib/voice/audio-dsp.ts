@@ -77,5 +77,24 @@ export async function sampleRoomNoiseBaseline(
   return Math.max(0.01, average);
 }
 
+export interface SpeechDetectionThresholds {
+  noiseFloor: number;
+  snrMultiplier?: number;
+  minimumSpeechRms?: number;
+}
+
+/**
+ * Determine if the current volume reading qualifies as active speech over noise floor
+ */
+export function isSpeechActive(
+  currentVolume: number,
+  thresholds: SpeechDetectionThresholds
+): boolean {
+  const { noiseFloor, snrMultiplier = 1.8, minimumSpeechRms = 0.04 } = thresholds;
+  const triggerLevel = Math.max(minimumSpeechRms, noiseFloor * snrMultiplier);
+  return currentVolume >= triggerLevel;
+}
+
+
 
 
