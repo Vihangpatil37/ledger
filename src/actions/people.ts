@@ -6,6 +6,7 @@ import { randomUUID } from "node:crypto";
 import type { ClientSession } from "mongodb";
 import { entriesCol, mongoClient, peopleCol } from "@/lib/mongo";
 import { getSession } from "@/server/session";
+import { invalidatePromptCache } from "@/lib/voice/prompt-builder";
 import type { ActionState } from "@/lib/types";
 import {
   fieldErrorsOf,
@@ -44,6 +45,7 @@ export async function createPerson(
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+    invalidatePromptCache(owner);
   } catch {
     return { error: "Could not save. Try again." };
   }
@@ -89,6 +91,7 @@ export async function updatePerson(
   }
   if (matched === 0) return { error: "Person not found." };
 
+  invalidatePromptCache(owner);
   expirePaths(id.data);
   return { ok: true };
 }
@@ -134,6 +137,7 @@ export async function deletePerson(formData: FormData): Promise<void> {
     }
   }
 
+  invalidatePromptCache(owner);
   revalidatePath(HOME);
   redirect(HOME);
 }

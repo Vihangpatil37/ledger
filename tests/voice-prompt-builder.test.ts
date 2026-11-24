@@ -4,6 +4,7 @@ import {
   rankCustomerNames,
   compileConditionedWhisperPrompt,
   getLocalePromptKeywords,
+  invalidatePromptCache,
   MAX_WHISPER_PROMPT_CHARS,
   STANDARD_KHATA_TERMINOLOGY,
   REGIONAL_BOOKKEEPING_VERBS,
@@ -88,6 +89,13 @@ describe("Voice Prompt Builder and Conditioning", () => {
     it("returns empty list for English or undefined", () => {
       expect(getLocalePromptKeywords("en-IN")).toEqual([]);
       expect(getLocalePromptKeywords(undefined)).toEqual([]);
+    });
+  });
+
+  describe("invalidatePromptCache", () => {
+    it("clears cached prompts for specified ownerId or entirely without throwing", () => {
+      expect(() => invalidatePromptCache("owner-123")).not.toThrow();
+      expect(() => invalidatePromptCache()).not.toThrow();
     });
   });
 });

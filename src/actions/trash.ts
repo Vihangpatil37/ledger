@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { ClientSession } from "mongodb";
 import { entriesCol, mongoClient, peopleCol, promisesCol } from "@/lib/mongo";
 import { getSession } from "@/server/session";
+import { invalidatePromptCache } from "@/lib/voice/prompt-builder";
 import type { ActionState } from "@/lib/types";
 import { idSchema } from "@/lib/validation";
 
@@ -46,6 +47,7 @@ export async function restorePerson(
     if (session) await session.endSession();
   }
 
+  invalidatePromptCache(owner);
   revalidatePath("/");
   revalidatePath("/trash");
   revalidatePath(`/people/${id.data}`);
@@ -95,6 +97,7 @@ export async function restoreEntry(
     if (session) await session.endSession();
   }
 
+  invalidatePromptCache(owner);
   revalidatePath("/");
   revalidatePath("/trash");
   revalidatePath(`/people/${personId.data}`);
@@ -137,6 +140,8 @@ export async function purgeTrashItem(
   } finally {
     if (session) await session.endSession();
   }
+
+  invalidatePromptCache(owner);
 
   revalidatePath("/trash");
   return { ok: true };
@@ -181,6 +186,8 @@ export async function emptyTrash(): Promise<ActionState | void> {
   } finally {
     if (session) await session.endSession();
   }
+
+  invalidatePromptCache(owner);
 
   revalidatePath("/trash");
   return { ok: true };
