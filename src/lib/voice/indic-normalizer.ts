@@ -208,6 +208,34 @@ export function doubleMetaphoneKey(input: string): string {
   return (first + rest).slice(0, 5);
 }
 
+/**
+ * Calculate Levenshtein edit distance between spoken words and stored names
+ */
+export function calculateLevenshteinDistance(a: string, b: string): number {
+  const s1 = a.toLowerCase().trim();
+  const s2 = b.toLowerCase().trim();
+
+  if (s1 === s2) return 0;
+  if (s1.length === 0) return s2.length;
+  if (s2.length === 0) return s1.length;
+
+  const row = Array.from({ length: s2.length + 1 }, (_, i) => i);
+
+  for (let i = 0; i < s1.length; i++) {
+    let prev = i + 1;
+    for (let j = 0; j < s2.length; j++) {
+      const cost = s1[i] === s2[j] ? 0 : 1;
+      const val = Math.min(row[j + 1] + 1, prev + 1, row[j] + cost);
+      row[j] = prev;
+      prev = val;
+    }
+    row[s2.length] = prev;
+  }
+
+  return row[s2.length];
+}
+
+
 
 
 
