@@ -199,13 +199,14 @@ export function doubleMetaphoneKey(input: string): string {
     .replace(/PH/g, "F")
     .replace(/TH/g, "T")
     .replace(/SH/g, "S")
-    .replace(/V/g, "W");
+    .replace(/[VW]/g, "B");
 
   // Keep first letter and consonants
   const first = str.charAt(0);
-  const rest = str.slice(1).replace(/[AEIOUYHW]/g, "");
+  const rest = str.slice(1).replace(/[AEIOUYH]/g, "");
 
   return (first + rest).slice(0, 5);
+
 }
 
 /**
