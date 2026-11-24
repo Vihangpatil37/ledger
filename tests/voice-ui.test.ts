@@ -125,5 +125,30 @@ describe("Global Voice Modal & UI helpers", () => {
       expect(sideNavSource).toContain("Alt+V");
       expect(sideNavSource).toContain("VoiceKhataIcon");
     });
+
+    it("recording stage maintains bounded acoustic clearance and heritage tokens", () => {
+      const modalSource = fs.readFileSync(
+        path.join(process.cwd(), "src", "components", "voice", "global-voice-modal.tsx"),
+        "utf-8"
+      );
+
+      // Dedicated acoustic stage container with clearance
+      expect(modalSource).toContain("relative flex items-center justify-center h-44 my-2 select-none");
+
+      // Language pills container has clean spacing without negative margins
+      expect(modalSource).toContain('flex items-center justify-center gap-2 mb-1');
+      expect(modalSource).not.toContain('gap-1.5 -mb-1');
+
+      // Heritage palette terracotta waves without neon rose rings
+      expect(modalSource).toContain("bg-debit/10 dark:bg-debit/20");
+      expect(modalSource).toContain("bg-debit/20 dark:bg-debit/30");
+      expect(modalSource).not.toContain("bg-rose-500");
+
+      // Clean solid white stop square
+      expect(modalSource).toContain('size-6 rounded-md bg-white shadow-sm');
+
+      // Outlines adhere to debit tone rather than blue focus ring
+      expect(modalSource).toContain("focus-visible:outline-debit");
+    });
   });
 });

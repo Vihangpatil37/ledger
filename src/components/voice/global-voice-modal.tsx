@@ -705,7 +705,7 @@ export function GlobalVoiceModal({
 
 
             {/* Language Selector Pills */}
-            <div className="flex items-center justify-center gap-1.5 -mb-1">
+            <div className="flex items-center justify-center gap-2 mb-1">
               {[
                 { code: "hi-IN", label: "हिन्दी" },
                 { code: "gu-IN", label: "ગુજરાતી" },
@@ -740,36 +740,31 @@ export function GlobalVoiceModal({
               </div>
             )}
 
-            {/* Visual Pulse & Mic Button with layered fluid ripple rings */}
-            <div className="relative flex items-center justify-center">
+            {/* Visual Pulse & Mic Button with bounded acoustic stage */}
+            <div className="relative flex items-center justify-center h-44 my-2 select-none">
               {isRecording && (
-                <>
-                  {/* Outer pulsating wave */}
-                  <div
-                    className="absolute rounded-full bg-rose-500/15 dark:bg-rose-500/25 transition-transform duration-100 ease-out pointer-events-none"
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  {/* Outer subtle acoustic aura */}
+                  <span
+                    className="absolute rounded-full bg-debit/10 dark:bg-debit/20 transition-transform duration-150 ease-out will-change-transform"
                     style={{
-                      width: `${130 + effectiveAudioLevel * 80}px`,
-                      height: `${130 + effectiveAudioLevel * 80}px`,
+                      width: `${128 + effectiveAudioLevel * 48}px`,
+                      height: `${128 + effectiveAudioLevel * 48}px`,
                     }}
                   />
-                  {/* Middle ring */}
-                  <div
-                    className="absolute rounded-full bg-rose-500/25 dark:bg-rose-500/35 transition-transform duration-75 ease-out pointer-events-none"
+                  {/* Inner concentrated acoustic halo */}
+                  <span
+                    className="absolute rounded-full bg-debit/20 dark:bg-debit/30 transition-transform duration-100 ease-out will-change-transform"
                     style={{
-                      width: `${115 + effectiveAudioLevel * 50}px`,
-                      height: `${115 + effectiveAudioLevel * 50}px`,
+                      width: `${112 + effectiveAudioLevel * 32}px`,
+                      height: `${112 + effectiveAudioLevel * 32}px`,
                     }}
                   />
-                  {/* Radar ping ring */}
-                  <div
-                    className="absolute rounded-full bg-rose-500/40 dark:bg-rose-500/50 animate-ping pointer-events-none"
-                    style={{
-                      width: "110px",
-                      height: "110px",
-                      animationDuration: "1.6s",
-                    }}
+                  {/* Gentle rhythmic core breathing ring */}
+                  <span
+                    className="absolute size-28 rounded-full border border-debit/40 animate-pulse pointer-events-none"
                   />
-                </>
+                </div>
               )}
 
               <button
@@ -788,27 +783,24 @@ export function GlobalVoiceModal({
                     ? "Click or press Space/Enter to stop recording and submit"
                     : "Click to start recording"
                 }
-                className={`group relative z-10 flex size-24 items-center justify-center rounded-full shadow-xl transition-all duration-300 cursor-pointer focus-visible:outline-2 focus-visible:outline-focus ${
+                className={`group relative z-10 flex size-24 items-center justify-center rounded-full shadow-lg transition-all duration-200 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-debit ${
                   isRecording
-                    ? "bg-debit text-white scale-105 shadow-debit/40 ring-4 ring-debit/20"
+                    ? "bg-debit text-white scale-100 shadow-debit/30 hover:scale-105 active:scale-95 ring-4 ring-debit/20"
                     : engineMode === "AUDIO_RECORDING" || isSupported
-                    ? "bg-ink text-paper hover:scale-105 active:scale-95 shadow-ink/20 hover:shadow-2xl"
+                    ? "bg-ink text-paper hover:scale-105 active:scale-95 shadow-ink/20 hover:shadow-xl"
                     : "bg-muted/40 text-muted cursor-not-allowed shadow-none"
                 }`}
               >
-
                 {isRecording ? (
-                  <div className="flex flex-col items-center justify-center size-8 rounded-lg bg-white shadow-inner animate-pulse">
-                    <span className="size-3.5 rounded-sm bg-debit" />
-                  </div>
+                  <span className="size-6 rounded-md bg-white shadow-sm transition-transform group-hover:scale-110" />
                 ) : (
-                  <MicIcon className="size-10 transition-transform duration-200 group-hover:scale-110" />
+                  <VoiceKhataIcon className="size-10 transition-transform duration-200 group-hover:scale-110" />
                 )}
               </button>
             </div>
 
             {/* Status & Live Speech Stream */}
-            <div className="space-y-2 w-full max-w-sm">
+            <div className="space-y-3 w-full max-w-sm">
               <div className="flex items-center justify-center gap-2">
                 <p className="font-display text-base font-bold text-ink">
                   {isRecording
@@ -823,24 +815,23 @@ export function GlobalVoiceModal({
                 </p>
                 {isRecording && (
                   <span
-                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-debit/10 text-debit font-mono text-xs font-semibold animate-pulse"
-                    aria-label={`Recording time: ${Math.floor(recordingDuration / 60)} minutes and ${recordingDuration % 60} seconds`}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-debit/10 text-debit font-mono text-xs font-semibold"
+                    aria-label={`Recording duration: ${recordingDuration} seconds`}
                   >
-                    <span className="size-2 rounded-full bg-debit" />
+                    <span className="size-2 rounded-full bg-debit animate-ping" />
                     {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, "0")}
                   </span>
                 )}
               </div>
 
-
               {isRecording ? (
-                <div className="rounded-xl border border-debit/20 bg-debit/5 p-3 text-center animate-in fade-in duration-150">
-                  <div className="flex items-center justify-center gap-1.5 text-[11px] font-semibold text-debit mb-1 uppercase tracking-wider">
-                    <span className="size-2 rounded-full bg-debit animate-ping" />
+                <div className="rounded-xl border border-rule/80 bg-surface p-3.5 text-center shadow-2xs animate-in fade-in duration-150">
+                  <div className="flex items-center justify-center gap-1.5 text-[11px] font-medium text-muted mb-1.5">
+                    <span className="size-1.5 rounded-full bg-debit animate-pulse" />
                     <span>
                       {engineMode === "AUDIO_RECORDING"
-                        ? "Live Mic Active • Auto-stops on 1.5s silence"
-                        : t("voice.listening")}
+                        ? "Auto-stops on 1.5s silence • or tap to finish"
+                        : "Live speech active"}
                     </span>
                   </div>
 
@@ -853,7 +844,7 @@ export function GlobalVoiceModal({
                       )
                     ) : (
                       <span className="text-muted italic">
-                        Speak clearly. Recording will auto-submit after you stop speaking, or tap the mic.
+                        Speak khata details clearly (e.g. &ldquo;Ramesh 500 jama&rdquo;)
                       </span>
                     )}
                   </p>
