@@ -8,6 +8,7 @@ import {
   validateAudioPayloadSize,
   verifyAudioMagicBytes,
   assertValidTranscriptionSession,
+  checkSessionRateLimit,
 } from "@/server/voice-transcribe";
 
 export const runtime = "nodejs";
@@ -21,6 +22,22 @@ export async function POST(req: NextRequest) {
     } catch {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rateLimit = checkSessionRateLimit(userId);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: `Too many transcription requests. Please wait ${rateLimit.retryAfterSeconds} seconds before speaking again.`,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.retryAfterSeconds || 5),
+          },
+        }
+      );
+    }
+
 
 
     const formData = await req.formData();

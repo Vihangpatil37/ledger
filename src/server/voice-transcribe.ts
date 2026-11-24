@@ -108,4 +108,48 @@ export function assertValidTranscriptionSession(
   return session.userId;
 }
 
+interface RateLimitRecord {
+  timestamps: number[];
+}
+
+const sessionRateLimits = new Map<string, RateLimitRecord>();
+
+/**
+ * Add a per-session rate limiter to guard the transcription route against loops
+ * Defaults to 20 transcription calls per minute per user
+ */
+export function checkSessionRateLimit(
+  userId: string,
+  maxRequestsPerMinute: number = 20,
+  windowMs: number = 60 * 1000
+): { allowed: boolean; remaining: number; retryAfterSeconds?: number } {
+  const now = Date.now();
+  let record = sessionRateLimits.get(userId);
+
+  if (!record) {
+    record = { timestamps: [] };
+    sessionRateLimits.set(userId, record);
+  }
+
+  // Filter timestamps within current sliding window
+  record.timestamps = record.timestamps.filter((ts) => now - ts < windowMs);
+
+  if (record.timestamps.length >= maxRequestsPerMinute) {
+    const oldest = record.timestamps[0];
+    const retryAfterSeconds = Math.max(1, Math.ceil((oldest + windowMs - now) / 1000));
+    return {
+      allowed: false,
+      remaining: 0,
+      retryAfterSeconds,
+    };
+  }
+
+  record.timestamps.push(now);
+  return {
+    allowed: true,
+    remaining: maxRequestsPerMinute - record.timestamps.length,
+  };
+}
+
+
 
