@@ -20,6 +20,9 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!userId) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const url = new URL("/login", request.url);
     const next = safeNextPath(pathname + search);
     if (next !== "/") url.searchParams.set("next", next);
