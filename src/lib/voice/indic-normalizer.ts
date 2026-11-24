@@ -161,6 +161,27 @@ export function translateGujaratiPaymentTerms(text: string): string {
     .replace(/\b(lidha|lidhu)\b/gi, "jama mila");
 }
 
+const COMMON_FILLER_WORDS = [
+  /\b(?:umm+|uhh+|aah+|hmm+|arre|bhai|yaar)\b/gi,
+];
+
+/**
+ * Strip trailing periods, commas, and filler words from raw transcription text
+ */
+export function cleanTranscriptionPunctuation(text: string): string {
+  if (!text) return "";
+  let cleaned = text;
+  for (const regex of COMMON_FILLER_WORDS) {
+    cleaned = cleaned.replace(regex, " ");
+  }
+
+  return cleaned
+    .replace(/[.,/#!$%^&*;:{}=\-_`~()?"'|[\]\\]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+
 
 
 
