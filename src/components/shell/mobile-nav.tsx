@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/client";
+import { openGlobalVoiceModal } from "@/components/voice/global-voice-modal";
+import { VoiceKhataIcon } from "@/components/voice/voice-icon";
 
 export function MobileNav() {
   const pathname = usePathname();
@@ -17,7 +19,7 @@ export function MobileNav() {
       aria-label="Mobile Navigation"
       className="fixed bottom-0 inset-x-0 z-30 border-t border-rule bg-surface/95 backdrop-blur-md pb-[env(safe-area-inset-bottom,0px)] lg:hidden print:hidden"
     >
-      <div className="grid grid-cols-3 h-14 max-w-md mx-auto items-center px-3 gap-1">
+      <div className="grid grid-cols-4 h-14 max-w-md mx-auto items-center px-2 gap-1">
         <Link
           href="/"
           className={`flex flex-col items-center justify-center min-h-[44px] gap-1 py-1 rounded-xl transition-all ${
@@ -45,6 +47,18 @@ export function MobileNav() {
           </svg>
           <span className="text-[11px] leading-none">{t("nav.people")}</span>
         </Link>
+
+        <button
+          type="button"
+          onClick={openGlobalVoiceModal}
+          aria-label={t("voice.title")}
+          className="flex flex-col items-center justify-center min-h-[44px] gap-1 py-1 rounded-xl text-muted hover:text-ink active:bg-paper/50 transition-all cursor-pointer group"
+        >
+          <div className="flex size-5 items-center justify-center rounded-full bg-debit/15 text-debit group-hover:scale-110 transition-transform">
+            <VoiceKhataIcon className="size-3.5 text-debit" />
+          </div>
+          <span className="text-[11px] leading-none font-medium">{t("voice.title")}</span>
+        </button>
 
         <Link
           href="/people/new"
