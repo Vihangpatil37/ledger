@@ -84,5 +84,59 @@ export function convertGujaratiNumeralsToArabic(text: string): string {
   );
 }
 
+const SPOKEN_NUMBER_WORDS: Record<string, number> = {
+  ek: 1,
+  do: 2,
+  teen: 3,
+  char: 4,
+  chaar: 4,
+  paanch: 5,
+  panch: 5,
+  che: 6,
+  chhah: 6,
+  saat: 7,
+  aath: 8,
+  nau: 9,
+  das: 10,
+  gyarah: 11,
+  barah: 12,
+  terah: 13,
+  chaudah: 14,
+  pandrah: 15,
+  solah: 16,
+  satrah: 17,
+  atharah: 18,
+  unnis: 19,
+  bees: 20,
+  tees: 30,
+  chalis: 40,
+  pachas: 50,
+  saath: 60,
+  sattar: 70,
+  assi: 80,
+  nabbe: 90,
+  sau: 100,
+  so: 100,
+  hazaar: 1000,
+  hazar: 1000,
+  lakh: 100000,
+};
+
+/**
+ * Translate spoken Hindi number phrases like paanch sau into numeric values
+ */
+export function translateSpokenNumberPhrases(text: string): string {
+  if (!text) return "";
+  return text.replace(
+    /\b(ek|do|teen|chaar|char|paanch|panch|che|saat|aath|nau|das)\s+(sau|so|hazaar|hazar)\b/gi,
+    (_, numStr, multStr) => {
+      const num = SPOKEN_NUMBER_WORDS[numStr.toLowerCase()] || 1;
+      const mult = SPOKEN_NUMBER_WORDS[multStr.toLowerCase()] || 1;
+      return String(num * mult);
+    }
+  );
+}
+
+
 
 
