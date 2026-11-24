@@ -37,3 +37,23 @@ export function connectStreamAnalyser(
   return { audioContext, analyser, source };
 }
 
+/**
+ * Calculate true root mean square (RMS) volume normalized between 0.0 and 1.0
+ */
+export function calculateRmsVolume(analyser: AnalyserNode): number {
+  const bufferLength = analyser.frequencyBinCount;
+  const timeData = new Uint8Array(bufferLength);
+  analyser.getByteTimeDomainData(timeData);
+
+  let sumSquares = 0;
+  for (let i = 0; i < bufferLength; i++) {
+    // Convert 0..255 byte domain to -1.0..1.0 float domain
+    const normalized = (timeData[i] - 128) / 128;
+    sumSquares += normalized * normalized;
+  }
+
+  const rms = Math.sqrt(sumSquares / bufferLength);
+  return Math.min(1, Math.max(0, rms));
+}
+
+
