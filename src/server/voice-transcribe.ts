@@ -41,3 +41,58 @@ export function validateAudioPayloadSize(
     sizeBytes,
   };
 }
+
+/**
+ * Inspect initial audio file bytes to verify genuine webm, mp4, ogg, or wav headers
+ */
+export function verifyAudioMagicBytes(buffer: Buffer): {
+  valid: boolean;
+  detectedFormat?: string;
+  error?: string;
+} {
+  if (!buffer || buffer.length < 4) {
+    return { valid: false, error: "Audio buffer is too small to inspect." };
+  }
+
+  // WebM / EBML: 1A 45 DF A3
+  if (
+    buffer[0] === 0x1a &&
+    buffer[1] === 0x45 &&
+    buffer[2] === 0xdf &&
+    buffer[3] === 0xa3
+  ) {
+    return { valid: true, detectedFormat: "webm" };
+  }
+
+  // OggS: 4F 67 67 53
+  if (
+    buffer[0] === 0x4f &&
+    buffer[1] === 0x67 &&
+    buffer[2] === 0x67 &&
+    buffer[3] === 0x53
+  ) {
+    return { valid: true, detectedFormat: "ogg" };
+  }
+
+  // RIFF (WAV): 52 49 46 46
+  if (
+    buffer[0] === 0x52 &&
+    buffer[1] === 0x49 &&
+    buffer[2] === 0x46 &&
+    buffer[3] === 0x46
+  ) {
+    return { valid: true, detectedFormat: "wav" };
+  }
+
+  // MP4 / M4A: check for "ftyp" box within first 16 bytes
+  const headerSlice = buffer.subarray(0, Math.min(buffer.length, 32)).toString("binary");
+  if (headerSlice.includes("ftyp")) {
+    return { valid: true, detectedFormat: "mp4" };
+  }
+
+  return {
+    valid: false,
+    error: "Unrecognized audio container header. Expected webm, mp4, ogg, or wav.",
+  };
+}
+

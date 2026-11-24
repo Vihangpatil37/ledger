@@ -4,9 +4,13 @@ import { getGroqApiKey } from "@/server/env";
 import { getSession } from "@/server/session";
 import { peopleCol } from "@/lib/mongo";
 import { activeFilter } from "@/lib/trash";
-import { validateAudioPayloadSize } from "@/server/voice-transcribe";
+import {
+  validateAudioPayloadSize,
+  verifyAudioMagicBytes,
+} from "@/server/voice-transcribe";
 
 export const runtime = "nodejs";
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -48,6 +52,12 @@ export async function POST(req: NextRequest) {
     const groq = new Groq({ apiKey });
 
     const buffer = Buffer.from(await audioBlob.arrayBuffer());
+
+    const headerCheck = verifyAudioMagicBytes(buffer);
+    if (!headerCheck.valid) {
+      return NextResponse.json({ error: headerCheck.error }, { status: 400 });
+    }
+
     const fileName =
       audioBlob instanceof File && audioBlob.name
         ? audioBlob.name
