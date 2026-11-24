@@ -36,3 +36,28 @@ export function mapToWhisperLanguageCode(
   return undefined;
 }
 
+const DEVANAGARI_DIGIT_MAP: Record<string, string> = {
+  "०": "0",
+  "१": "1",
+  "२": "2",
+  "३": "3",
+  "४": "4",
+  "५": "5",
+  "६": "6",
+  "७": "7",
+  "८": "8",
+  "९": "9",
+};
+
+/**
+ * Convert spoken Devanagari numerals into plain Arabic integer digits
+ */
+export function convertDevanagariNumeralsToArabic(text: string): string {
+  if (!text) return "";
+  return text.replace(
+    /[०-९]/g,
+    (digit) => DEVANAGARI_DIGIT_MAP[digit] || digit
+  );
+}
+
+
