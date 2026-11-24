@@ -151,6 +151,17 @@ export function standardizeInformalCurrencyTerms(text: string): string {
     .replace(/\bsaadhe\s+char\s+sau\b/gi, "450");
 }
 
+/**
+ * Translate Gujarati payment terms like aapya and lidha to standard khata actions
+ */
+export function translateGujaratiPaymentTerms(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/\b(aapya|aapiya|aapyu)\b/gi, "udhar diya")
+    .replace(/\b(lidha|lidhu)\b/gi, "jama mila");
+}
+
+
 
 
 
