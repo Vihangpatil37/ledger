@@ -28,6 +28,7 @@ import {
   type MatchedCustomer,
 } from "@/actions/voice";
 import { useLanguage } from "@/lib/i18n/client";
+import { VoiceKhataIcon } from "@/components/voice/voice-icon";
 import type { EntryType } from "@/lib/types";
 import {
   saveVoiceEnginePreference,
@@ -1304,6 +1305,7 @@ export function GlobalVoiceModal({
 
 /**
  * Universal Floating Action Button (FAB) for Voice Khata.
+ * Hidden on desktop (lg:hidden) where SideNav already provides the primary button.
  */
 export function VoiceFloatingButton({
   className = "",
@@ -1316,15 +1318,14 @@ export function VoiceFloatingButton({
     <button
       type="button"
       onClick={openGlobalVoiceModal}
-      aria-label={t("voice.title")}
+      aria-label={`${t("voice.title")} (Alt+V)`}
       title={`${t("voice.title")} (Alt+V)`}
-      className={`fixed bottom-20 right-4 sm:bottom-6 sm:right-6 lg:bottom-8 lg:right-8 z-40 flex items-center gap-2.5 rounded-full bg-ink px-4 py-3 text-paper shadow-[0_8px_24px_rgba(30,27,24,0.3)] transition-all duration-200 hover:scale-105 active:scale-95 hover:bg-ink/90 focus-visible:outline-2 focus-visible:outline-focus cursor-pointer ${className}`}
+      className={`fixed bottom-20 right-4 sm:bottom-6 sm:right-6 lg:hidden z-40 flex items-center gap-2 rounded-full bg-ink px-3.5 py-2.5 text-paper shadow-[0_6px_20px_rgba(30,27,24,0.25)] transition-all duration-200 hover:scale-105 active:scale-95 hover:bg-ink/90 focus-visible:outline-2 focus-visible:outline-focus cursor-pointer ${className}`}
     >
-      <span className="relative flex size-5 items-center justify-center">
-        <span className="absolute inline-flex size-full animate-ping rounded-full bg-rose-400 opacity-75" />
-        <MicIcon className="relative size-4 text-paper" />
+      <span className="flex size-6 items-center justify-center rounded-full bg-paper/20 text-paper">
+        <VoiceKhataIcon className="size-3.5 text-paper" />
       </span>
-      <span className="font-display text-sm font-bold tracking-tight pr-1">
+      <span className="font-display text-xs font-bold tracking-tight pr-0.5">
         {t("voice.title")}
       </span>
     </button>
@@ -1345,11 +1346,11 @@ export function VoiceHeaderButton({
     <button
       type="button"
       onClick={openGlobalVoiceModal}
-      aria-label={t("voice.title")}
+      aria-label={`${t("voice.title")} (Alt+V)`}
       title={`${t("voice.title")} (Alt+V)`}
-      className={`inline-flex size-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-xl border border-rule bg-surface text-ink hover:bg-paper active:scale-95 transition-all cursor-pointer shadow-2xs focus-visible:outline-2 focus-visible:outline-focus ${className}`}
+      className={`inline-flex size-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-xl border border-rule bg-surface text-ink hover:bg-paper hover:border-ink/20 active:scale-95 transition-all cursor-pointer shadow-2xs focus-visible:outline-2 focus-visible:outline-focus ${className}`}
     >
-      <MicIcon className="size-4 text-debit" />
+      <VoiceKhataIcon className="size-4 text-debit" />
     </button>
   );
 }
@@ -1357,22 +1358,7 @@ export function VoiceHeaderButton({
 // --- Icons ---
 
 function MicIcon({ className = "size-4" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-      <line x1="12" y1="19" x2="12" y2="22" />
-    </svg>
-  );
+  return <VoiceKhataIcon className={className} />;
 }
 
 function UserCheckIcon({ className = "size-4" }: { className?: string }) {

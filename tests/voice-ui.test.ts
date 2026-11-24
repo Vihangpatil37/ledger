@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
 import {
   openGlobalVoiceModal,
   VOICE_MODAL_EVENT,
@@ -92,5 +94,36 @@ describe("Global Voice Modal & UI helpers", () => {
       expect(gu[key]).toBeTruthy();
       expect(typeof gu[key]).toBe("string");
     }
+  });
+
+  describe("Voice Khata icon definition & navigation integration", () => {
+    it("source file contains complete microphone capsule and footing base", () => {
+      const iconSource = fs.readFileSync(
+        path.join(process.cwd(), "src", "components", "voice", "voice-icon.tsx"),
+        "utf-8"
+      );
+      expect(iconSource).toContain('line x1="8" y1="22" x2="16" y2="22"');
+      expect(iconSource).toContain('path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"');
+    });
+
+    it("mobile navigation includes voice modal trigger button", () => {
+      const mobileNavSource = fs.readFileSync(
+        path.join(process.cwd(), "src", "components", "shell", "mobile-nav.tsx"),
+        "utf-8"
+      );
+      expect(mobileNavSource).toContain("grid-cols-4");
+      expect(mobileNavSource).toContain("openGlobalVoiceModal");
+      expect(mobileNavSource).toContain("VoiceKhataIcon");
+    });
+
+    it("desktop side navigation includes voice modal trigger with Alt+V shortcut", () => {
+      const sideNavSource = fs.readFileSync(
+        path.join(process.cwd(), "src", "components", "shell", "nav.tsx"),
+        "utf-8"
+      );
+      expect(sideNavSource).toContain("openGlobalVoiceModal");
+      expect(sideNavSource).toContain("Alt+V");
+      expect(sideNavSource).toContain("VoiceKhataIcon");
+    });
   });
 });
